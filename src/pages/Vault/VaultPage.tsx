@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import { Card } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { Badge } from '../../components/ui/Badge';
-import { Search } from '../../components/ui/Search';
-import { ReportCard } from '../../components/cards/ReportCard';
-import { Modal } from '../../components/ui/Modal';
-import { useUI } from '../../contexts/UIContext';
-import { MOCK_REPORTS } from '../../constants/mockData';
-import { MedicalReport, ReportCategory } from '../../types';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Badge } from '@/components/ui/Badge';
+import { Search } from '@/components/ui/Search';
+import { ReportCard } from '@/components/cards/ReportCard';
+import { Modal } from '@/components/ui/Modal';
+import { useUI } from '@/contexts/UIContext';
+import { MOCK_REPORTS } from '@/constants/mockData';
+import type { MedicalReport, ReportCategory } from '@/types';
 import {
   FolderLock,
   Upload,

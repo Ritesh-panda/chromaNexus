@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '../../components/ui/Button';
+import { Button } from '@/components/ui/Button';
 import { ShieldCheck, ArrowRight, RotateCcw } from 'lucide-react';
-import { useUI } from '../../contexts/UIContext';
+import { useUI } from '@/contexts/UIContext';
 
 export const OTPVerificationPage: React.FC = () => {
   const [otp, setOtp] = useState(['5', '8', '2', '9', '1', '4']);

@@ -1,7 +1,7 @@
 import React from 'react';
-import type { TimelineEvent } from '../../types';
-import { Card } from '../ui/Card';
-import { Badge } from '../ui/Badge';
+import type { TimelineEvent } from '@/types';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
 import { Activity, Stethoscope, Pill, FileText, Hospital, ShieldAlert, Award } from 'lucide-react';
 
 export interface TimelineCardProps {

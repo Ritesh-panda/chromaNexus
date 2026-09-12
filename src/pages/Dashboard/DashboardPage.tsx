@@ -1,20 +1,20 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
-import { ReportCard } from '../../components/cards/ReportCard';
-import { MedicalCard } from '../../components/cards/MedicalCard';
-import { TimelineCard } from '../../components/cards/TimelineCard';
-import { VitalsTrendChart } from '../../components/charts/VitalsTrendChart';
-import { useUI } from '../../contexts/UIContext';
+import { Card, CardTitle, CardDescription } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { ReportCard } from '@/components/cards/ReportCard';
+import { MedicalCard } from '@/components/cards/MedicalCard';
+import { TimelineCard } from '@/components/cards/TimelineCard';
+import { VitalsTrendChart } from '@/components/charts/VitalsTrendChart';
+import { useUI } from '@/contexts/UIContext';
 import {
   MOCK_REPORTS,
   MOCK_DISEASES,
   MOCK_MEDICATIONS,
   MOCK_TIMELINE_EVENTS,
   MOCK_CHAT_MESSAGES
-} from '../../constants/mockData';
+} from '@/constants/mockData';
 import {
   FileText,
   Activity,
@@ -26,7 +26,6 @@ import {
   ArrowRight,
   Sparkles,
   TrendingUp,
-  ShieldCheck,
   Zap
 } from 'lucide-react';
 import { motion } from 'framer-motion';

@@ -1,6 +1,6 @@
-import api from './axios';
-import { MOCK_USER } from '../constants/mockData';
-import type { User } from '../types';
+import api from '@/services/axios';
+import { MOCK_USER } from '@/constants/mockData';
+import type { User } from '@/types';
 
 export interface LoginParams {
   email: string;

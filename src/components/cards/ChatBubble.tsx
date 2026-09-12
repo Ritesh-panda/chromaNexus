@@ -1,7 +1,7 @@
 import React from 'react';
-import type { ChatMessage } from '../../types';
-import { Avatar } from '../ui/Avatar';
-import { Badge } from '../ui/Badge';
+import type { ChatMessage } from '@/types';
+import { Avatar } from '@/components/ui/Avatar';
+import { Badge } from '@/components/ui/Badge';
 import { Sparkles, FileText, CheckCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 

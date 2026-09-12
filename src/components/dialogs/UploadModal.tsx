@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { Modal } from '../ui/Modal';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
-import { useUI } from '../../contexts/UIContext';
-import { reportService } from '../../services/report.service';
+import { Modal } from '@/components/ui/Modal';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { useUI } from '@/contexts/UIContext';
+import { reportService } from '@/services/report.service';
 import { Upload, FileText, CheckCircle2, AlertCircle, X, ShieldCheck } from 'lucide-react';
-import type { ReportCategory } from '../../types';
+import type { ReportCategory } from '@/types';
 
 export const UploadModal: React.FC = () => {
   const { uploadModalOpen, setUploadModalOpen, addToast } = useUI();

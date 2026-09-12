@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Card } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { Tabs } from '../../components/ui/Tabs';
-import { Badge } from '../../components/ui/Badge';
-import { useTheme } from '../../contexts/ThemeContext';
-import { useUI } from '../../contexts/UIContext';
+import { Card } from '@/components/ui/Card';
+import { Button } from '@/components/ui/Button';
+import { Tabs } from '@/components/ui/Tabs';
+import { Badge } from '@/components/ui/Badge';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useUI } from '@/contexts/UIContext';
 import {
   Settings,
   Sun,

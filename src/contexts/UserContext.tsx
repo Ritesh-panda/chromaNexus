@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from 'react';
-import type { Patient } from '../types';
-import { MOCK_PATIENT } from '../constants/mockData';
+import type { Patient } from '@/types';
+import { MOCK_PATIENT } from '@/constants/mockData';
 
 interface UserContextType {
   patient: Patient;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { FileQuestion } from 'lucide-react';
-import { cn } from '../../utils/cn';
+import { cn } from '@/utils/cn';
 
 export interface EmptyStateProps {
   icon?: React.ReactNode;

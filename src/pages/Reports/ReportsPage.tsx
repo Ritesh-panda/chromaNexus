@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
-import { Table, Column } from '../../components/ui/Table';
-import { Card } from '../../components/ui/Card';
-import { Badge } from '../../components/ui/Badge';
-import { Input } from '../../components/ui/Input';
-import { Search } from '../../components/ui/Search';
-import { Button } from '../../components/ui/Button';
-import { MOCK_REPORTS } from '../../constants/mockData';
-import { MedicalReport } from '../../types';
-import { FileCheck, Building2, Calendar, Eye, Download, ShieldCheck } from 'lucide-react';
+import { Table } from '@/components/ui/Table';
+import type { Column } from '@/components/ui/Table';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Search } from '@/components/ui/Search';
+import { Button } from '@/components/ui/Button';
+import { MOCK_REPORTS } from '@/constants/mockData';
+import type { MedicalReport } from '@/types';
+import { FileCheck, Eye, Download, ShieldCheck } from 'lucide-react';
 
 export const ReportsPage: React.FC = () => {
   const [reports] = useState<MedicalReport[]>(MOCK_REPORTS);

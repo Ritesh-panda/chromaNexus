@@ -1,9 +1,9 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle2, AlertTriangle, AlertCircle, Info, X } from 'lucide-react';
-import { useUI } from '../../contexts/UIContext';
-import type { ToastMessage } from '../../contexts/UIContext';
-import { cn } from '../../utils/cn';
+import { useUI } from '@/contexts/UIContext';
+import type { ToastMessage } from '@/contexts/UIContext';
+import { cn } from '@/utils/cn';
 
 export const ToastContainer: React.FC = () => {
   const { toasts, removeToast } = useUI();

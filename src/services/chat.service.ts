@@ -1,5 +1,5 @@
-import { MOCK_CHAT_MESSAGES } from '../constants/mockData';
-import type { ChatMessage, ConversationThread } from '../types';
+import { MOCK_CHAT_MESSAGES } from '@/constants/mockData';
+import type { ChatMessage, ConversationThread } from '@/types';
 
 export const chatService = {
   async getMessages(): Promise<ChatMessage[]> {
