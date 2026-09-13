@@ -2,27 +2,27 @@ import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 
 // Layouts
-import { LandingLayout } from '../components/layout/LandingLayout';
-import { AuthLayout } from '../components/layout/AuthLayout';
-import { DashboardLayout } from '../components/layout/DashboardLayout';
-import { ProtectedRoute } from './ProtectedRoute';
+import { LandingLayout } from '@/components/layout/LandingLayout';
+import { AuthLayout } from '@/components/layout/AuthLayout';
+import { DashboardLayout } from '@/components/layout/DashboardLayout';
+import { ProtectedRoute } from '@/routes/ProtectedRoute';
 
 // Pages
-import { LandingPage } from '../pages/Landing/LandingPage';
-import { LoginPage } from '../pages/Auth/LoginPage';
-import { SignupPage } from '../pages/Auth/SignupPage';
-import { ForgotPasswordPage } from '../pages/Auth/ForgotPasswordPage';
-import { OTPVerificationPage } from '../pages/Auth/OTPVerificationPage';
+import { LandingPage } from '@/pages/Landing/LandingPage';
+import { LoginPage } from '@/pages/Auth/LoginPage';
+import { SignupPage } from '@/pages/Auth/SignupPage';
+import { ForgotPasswordPage } from '@/pages/Auth/ForgotPasswordPage';
+import { OTPVerificationPage } from '@/pages/Auth/OTPVerificationPage';
 
-import { DashboardPage } from '../pages/Dashboard/DashboardPage';
-import { VaultPage } from '../pages/Vault/VaultPage';
-import { ReportsPage } from '../pages/Reports/ReportsPage';
-import { TimelinePage } from '../pages/Timeline/TimelinePage';
-import { AIChatPage } from '../pages/Chat/AIChatPage';
-import { DoctorSummaryPage } from '../pages/DoctorSummary/DoctorSummaryPage';
-import { ProfilePage } from '../pages/Profile/ProfilePage';
-import { SettingsPage } from '../pages/Settings/SettingsPage';
-import { NotFoundPage } from '../pages/NotFound/NotFoundPage';
+import { DashboardPage } from '@/pages/Dashboard/DashboardPage';
+import { VaultPage } from '@/pages/Vault/VaultPage';
+import { ReportsPage } from '@/pages/Reports/ReportsPage';
+import { TimelinePage } from '@/pages/Timeline/TimelinePage';
+import { AIChatPage } from '@/pages/Chat/AIChatPage';
+import { DoctorSummaryPage } from '@/pages/DoctorSummary/DoctorSummaryPage';
+import { ProfilePage } from '@/pages/Profile/ProfilePage';
+import { SettingsPage } from '@/pages/Settings/SettingsPage';
+import { NotFoundPage } from '@/pages/NotFound/NotFoundPage';
 
 export const AppRoutes: React.FC = () => {
   return (

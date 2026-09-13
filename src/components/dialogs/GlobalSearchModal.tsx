@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { useUI } from '../../contexts/UIContext';
+import { useUI } from '@/contexts/UIContext';
 import { Search as SearchIcon, FileText, Activity, GitCommit, Bot, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { MOCK_REPORTS, MOCK_TIMELINE_EVENTS, MOCK_DISEASES } from '../../constants/mockData';
+import { MOCK_REPORTS, MOCK_TIMELINE_EVENTS, MOCK_DISEASES } from '@/constants/mockData';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export const GlobalSearchModal: React.FC = () => {

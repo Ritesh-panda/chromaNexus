@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card } from '../ui/Card';
-import { cn } from '../../utils/cn';
+import { Card } from '@/components/ui/Card';
+import { cn } from '@/utils/cn';
 
 export interface SummaryCardProps {
   title: string;

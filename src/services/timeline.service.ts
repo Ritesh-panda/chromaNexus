@@ -1,5 +1,5 @@
-import { MOCK_TIMELINE_EVENTS } from '../constants/mockData';
-import { TimelineEvent } from '../types';
+import { MOCK_TIMELINE_EVENTS } from '@/constants/mockData';
+import type { TimelineEvent } from '@/types';
 
 export const timelineService = {
   async getTimelineEvents(filterType?: string): Promise<TimelineEvent[]> {

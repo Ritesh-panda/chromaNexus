@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Button } from '../../components/ui/Button';
+import { Button } from '@/components/ui/Button';
 import { HeartPulse, ArrowLeft, Home } from 'lucide-react';
 
 export const NotFoundPage: React.FC = () => {

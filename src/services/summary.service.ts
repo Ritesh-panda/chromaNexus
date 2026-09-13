@@ -1,5 +1,5 @@
-import { MOCK_DOCTOR_SUMMARY } from '../constants/mockData';
-import { DoctorSummary } from '../types';
+import { MOCK_DOCTOR_SUMMARY } from '@/constants/mockData';
+import type { DoctorSummary } from '@/types';
 
 export const summaryService = {
   async getDoctorSummary(): Promise<DoctorSummary> {

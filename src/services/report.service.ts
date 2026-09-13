@@ -1,5 +1,5 @@
-import { MOCK_REPORTS } from '../constants/mockData';
-import type { MedicalReport, ReportCategory } from '../types';
+import { MOCK_REPORTS } from '@/constants/mockData';
+import type { MedicalReport, ReportCategory } from '@/types';
 
 export interface UploadReportParams {
   file: File;

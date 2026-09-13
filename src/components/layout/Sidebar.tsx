@@ -1,7 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { useUI } from '../../contexts/UIContext';
-import { useAuth } from '../../contexts/AuthContext';
+import { useUI } from '@/contexts/UIContext';
+import { useAuth } from '@/contexts/AuthContext';
 import {
   LayoutDashboard,
   FolderLock,
@@ -15,10 +15,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Shield,
-  Activity,
   HeartPulse
 } from 'lucide-react';
-import { cn } from '../../utils/cn';
+import { cn } from '@/utils/cn';
 
 export interface NavItem {
   label: string;

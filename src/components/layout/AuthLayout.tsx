@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, Link } from 'react-router-dom';
 import { HeartPulse, Shield, Sparkles, CheckCircle2 } from 'lucide-react';
-import { ToastContainer } from '../ui/Toast';
+import { ToastContainer } from '@/components/ui/Toast';
 
 export const AuthLayout: React.FC = () => {
   return (

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/AuthContext';
-import { useUI } from '../../contexts/UIContext';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUI } from '@/contexts/UIContext';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { Mail, Lock, ArrowRight, ShieldCheck, KeyRound } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {

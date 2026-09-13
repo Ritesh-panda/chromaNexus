@@ -1,11 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChatBubble } from '../../components/cards/ChatBubble';
-import { Button } from '../../components/ui/Button';
-import { Input } from '../../components/ui/Input';
-import { Badge } from '../../components/ui/Badge';
-import { MOCK_CHAT_MESSAGES } from '../../constants/mockData';
-import { ChatMessage, ConversationThread } from '../../types';
-import { chatService } from '../../services/chat.service';
+import { ChatBubble } from '@/components/cards/ChatBubble';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { MOCK_CHAT_MESSAGES } from '@/constants/mockData';
+import type { ChatMessage, ConversationThread } from '@/types';
+import { chatService } from '@/services/chat.service';
 import {
   Bot,
   Send,
@@ -13,13 +12,9 @@ import {
   MessageSquare,
   Sparkles,
   ShieldCheck,
-  FileText,
-  Mic,
-  Paperclip,
-  CheckCircle2,
-  HelpCircle
+  HelpCircle,
+  Paperclip
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 export const AIChatPage: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>(MOCK_CHAT_MESSAGES);

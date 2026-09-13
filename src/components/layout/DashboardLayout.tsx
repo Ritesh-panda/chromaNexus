@@ -1,13 +1,13 @@
 import React from 'react';
 import { Outlet } from 'react-router-dom';
-import { Sidebar } from './Sidebar';
-import { TopBar } from './TopBar';
-import { Breadcrumb } from './Breadcrumb';
-import { useUI } from '../../contexts/UIContext';
-import { GlobalSearchModal } from '../dialogs/GlobalSearchModal';
-import { UploadModal } from '../dialogs/UploadModal';
-import { ToastContainer } from '../ui/Toast';
-import { cn } from '../../utils/cn';
+import { Sidebar } from '@/components/layout/Sidebar';
+import { TopBar } from '@/components/layout/TopBar';
+import { Breadcrumb } from '@/components/layout/Breadcrumb';
+import { useUI } from '@/contexts/UIContext';
+import { GlobalSearchModal } from '@/components/dialogs/GlobalSearchModal';
+import { UploadModal } from '@/components/dialogs/UploadModal';
+import { ToastContainer } from '@/components/ui/Toast';
+import { cn } from '@/utils/cn';
 
 export const DashboardLayout: React.FC = () => {
   const { sidebarOpen } = useUI();

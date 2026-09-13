@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import type { User } from '../types';
-import { MOCK_USER } from '../constants/mockData';
-import { authService } from '../services/auth.service';
-import type { LoginParams, SignupParams } from '../services/auth.service';
+import type { User } from '@/types';
+import { MOCK_USER } from '@/constants/mockData';
+import { authService } from '@/services/auth.service';
+import type { LoginParams, SignupParams } from '@/services/auth.service';
 
 
 interface AuthContextType {

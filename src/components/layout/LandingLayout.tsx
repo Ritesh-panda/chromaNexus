@@ -1,8 +1,8 @@
 import React from 'react';
 import { Outlet, Link, useNavigate } from 'react-router-dom';
-import { HeartPulse, ArrowRight, ShieldCheck, Github, ExternalLink } from 'lucide-react';
-import { Button } from '../ui/Button';
-import { useAuth } from '../../contexts/AuthContext';
+import { HeartPulse, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const LandingLayout: React.FC = () => {
   const { isAuthenticated } = useAuth();

@@ -1,7 +1,7 @@
 import React from 'react';
 import { AlertOctagon, RotateCcw } from 'lucide-react';
-import { Button } from './Button';
-import { cn } from '../../utils/cn';
+import { Button } from '@/components/ui/Button';
+import { cn } from '@/utils/cn';
 
 export interface ErrorStateProps {
   title?: string;

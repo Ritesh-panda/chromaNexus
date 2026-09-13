@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { useUI } from '../../contexts/UIContext';
-import { useTheme } from '../../contexts/ThemeContext';
-import { useAuth } from '../../contexts/AuthContext';
-import { Avatar } from '../ui/Avatar';
-import { Badge } from '../ui/Badge';
-import { Search } from '../ui/Search';
-import { MOCK_NOTIFICATIONS } from '../../constants/mockData';
+import { useUI } from '@/contexts/UIContext';
+import { useTheme } from '@/contexts/ThemeContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { Avatar } from '@/components/ui/Avatar';
+import { Badge } from '@/components/ui/Badge';
+import { MOCK_NOTIFICATIONS } from '@/constants/mockData';
 import {
   Bell,
   Sun,
@@ -18,7 +17,8 @@ import {
   LogOut,
   ChevronDown,
   ShieldCheck,
-  Check
+  Check,
+  Menu
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';

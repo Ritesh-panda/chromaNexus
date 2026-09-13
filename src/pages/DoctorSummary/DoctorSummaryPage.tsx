@@ -1,23 +1,19 @@
 import React, { useState } from 'react';
-import { Card } from '../../components/ui/Card';
-import { Button } from '../../components/ui/Button';
-import { Badge } from '../../components/ui/Badge';
-import { SummaryCard } from '../../components/cards/SummaryCard';
-import { Modal } from '../../components/ui/Modal';
-import { useUI } from '../../contexts/UIContext';
-import { MOCK_DOCTOR_SUMMARY } from '../../constants/mockData';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { SummaryCard } from '@/components/cards/SummaryCard';
+import { Modal } from '@/components/ui/Modal';
+import { useUI } from '@/contexts/UIContext';
+import { MOCK_DOCTOR_SUMMARY } from '@/constants/mockData';
 import {
   Stethoscope,
-  Download,
   Share2,
   Printer,
   CheckCircle2,
   AlertTriangle,
   Pill,
   Activity,
-  FileText,
   ShieldCheck,
-  User,
   Calendar,
   Lock
 } from 'lucide-react';

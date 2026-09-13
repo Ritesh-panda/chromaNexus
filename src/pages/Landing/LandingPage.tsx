@@ -1,9 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { useNavigate, Link } from 'react-router-dom';
-import { Button } from '../../components/ui/Button';
-import { Card } from '../../components/ui/Card';
-import { Badge } from '../../components/ui/Badge';
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
 import {
   Sparkles,
   ArrowRight,
@@ -11,12 +11,9 @@ import {
   Brain,
   GitCommit,
   Bot,
-  FileCheck,
   FolderLock,
   Stethoscope,
-  Activity,
   CheckCircle2,
-  Lock,
   Layers,
   Database,
   Cpu
@@ -166,7 +163,7 @@ export const LandingPage: React.FC = () => {
             <div className="p-4 rounded-xl bg-white/80 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 space-y-2 text-xs">
               <div className="flex items-center justify-between font-bold text-blue-600 dark:text-blue-400">
                 <span>Patient ➔ Diseases ➔ Medications ➔ Lab Trends</span>
-                <Badge variant="success font-mono">Machine Understandable</Badge>
+                <Badge variant="success" className="font-mono">Machine Understandable</Badge>
               </div>
               <p className="text-slate-500 dark:text-slate-400">
                 "Patient took Cholecalciferol in 2020, diagnosed Type 2 Diabetes in 2023, now controlled on Metformin with HbA1c 6.7%."
