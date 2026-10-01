@@ -10,10 +10,19 @@ import { ToastContainer } from '@/components/ui/Toast';
 import { cn } from '@/utils/cn';
 
 export const DashboardLayout: React.FC = () => {
-  const { sidebarOpen } = useUI();
+  const { sidebarOpen, setSidebarOpen } = useUI();
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 flex font-sans">
+      {/* Mobile backdrop overlay — appears when sidebar is open on small screens */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-slate-900/60 backdrop-blur-sm lg:hidden"
+          aria-hidden="true"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar Shell */}
       <Sidebar />
 
@@ -21,7 +30,9 @@ export const DashboardLayout: React.FC = () => {
       <div
         className={cn(
           'flex-1 flex flex-col min-w-0 transition-all duration-300',
-          sidebarOpen ? 'ml-64' : 'ml-20'
+          // On large screens honour the sidebar state; on mobile always full-width
+          'lg:ml-0',
+          sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'
         )}
       >
         <TopBar />

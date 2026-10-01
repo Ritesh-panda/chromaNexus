@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUI } from '@/contexts/UIContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Mail, Lock, User as UserIcon, ArrowRight, ShieldCheck, Stethoscope, CheckCircle2 } from 'lucide-react';
+import { Mail, Lock, User as UserIcon, ArrowRight, Stethoscope } from 'lucide-react';
 
 export const SignupPage: React.FC = () => {
   const [name, setName] = useState('');

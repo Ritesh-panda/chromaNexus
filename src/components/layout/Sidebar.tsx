@@ -15,7 +15,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Shield,
-  HeartPulse
+  HeartPulse,
+  X
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
 
@@ -38,7 +39,7 @@ export const navItems: NavItem[] = [
 ];
 
 export const Sidebar: React.FC = () => {
-  const { sidebarOpen, toggleSidebar } = useUI();
+  const { sidebarOpen, toggleSidebar, setSidebarOpen } = useUI();
   const { logout } = useAuth();
   const navigate = useNavigate();
 
@@ -47,17 +48,36 @@ export const Sidebar: React.FC = () => {
     navigate('/login');
   };
 
+  // Close sidebar on mobile after navigation
+  const handleNavClick = () => {
+    // Only close on mobile (lg breakpoint ~1024px)
+    if (window.innerWidth < 1024) {
+      setSidebarOpen(false);
+    }
+  };
+
   return (
     <aside
+      aria-label="Main navigation"
+      aria-expanded={sidebarOpen}
       className={cn(
+        // Base: fixed full height, transitions, glass panel
         'fixed top-0 left-0 z-40 h-screen transition-all duration-300 glass-panel border-r border-slate-200 dark:border-slate-800/80 flex flex-col justify-between p-4',
-        sidebarOpen ? 'w-64' : 'w-20'
+        // On mobile: full-width drawer that slides in/out
+        // On large screens: collapsible sidebar
+        sidebarOpen
+          ? 'w-64 translate-x-0'
+          : '-translate-x-full lg:translate-x-0 lg:w-20'
       )}
     >
       <div>
         {/* Logo Section */}
         <div className="flex items-center justify-between pb-6 mb-2 border-b border-slate-200/60 dark:border-slate-800/60">
-          <NavLink to="/dashboard" className="flex items-center space-x-3 overflow-hidden">
+          <NavLink
+            to="/dashboard"
+            className="flex items-center space-x-3 overflow-hidden"
+            onClick={handleNavClick}
+          >
             <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 via-blue-500 to-emerald-400 flex items-center justify-center text-white font-bold shadow-md shadow-blue-500/25 shrink-0">
               <HeartPulse className="w-6 h-6 animate-pulse" />
             </div>
@@ -73,21 +93,37 @@ export const Sidebar: React.FC = () => {
             )}
           </NavLink>
 
+          {/* Mobile: X close button; Desktop: chevron collapse */}
           <button
-            onClick={toggleSidebar}
+            onClick={() => {
+              if (window.innerWidth < 1024) {
+                setSidebarOpen(false);
+              } else {
+                toggleSidebar();
+              }
+            }}
             className="p-1.5 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            aria-label={sidebarOpen ? 'Close navigation' : 'Expand navigation'}
             title={sidebarOpen ? 'Collapse Sidebar' : 'Expand Sidebar'}
           >
-            {sidebarOpen ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+            {/* Mobile always shows X when open; desktop shows chevrons */}
+            <span className="lg:hidden">
+              <X className="w-5 h-5" />
+            </span>
+            <span className="hidden lg:block">
+              {sidebarOpen ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+            </span>
           </button>
         </div>
 
         {/* Navigation Items */}
-        <nav className="space-y-1 mt-4">
+        <nav className="space-y-1 mt-4" aria-label="Application pages">
           {navItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={handleNavClick}
+              aria-label={item.label}
               className={({ isActive }) =>
                 cn(
                   'flex items-center space-x-3 px-3.5 py-3 rounded-2xl text-sm font-medium transition-all duration-200 group relative',
@@ -104,8 +140,9 @@ export const Sidebar: React.FC = () => {
                   {item.badge}
                 </span>
               )}
+              {/* Tooltip for collapsed desktop sidebar */}
               {!sidebarOpen && (
-                <div className="absolute left-16 z-50 hidden group-hover:block px-3 py-1.5 bg-slate-900 text-white text-xs font-semibold rounded-xl whitespace-nowrap shadow-lg">
+                <div className="absolute left-16 z-50 hidden group-hover:block lg:group-hover:block px-3 py-1.5 bg-slate-900 text-white text-xs font-semibold rounded-xl whitespace-nowrap shadow-lg pointer-events-none">
                   {item.label}
                 </div>
               )}
@@ -128,6 +165,7 @@ export const Sidebar: React.FC = () => {
 
         <button
           onClick={handleLogout}
+          aria-label="Log out"
           className={cn(
             'w-full flex items-center space-x-3 px-3.5 py-3 rounded-2xl text-sm font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors',
             !sidebarOpen && 'justify-center'

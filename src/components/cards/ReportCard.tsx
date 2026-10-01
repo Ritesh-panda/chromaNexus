@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import { FileText, Building2, User, Calendar, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { FileText, Building2, Calendar, ShieldCheck } from 'lucide-react';
 import type { MedicalReport } from '@/types';
 
 export interface ReportCardProps {

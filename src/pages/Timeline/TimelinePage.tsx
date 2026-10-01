@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
-import { Card } from '@/components/ui/Card';
+
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { MOCK_TIMELINE_EVENTS } from '@/constants/mockData';
-import type { TimelineEvent, TimelineEventType } from '@/types';
+import type { TimelineEvent } from '@/types';
 import { TimelineCard } from '@/components/cards/TimelineCard';
 import { Modal } from '@/components/ui/Modal';
-import { GitCommit, Filter, Calendar, Activity, Sparkles, FileText, ChevronRight } from 'lucide-react';
+import { GitCommit, Filter, FileText } from 'lucide-react';
 
 export const TimelinePage: React.FC = () => {
   const [selectedType, setSelectedType] = useState<string>('all');

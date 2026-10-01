@@ -4,7 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useUI } from '@/contexts/UIContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Mail, Lock, ArrowRight, ShieldCheck, KeyRound } from 'lucide-react';
+import { Mail, Lock, ArrowRight, KeyRound } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('alex.vance@example.com');

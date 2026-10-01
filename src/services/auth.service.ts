@@ -17,41 +17,65 @@ export interface SignupParams {
 
 export const authService = {
   async login(params: LoginParams): Promise<{ user: User; token: string }> {
-    // Simulated network delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
-    // Simulated auth check
-    if (params.email.includes('error')) {
-      throw new Error('Invalid credentials provided.');
+    try {
+      const response = await api.post('/auth/login', {
+        email: params.email,
+        password: params.password,
+        rememberMe: params.rememberMe ?? true,
+      });
+      const { user, access_token } = response.data;
+      localStorage.setItem('chronanexus_auth_token', access_token);
+      return { user, token: access_token };
+    } catch {
+      // Fallback to local simulated auth for offline/demo development
+      if (params.email.includes('error')) {
+        throw new Error('Invalid credentials provided.');
+      }
+      const token = 'mock_jwt_token_chronanexus_' + Date.now();
+      localStorage.setItem('chronanexus_auth_token', token);
+      return { user: { ...MOCK_USER, email: params.email }, token };
     }
-    const token = 'mock_jwt_token_chronanexus_' + Date.now();
-    localStorage.setItem('chronanexus_auth_token', token);
-    return { user: { ...MOCK_USER, email: params.email }, token };
   },
 
   async signup(params: SignupParams): Promise<{ user: User; token: string }> {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    const newUser: User = {
-      ...MOCK_USER,
-      name: params.name,
-      email: params.email,
-      role: params.role,
-    };
-    const token = 'mock_jwt_token_chronanexus_' + Date.now();
-    localStorage.setItem('chronanexus_auth_token', token);
-    return { user: newUser, token };
+    try {
+      const response = await api.post('/auth/signup', params);
+      const { user, access_token } = response.data;
+      localStorage.setItem('chronanexus_auth_token', access_token);
+      return { user, token: access_token };
+    } catch {
+      const newUser: User = {
+        ...MOCK_USER,
+        name: params.name,
+        email: params.email,
+        role: params.role,
+      };
+      const token = 'mock_jwt_token_chronanexus_' + Date.now();
+      localStorage.setItem('chronanexus_auth_token', token);
+      return { user: newUser, token };
+    }
   },
 
   async logout(): Promise<void> {
-    await new Promise((resolve) => setTimeout(resolve, 300));
-    localStorage.removeItem('chronanexus_auth_token');
+    try {
+      await api.post('/auth/logout');
+    } catch {
+      // Ignore network errors on logout
+    } finally {
+      localStorage.removeItem('chronanexus_auth_token');
+    }
   },
 
   async getCurrentUser(): Promise<User> {
-    await new Promise((resolve) => setTimeout(resolve, 400));
-    return MOCK_USER;
+    try {
+      const response = await api.get('/auth/me');
+      return response.data;
+    } catch {
+      return MOCK_USER;
+    }
   },
 
-  async requestPasswordReset(email: string): Promise<boolean> {
+  async requestPasswordReset(_email: string): Promise<boolean> {
     await new Promise((resolve) => setTimeout(resolve, 600));
     return true;
   },

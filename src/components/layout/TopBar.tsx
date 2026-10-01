@@ -24,7 +24,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 
 export const TopBar: React.FC = () => {
-  const { setSearchOpen, setUploadModalOpen } = useUI();
+  const { setSearchOpen, setUploadModalOpen, toggleSidebar } = useUI();
   const { theme, setTheme } = useTheme();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -41,11 +41,21 @@ export const TopBar: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-30 h-16 w-full glass-panel border-b border-slate-200 dark:border-slate-800/80 px-6 flex items-center justify-between">
+    <header className="sticky top-0 z-30 h-16 w-full glass-panel border-b border-slate-200 dark:border-slate-800/80 px-4 sm:px-6 flex items-center justify-between gap-3">
+      {/* Mobile hamburger — hidden on lg+ since sidebar has its own toggle */}
+      <button
+        onClick={toggleSidebar}
+        aria-label="Toggle navigation menu"
+        className="lg:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
+
       {/* Search trigger */}
       <div className="flex items-center space-x-4 flex-1 max-w-md">
         <button
           onClick={() => setSearchOpen(true)}
+          aria-label="Open global search"
           className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl bg-slate-100/80 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all text-xs font-medium group"
         >
           <span className="flex items-center gap-2">

@@ -102,8 +102,9 @@ ChronaNexus is structured around six core processing systems:
 
 ## Tech Stack
 
-The frontend foundation of ChronaNexus is engineered with modern, enterprise-grade web tools:
+The full-stack platform of ChronaNexus is engineered with enterprise-grade web and API frameworks:
 
+### Frontend
 | Technology | Version | Purpose |
 | :--- | :--- | :--- |
 | **React** | `19.2.8` | Core UI Framework |
@@ -112,158 +113,139 @@ The frontend foundation of ChronaNexus is engineered with modern, enterprise-gra
 | **TailwindCSS** | `^4.3.3` | Utility-First Styling Engine with `@tailwindcss/vite` |
 | **React Router** | `^7.18.2` | Declarative Client-Side Routing & Protected Route Guards |
 | **React Query** | `^5.101.4` | Asynchronous Data Fetching & Caching (`@tanstack/react-query`) |
-| **Axios** | `^1.19.0` | HTTP Client Configuration |
+| **Axios** | `^1.19.0` | Configured HTTP API Client with Bearer Tokens & Interceptors |
 | **React Hook Form** | `^7.85.0` | Performant Form Management |
 | **Zod** | `^4.4.3` | Schema Validation |
 | **Lucide Icons** | `^1.31.0` | Modern Medical & System Icon Set |
 | **Framer Motion** | `^13.1.0` | Micro-animations, Transitions, & Modals |
 | **Recharts** | `^3.10.1` | Interactive Lab Trends & Vitals Visualizations |
-| **Shadcn UI Pattern** | Utility | Reusable Components with `clsx` & `tailwind-merge` (`cn.ts`) |
+
+### Backend
+| Technology | Version | Purpose |
+| :--- | :--- | :--- |
+| **Python** | `3.13+` | Core Backend Runtime |
+| **FastAPI** | `0.115+` | High-performance Async REST API Framework |
+| **SQLAlchemy** | `2.0+` | Database ORM & Patient Memory Relational Models |
+| **Alembic** | `1.14+` | Database Schema Migrations |
+| **Pydantic** | `2.10+` | Request / Response Schema Validation & Serialization |
+| **PyJWT & Bcrypt**| `2.10+` | JWT Authentication & Password Hashing |
+| **Pytest** | `9.1+` | Automated Backend Unit & Integration Tests |
 
 ---
 
-## UI Design Principles
-
-* **Rich Glassmorphism Aesthetics**: Modern dark/light theme palette, HSL background tones (`#0B0F19`), translucent glass cards (`glass-card`), backdrop blur effects, and subtle borders.
-* **Privacy Indicators**: Prominent HIPAA compliance badges, isolated vault tags, and local processing status toggles.
-* **Accessibility**: ARIA role attributes, keyboard shortcut support (`Cmd + K` search trigger), focus rings, and high contrast text ratios.
-* **Responsive Dashboard Layout**: Dynamic sidebar shell with collapsible states, mobile drawer backdrop, top navigation bar, and breadcrumb tracking.
-
----
-
-## Routing Structure
+## Backend Architecture
 
 ```
-/                            ──► Public Landing Page (Vision, Architecture Showcase, Features)
-/login                       ──► Auth: Login Form
-/signup                      ──► Auth: Registration Form
-/forgot-password             ──► Auth: Password Recovery
-/otp-verification            ──► Auth: Two-Factor / OTP Verification
-├── [ProtectedRoute Guard]
-│   ├── /dashboard           ──► Main Command Center (Vitals, Active Memory, Recent Events)
-│   ├── /vault               ──► Document Vault (Grid/List View, Filter, Upload Trigger)
-│   ├── /reports             ──► Data Table View of Extracted Clinical Reports
-│   ├── /timeline            ──► Interactive Longitudinal Health History Timeline
-│   ├── /chat                ──► AI Assistant (Natural Language Q&A with Report Citations)
-│   ├── /doctor-summary      ──► One-Click Physician Summary Generator & PDF Exporter
-│   ├── /profile             ──► Patient Health Profile (Vitals, Emergency Contacts, Allergies)
-│   └── /settings            ──► Account & Privacy Preferences (Data Isolation, Theme)
-└── /not-found               ──► Custom 404 Route Fallback
-```
-
----
-
-## Component Architecture
-
-```
-src/
+backend/
 ├── app/
-│   └── providers.tsx         # QueryClientProvider, ThemeProvider, AuthProvider, UserProvider, UIProvider
-├── components/
-│   ├── cards/                # Domain-specific Cards (ChatBubble, MedicalCard, ReportCard, SummaryCard, TimelineCard)
-│   ├── charts/               # Recharts Components (VitalsTrendChart)
-│   ├── dialogs/              # Modals (GlobalSearchModal [Cmd+K], UploadModal)
-│   ├── layout/               # Shell Layouts (LandingLayout, AuthLayout, DashboardLayout, Sidebar, TopBar, Breadcrumb)
-│   └── ui/                   # Reusable UI Primitives (Button, Card, Badge, Input, Modal, Search, Table, Tabs, Toast, Avatar, Skeleton, Loading, EmptyState, ErrorState, Accordion)
-├── constants/
-│   └── mockData.ts           # Comprehensive Mock Data (Patient, Reports, Diseases, Medications, Timeline, AI Chat)
-├── contexts/
-│   ├── AuthContext.tsx       # Auth state management
-│   ├── ThemeContext.tsx      # Dark/Light/System theme provider
-│   ├── UIContext.tsx         # Modals, Toast notifications, and Sidebar toggle state
-│   └── UserContext.tsx       # Active patient memory state
-├── pages/                    # 11 Application Screen Components
-├── routes/                   # AppRoutes router & ProtectedRoute guard
-├── services/                 # Service layer modules (auth, report, timeline, summary, chat, axios)
-├── types/                    # TypeScript Type Definitions
-└── utils/                    # Utility functions (cn.ts)
+│   ├── main.py               # FastAPI entry point with CORS, lifespan DB init, & Swagger docs
+│   ├── core/
+│   │   ├── config.py         # Pydantic Settings & environment configuration
+│   │   ├── database.py       # SQLAlchemy SessionLocal, engine, & Base
+│   │   └── security.py       # Bcrypt password hashing & JWT token management
+│   ├── models/               # SQLAlchemy Models:
+│   │   ├── user.py           # User & authentication credentials
+│   │   ├── patient.py        # Patient demographic, physician, & emergency contacts
+│   │   ├── report.py         # Medical reports & extracted clinical entities
+│   │   ├── disease.py        # Active & past diagnoses with ICD codes
+│   │   ├── medication.py     # Active & completed prescriptions
+│   │   ├── lab_result.py     # Lab values, reference ranges, & flags
+│   │   ├── timeline.py       # Longitudinal timeline milestones
+│   │   ├── chat.py           # Multi-turn chat conversations & citations
+│   │   └── summary.py        # Clinical doctor summaries
+│   ├── schemas/              # Pydantic v2 schemas (ConfigDict(from_attributes=True))
+│   ├── routers/              # Modular API endpoints:
+│   │   ├── auth.py           # /auth/signup, /auth/login, /auth/me, /auth/logout
+│   │   ├── users.py          # /users/me
+│   │   ├── patients.py       # /patients/me
+│   │   ├── reports.py        # /reports (CRUD)
+│   │   ├── documents.py      # /documents/upload, /documents/download
+│   │   ├── timeline.py       # /timeline (Year/type filtering)
+│   │   ├── chat.py           # /chat/conversations & /chat/conversations/{id}/messages
+│   │   ├── summaries.py      # /summaries/latest & /summaries/generate
+│   │   └── search.py         # /search?q={query}
+│   └── services/             # Storage abstraction, clinical intent matcher, & seeders
+├── alembic/                  # Database migration configuration & versions
+├── tests/                    # 17 Automated pytest unit & integration tests
+├── requirements.txt          # Python backend dependencies
+└── .env.example              # Environment variable template
 ```
-
----
-
-## Application Screens
-
-1. **Landing Page (`/`)**: Product showcase highlighting the problem, 6 core systems, microservice pipeline, and interactive platform preview.
-2. **Login & Registration (`/login`, `/signup`)**: Secure authentication forms with role selection (`Patient` / `Doctor`) and HIPAA isolation assurances.
-3. **Password Recovery & OTP (`/forgot-password`, `/otp-verification`)**: Multi-step identity verification flow.
-4. **Dashboard Page (`/dashboard`)**: Primary health portal showing vital trends (HbA1c, Glucose, Cholesterol), active chronic conditions, upcoming reminders, timeline snippet, and quick AI Q&A launcher.
-5. **Medical Vault (`/vault`)**: Ingestion hub supporting grid/list views, category filtering (Blood Reports, MRI, Prescriptions, CT, X-Ray), instant search, and upload modal triggers.
-6. **Reports Page (`/reports`)**: Structured tabular list of all processed clinical documents with entity confidence scores, parsed metadata, and report view modals.
-7. **Timeline Page (`/timeline`)**: Filterable longitudinal event line detailing diagnoses, treatments, lab tests, surgeries, and physician visits from 2019 to 2026.
-8. **AI Assistant (`/chat`)**: Conversational interface enabling natural language queries over uploaded patient history, complete with auditable report citations and reasoning badges.
-9. **Doctor Summary Page (`/doctor-summary`)**: One-click summary generator producing structured executive notes (Active/Past Diseases, Current Medications, Allergies, Risk Factors, Abnormal Labs) formatted for clinical consultation.
-10. **Profile Page (`/profile`)**: Comprehensive patient record detailing blood group, height, weight, primary care physician, emergency contact, insurance details, and allergen list.
-11. **Settings Page (`/settings`)**: Theme customization (Light/Dark/System), notification preferences, data isolation toggles, and security audit logs.
 
 ---
 
 ## Current Progress & Milestones
 
-> [!NOTE]
-> **Current Repository Scope**: This repository currently contains the complete **Frontend Architectural Foundation** (UI, Layouts, Screens, Design System, Mock Services, State Contexts, and Client Routing).
-
 ### Implementation Status:
-* ✅ **Frontend Foundation**: 100% Implemented & Verified (Clean TypeScript Build, Zero Lint Errors).
-* ⏳ **Backend Microservices**: Planned for Milestone 2 (Auth Service, Document Storage, Metadata DB).
-* ⏳ **AI & OCR Pipeline**: Planned for Milestone 3 (OCR Service, Clinical Entity Extractor, Embedding Generator, Vector Search).
-* ⏳ **Local LLM Engine**: Planned for Milestone 4 (Privacy-first local LLM integration & Patient Memory Graph Sync).
+* ✅ **Phase 1: Frontend Foundation**: 100% Implemented & Verified (Clean TypeScript Build, Zero Lint Errors).
+* ✅ **Phase 2: Full-Stack Persistence Layer**: 100% Implemented & Verified (FastAPI, SQLite/PostgreSQL Models, 9 Routers, Storage Abstraction, 17 Pytest Tests PASS, Axios Integration).
+* ⏳ **Phase 3: OCR Ingestion & Clinical NLP**: Automated Tesseract/Cloud Vision OCR pipeline and LLM extraction worker.
+* ⏳ **Phase 4: Privacy-First Local RAG Engine**: Vector database embeddings & local LLM reasoning.
 
 ---
 
 ## Getting Started
 
-### Prerequisites
+### 1. Prerequisites
 * **Node.js**: `v18.0.0` or higher
 * **npm**: `v9.0.0` or higher
+* **Python**: `3.10` or higher
 
-### Installation
+### 2. Frontend Setup
 
 ```bash
-# Clone the repository
-git clone https://github.com/codingashutosh441-eng/chromaNexus.git
-
 # Navigate into the project directory
 cd chromaNexus
 
-# Install dependencies
+# Install frontend dependencies
 npm install
-```
 
-### Development Server
-
-```bash
+# Start Vite dev server (runs on http://localhost:5173)
 npm run dev
 ```
-Open [http://localhost:5173](http://localhost:5173) in your browser to view the application.
 
-### Production Build & Linting
+### 3. Backend Setup
 
 ```bash
-# Execute TypeScript verification & Vite production build
-npm run build
+# Navigate into the backend directory
+cd backend
 
-# Execute Oxlint code quality verification
-npm run lint
+# Create and activate virtual environment (optional)
+python -m venv venv
+# Windows:
+.\venv\Scripts\activate
+# Linux/macOS:
+source venv/bin/activate
 
-# Preview production build locally
-npm run preview
+# Install backend dependencies
+pip install -r requirements.txt
+
+# Start FastAPI server (runs on http://localhost:8000)
+uvicorn app.main:app --reload --port 8000
 ```
 
----
+### 4. Interactive API Documentation
+FastAPI automatically generates interactive Swagger and ReDoc documentation:
+* Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
+* ReDoc UI: [http://localhost:8000/redoc](http://localhost:8000/redoc)
 
-## Future Roadmap (Reference: `capstone.pdf`)
+### 5. Running Automated Tests & Quality Checks
 
-* **Phase 1 (MVP Foundation)**: User authentication, Document Vault upload, Clinical Entity Extraction, Patient Memory construction, Timeline view, AI Q&A, and Doctor Summary generator (Current Milestone).
-* **Phase 2 (Microservices Architecture)**: Ingestion, OCR, Medical Extraction, Memory Graph, Timeline, Search, AI Q&A, and Notification microservices.
-* **Phase 3 (Privacy & Security)**: On-device local LLM execution, zero-knowledge encrypted vault storage, and audit logs.
-* **Phase 4 (Ecosystem Expansion)**: Family account monitoring, wearable integration (Apple Health, Fitbit), and multi-language support.
+```bash
+# Run backend pytest suite (17 comprehensive tests)
+python -m pytest backend/tests -v
+
+# Run frontend TypeScript type checking & production build
+npm run build
+
+# Run Oxlint code quality verification
+npm run lint
+```
 
 ---
 
 ## License & Credits
 
 * **Project**: ChronaNexus Capstone Project
-* **Lead Engineer / Architect**: Senior Frontend Architecture Review
+* **Lead Engineer / Architect**: Senior Full-Stack Architecture Review
 * **License**: MIT License
 
----

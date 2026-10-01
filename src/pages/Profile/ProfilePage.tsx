@@ -1,16 +1,16 @@
 import React from 'react';
-import { Card, CardTitle, CardDescription } from '@/components/ui/Card';
+import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Avatar } from '@/components/ui/Avatar';
 import { useUser } from '@/contexts/UserContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, Phone, ShieldCheck, Heart, AlertTriangle, Building2, Save } from 'lucide-react';
+import { User, Phone, Save } from 'lucide-react';
 import { useUI } from '@/contexts/UIContext';
 
 export const ProfilePage: React.FC = () => {
-  const { patient, updatePatient } = useUser();
+  const { patient } = useUser();
   const { user } = useAuth();
   const { addToast } = useUI();
 

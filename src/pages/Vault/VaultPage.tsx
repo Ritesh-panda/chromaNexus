@@ -1,30 +1,22 @@
 import React, { useState } from 'react';
-import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Search } from '@/components/ui/Search';
 import { ReportCard } from '@/components/cards/ReportCard';
 import { Modal } from '@/components/ui/Modal';
 import { useUI } from '@/contexts/UIContext';
 import { MOCK_REPORTS } from '@/constants/mockData';
-import type { MedicalReport, ReportCategory } from '@/types';
+import type { MedicalReport } from '@/types';
 import {
   FolderLock,
   Upload,
   Grid,
   List as ListIcon,
-  Filter,
   FileText,
-  Building2,
-  Calendar,
-  User,
   ShieldCheck,
-  CheckCircle2,
   Trash2,
   Download
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 export const VaultPage: React.FC = () => {
   const { setUploadModalOpen, addToast } = useUI();

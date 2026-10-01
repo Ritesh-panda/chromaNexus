@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { Tabs } from '@/components/ui/Tabs';
 import { Badge } from '@/components/ui/Badge';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -15,15 +16,21 @@ import {
   Globe,
   Trash2,
   Download,
-  Check,
   ShieldCheck,
-  AlertTriangle
+  AlertTriangle,
+  Smartphone,
+  Laptop,
+  KeyRound,
+  CheckCircle2
 } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
   const { theme, setTheme } = useTheme();
   const { addToast } = useUI();
   const [activeTab, setActiveTab] = useState('appearance');
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
 
   const [notifications, setNotifications] = useState({
     email: true,
@@ -39,6 +46,7 @@ export const SettingsPage: React.FC = () => {
     { id: 'privacy', label: 'Privacy & Governance', icon: <Shield className="w-4 h-4" /> },
     { id: 'danger', label: 'Danger Zone', icon: <AlertTriangle className="w-4 h-4 text-rose-500" /> },
   ];
+
 
   return (
     <div className="space-y-6 pb-12">
@@ -117,7 +125,117 @@ export const SettingsPage: React.FC = () => {
         </Card>
       )}
 
+      {activeTab === 'security' && (
+        <Card className="p-6 space-y-6 border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <Lock className="w-5 h-5 text-blue-500" /> Two-Factor Authentication (2FA)
+              </h3>
+              <p className="text-xs text-slate-500">Require an OTP verification code when signing into your vault.</p>
+            </div>
+            <Button
+              variant={twoFactorEnabled ? 'outline' : 'primary'}
+              size="sm"
+              onClick={() => {
+                setTwoFactorEnabled(!twoFactorEnabled);
+                addToast({
+                  type: 'info',
+                  title: '2FA Updated',
+                  message: `Two-factor authentication is now ${!twoFactorEnabled ? 'Enabled' : 'Disabled'}.`,
+                });
+              }}
+            >
+              {twoFactorEnabled ? 'Disable 2FA' : 'Enable 2FA'}
+            </Button>
+          </div>
+
+          {/* Active Sessions */}
+          <div className="space-y-3">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Active Authorized Sessions
+            </h4>
+            <div className="space-y-2">
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600">
+                    <Laptop className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                      Chrome on Windows 11 <Badge variant="success" className="text-[10px]">Current Session</Badge>
+                    </p>
+                    <p className="text-[11px] text-slate-400 font-mono">IP: 192.168.1.104 • Location: Encrypted Node</p>
+                  </div>
+                </div>
+                <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> Active Now
+                </span>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                    <Smartphone className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-slate-900 dark:text-slate-100">ChronaNexus Mobile App (iOS 18)</p>
+                    <p className="text-[11px] text-slate-400 font-mono">Last active: 2 hours ago</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => addToast({ type: 'info', title: 'Session Revoked', message: 'iOS session disconnected.' })}
+                  className="text-xs text-rose-500 font-semibold"
+                >
+                  Revoke
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* Change Password Form */}
+          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+              <KeyRound className="w-4 h-4 text-amber-500" /> Update Vault Password
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input
+                label="Current Password"
+                type="password"
+                placeholder="••••••••"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+              />
+              <Input
+                label="New Password"
+                type="password"
+                placeholder="Minimum 8 characters"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+            </div>
+            <div className="flex justify-end">
+              <Button
+                variant="primary"
+                size="sm"
+                disabled={!currentPassword || !newPassword}
+                onClick={() => {
+                  setCurrentPassword('');
+                  setNewPassword('');
+                  addToast({ type: 'success', title: 'Password Changed Successfully' });
+                }}
+              >
+                Update Password
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {activeTab === 'privacy' && (
+
         <Card className="p-6 space-y-6 border-slate-200 dark:border-slate-800">
           <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
             <div>
