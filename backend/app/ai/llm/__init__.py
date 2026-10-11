@@ -19,7 +19,8 @@ def get_llm_provider(
     if prov == "ollama":
         base_url = kwargs.get("base_url", getattr(settings, "OLLAMA_BASE_URL", "http://localhost:11434"))
         model = kwargs.get("model", getattr(settings, "OLLAMA_MODEL", "llama3:8b"))
-        return OllamaProvider(base_url=base_url, model=model)
+        timeout = kwargs.get("timeout", getattr(settings, "OLLAMA_TIMEOUT", 90.0))
+        return OllamaProvider(base_url=base_url, model=model, timeout=timeout)
     elif prov == "gemini":
         api_key = kwargs.get("api_key", getattr(settings, "GEMINI_API_KEY", ""))
         model = kwargs.get("model", getattr(settings, "GEMINI_MODEL", "gemini-1.5-flash"))

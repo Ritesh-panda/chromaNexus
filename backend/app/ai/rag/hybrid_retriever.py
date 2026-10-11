@@ -41,12 +41,17 @@ class HybridRetriever:
         self,
         query: str,
         patient_id: str,
-        top_k: int = 6
+        top_k: int = 6,
+        search_query: Optional[str] = None,
+        override_intent: Optional[QueryIntent] = None,
+        override_keywords: Optional[List[str]] = None
     ) -> HybridRetrievalResult:
+        eff_query = search_query or query
+
         # 1. Classify query intent
-        classification = self.classifier.classify(query)
-        primary_intent = classification.primary_intent
-        matched_keywords = classification.keywords_matched
+        classification = self.classifier.classify(eff_query)
+        primary_intent = override_intent or classification.primary_intent
+        matched_keywords = list(set((override_keywords or []) + classification.keywords_matched))
 
         structured_results: List[StructuredClinicalResult] = []
         vector_results = []
@@ -55,17 +60,35 @@ class HybridRetriever:
         if self.db and patient_id:
             s_retriever = StructuredRetriever(self.db)
 
+            # Filter keywords specifically for lab and medication names
+            # Broad overview keywords must not filter out all labs or medications
+            overview_filter_words = {"health", "status", "summary", "overview", "report", "reports", "records", "current", "recent", "doing", "give", "tell"}
+            lab_kws = [k for k in matched_keywords if k.lower() in QueryClassifier.LAB_KEYWORDS and k.lower() not in overview_filter_words]
+            med_kws = [k for k in matched_keywords if k.lower() in QueryClassifier.MEDICATION_KEYWORDS and k.lower() not in overview_filter_words]
+
             if primary_intent in [QueryIntent.LAB_HISTORY, QueryIntent.MIXED_CLINICAL]:
-                structured_results.extend(s_retriever.retrieve_labs(patient_id, matched_keywords, limit=6))
+                structured_results.extend(s_retriever.retrieve_labs(patient_id, lab_kws if lab_kws else None, limit=6))
 
             if primary_intent in [QueryIntent.MEDICATION_HISTORY, QueryIntent.MIXED_CLINICAL]:
-                structured_results.extend(s_retriever.retrieve_medications(patient_id, matched_keywords, limit=6))
+                structured_results.extend(s_retriever.retrieve_medications(patient_id, med_kws if med_kws else None, limit=6))
 
             if primary_intent in [QueryIntent.DIAGNOSIS_HISTORY, QueryIntent.MIXED_CLINICAL]:
                 structured_results.extend(s_retriever.retrieve_diagnoses(patient_id, limit=6))
 
             if primary_intent in [QueryIntent.TIMELINE, QueryIntent.MIXED_CLINICAL]:
                 structured_results.extend(s_retriever.retrieve_timeline(patient_id, limit=6))
+
+            if primary_intent == QueryIntent.REPORT_CONTENT:
+                # Include relevant structured diagnoses or timeline events to enrich report context
+                structured_results.extend(s_retriever.retrieve_diagnoses(patient_id, limit=3))
+                structured_results.extend(s_retriever.retrieve_timeline(patient_id, limit=3))
+
+            # Fallback for GENERAL_DOCUMENT_QUERY: pull all structured data so the LLM always
+            # has patient context (covers "am I healthy?", unrecognized, or very short queries)
+            if primary_intent == QueryIntent.GENERAL_DOCUMENT_QUERY and len(structured_results) == 0:
+                structured_results.extend(s_retriever.retrieve_diagnoses(patient_id, limit=5))
+                structured_results.extend(s_retriever.retrieve_medications(patient_id, limit=5))
+                structured_results.extend(s_retriever.retrieve_labs(patient_id, limit=5))
 
         # 3. Semantic Vector Retrieval Branch
         # Always run vector search for report content, mixed queries, or general document queries
@@ -83,7 +106,7 @@ class HybridRetriever:
         if should_run_vector:
             filter_meta = {"patient_id": patient_id} if patient_id else None
             vector_results = self.vector_store.similarity_search(
-                query=query,
+                query=eff_query,
                 top_k=top_k,
                 filter_metadata=filter_meta
             )
@@ -98,7 +121,7 @@ class HybridRetriever:
         # 5. Intent-aware Reranking
         reranked = self.reranker.rerank(
             elements=fused,
-            query=query,
+            query=eff_query,
             primary_intent=primary_intent
         )
 

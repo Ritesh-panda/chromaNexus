@@ -17,4 +17,5 @@ export interface DoctorSummary {
   riskFactors: string[];
   recentReports: MedicalReport[];
   timelineHighlights: string[];
+  shareLink?: string;
 }

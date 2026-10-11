@@ -68,6 +68,31 @@ class QueryClassifier:
         "hospitalized", "hospitalization", "admission", "admitted", "biopsy", "therapy"
     }
 
+    # Health overview / status keywords — trigger full MIXED_CLINICAL retrieval
+    HEALTH_OVERVIEW_KEYWORDS: Set[str] = {
+        "health", "healthy", "status", "overall", "overview", "summary", "doing",
+        "current", "right", "moment", "medical", "wellness", "wellbeing",
+        "comprehensive", "complete", "everything", "general", "all",
+        "according", "based", "tell", "report", "reports", "records", "give"
+    }
+
+    OVERVIEW_PATTERNS: List[str] = [
+        r"\bhealth status\b",
+        r"\bhow am i\b",
+        r"\boverall health\b",
+        r"\brecent health\b",
+        r"\boverall summary\b",
+        r"\bcurrent health\b",
+        r"\bgeneral health\b",
+        r"\bsummary of my health\b",
+        r"\bimportant things about my current health\b",
+        r"\bimportant things about my health\b",
+        r"\bhow am i right now\b",
+        r"\bstate of my health\b",
+        r"\bstatus of my health\b",
+        r"\baccording to my reports\b"
+    ]
+
     def classify(self, query: str) -> ClassificationResult:
         if not query or not query.strip():
             return ClassificationResult(
@@ -81,12 +106,25 @@ class QueryClassifier:
         lower = query.lower()
         words = set(re.findall(r"\b[a-z0-9\-]+\b", lower))
 
+        # Check for broad health status / overview inquiry first
+        is_overview = any(re.search(pat, lower) for pat in self.OVERVIEW_PATTERNS)
+        if is_overview:
+            matched_ov = words.intersection(self.HEALTH_OVERVIEW_KEYWORDS)
+            return ClassificationResult(
+                primary_intent=QueryIntent.MIXED_CLINICAL,
+                intents=[QueryIntent.MIXED_CLINICAL],
+                is_hybrid_required=True,
+                confidence=0.95,
+                keywords_matched=list(matched_ov) if matched_ov else ["health", "status"]
+            )
+
         matched_lab = words.intersection(self.LAB_KEYWORDS)
         matched_med = words.intersection(self.MEDICATION_KEYWORDS)
         matched_diag = words.intersection(self.DIAGNOSIS_KEYWORDS)
         matched_time = words.intersection(self.TIMELINE_KEYWORDS)
         matched_report = words.intersection(self.REPORT_KEYWORDS)
         matched_proc = words.intersection(self.PROCEDURE_KEYWORDS)
+        matched_health_overview = words.intersection(self.HEALTH_OVERVIEW_KEYWORDS)
 
         detected_intents: List[QueryIntent] = []
         all_matched_keywords: List[str] = []
@@ -112,7 +150,7 @@ class QueryClassifier:
 
         # Multi-facet / Mixed detection
         is_hybrid = len(detected_intents) > 1 or (
-            QueryIntent.REPORT_CONTENT in detected_intents and 
+            QueryIntent.REPORT_CONTENT in detected_intents and
             (QueryIntent.LAB_HISTORY in detected_intents or QueryIntent.MEDICATION_HISTORY in detected_intents)
         )
 
@@ -120,6 +158,11 @@ class QueryClassifier:
             primary_intent = QueryIntent.MIXED_CLINICAL
         elif len(detected_intents) == 1:
             primary_intent = detected_intents[0]
+        elif matched_health_overview:
+            primary_intent = QueryIntent.MIXED_CLINICAL
+            detected_intents = [QueryIntent.MIXED_CLINICAL]
+            all_matched_keywords.extend(matched_health_overview)
+            is_hybrid = True
         else:
             primary_intent = QueryIntent.GENERAL_DOCUMENT_QUERY
             detected_intents = [QueryIntent.GENERAL_DOCUMENT_QUERY]

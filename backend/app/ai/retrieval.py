@@ -131,7 +131,7 @@ class PostgresVectorStore(VectorStore):
     """
     Production-ready PostgreSQL + pgvector Vector Store adapter.
     Persists document chunks and vector embeddings to the document_chunks table.
-    Supports pgvector cosine similarity (<=>) with hybrid SQL + in-memory fallback.
+    Uses native pgvector cosine distance operator (<=>) in PostgreSQL for fast similarity search.
     """
 
     def __init__(
@@ -162,17 +162,17 @@ class PostgresVectorStore(VectorStore):
 
         try:
             for chunk, emb in zip(chunks, embeddings):
-                # Check for existing chunk to update or insert
                 existing = db.query(DocumentChunkModel).filter(
                     DocumentChunkModel.chunk_id == chunk.chunk_id
                 ).first()
 
                 patient_id = chunk.metadata.get("patient_id")
+                emb_list = list(emb) if emb is not None else None
 
                 if existing:
                     existing.content = chunk.text
                     existing.page_number = chunk.page_number
-                    existing.embedding = emb
+                    existing.embedding = emb_list
                     existing.chunk_metadata = chunk.metadata
                     existing.patient_id = patient_id
                 else:
@@ -183,7 +183,7 @@ class PostgresVectorStore(VectorStore):
                         chunk_index=chunk.chunk_index,
                         page_number=chunk.page_number,
                         content=chunk.text,
-                        embedding=emb,
+                        embedding=emb_list,
                         chunk_metadata=chunk.metadata
                     )
                     db.add(new_chunk)
@@ -211,54 +211,110 @@ class PostgresVectorStore(VectorStore):
         should_close = self._external_session is None
 
         try:
-            query_obj = db.query(DocumentChunkModel)
+            is_postgres = False
+            if db.bind and hasattr(db.bind, "dialect") and db.bind.dialect.name == "postgresql":
+                is_postgres = True
 
-            # Metadata filtering
-            if filter_metadata:
-                if "patient_id" in filter_metadata and filter_metadata["patient_id"]:
-                    query_obj = query_obj.filter(DocumentChunkModel.patient_id == filter_metadata["patient_id"])
-                if "document_id" in filter_metadata and filter_metadata["document_id"]:
-                    query_obj = query_obj.filter(DocumentChunkModel.document_id == filter_metadata["document_id"])
+            if is_postgres:
+                # Native PostgreSQL + pgvector vector similarity search
+                query_obj = db.query(
+                    DocumentChunkModel,
+                    DocumentChunkModel.embedding.cosine_distance(query_emb).label("distance")
+                ).filter(DocumentChunkModel.embedding != None)
 
-            db_chunks = query_obj.all()
-            if not db_chunks:
-                return []
-
-            results: List[SearchResult] = []
-            for item in db_chunks:
-                emb = item.embedding
-                if not emb:
-                    continue
-
-                # Cosine similarity calculation
-                sim = sum(q * e for q, e in zip(query_emb, emb))
-                norm_score = max(0.0, min(1.0, (sim + 1.0) / 2.0 if sim < 0 else sim))
-
-                # Check additional metadata filters
+                # Metadata filtering
                 if filter_metadata:
-                    match = True
-                    for k, v in filter_metadata.items():
-                        if k in ["patient_id", "document_id"]:
+                    if "patient_id" in filter_metadata and filter_metadata["patient_id"]:
+                        query_obj = query_obj.filter(DocumentChunkModel.patient_id == filter_metadata["patient_id"])
+                    if "document_id" in filter_metadata and filter_metadata["document_id"]:
+                        query_obj = query_obj.filter(DocumentChunkModel.document_id == filter_metadata["document_id"])
+
+                query_obj = query_obj.order_by(DocumentChunkModel.embedding.cosine_distance(query_emb))
+
+                db_rows = query_obj.all()
+                results: List[SearchResult] = []
+
+                for item, dist in db_rows:
+                    if dist is None:
+                        continue
+                    distance_val = float(dist)
+                    sim = 1.0 - distance_val
+                    norm_score = max(0.0, min(1.0, (sim + 1.0) / 2.0 if sim < 0 else sim))
+
+                    if filter_metadata:
+                        match = True
+                        for k, v in filter_metadata.items():
+                            if k in ["patient_id", "document_id"]:
+                                continue
+                            if item.chunk_metadata and item.chunk_metadata.get(k) != v:
+                                match = False
+                                break
+                        if not match:
                             continue
-                        if item.chunk_metadata and item.chunk_metadata.get(k) != v:
-                            match = False
-                            break
-                    if not match:
+
+                    doc_chunk = DocumentChunk(
+                        chunk_id=item.chunk_id,
+                        document_id=item.document_id,
+                        page_number=item.page_number,
+                        chunk_index=item.chunk_index,
+                        text=item.content,
+                        metadata=item.chunk_metadata or {},
+                        character_count=len(item.content)
+                    )
+                    results.append(SearchResult(chunk=doc_chunk, score=norm_score))
+
+                results.sort(key=lambda s: s.score, reverse=True)
+                return results[:top_k]
+
+            else:
+                # Fallback for SQLite / unit tests
+                query_obj = db.query(DocumentChunkModel)
+                if filter_metadata:
+                    if "patient_id" in filter_metadata and filter_metadata["patient_id"]:
+                        query_obj = query_obj.filter(DocumentChunkModel.patient_id == filter_metadata["patient_id"])
+                    if "document_id" in filter_metadata and filter_metadata["document_id"]:
+                        query_obj = query_obj.filter(DocumentChunkModel.document_id == filter_metadata["document_id"])
+
+                db_chunks = query_obj.all()
+                if not db_chunks:
+                    return []
+
+                results: List[SearchResult] = []
+                for item in db_chunks:
+                    emb = item.embedding
+                    if not emb:
                         continue
 
-                doc_chunk = DocumentChunk(
-                    chunk_id=item.chunk_id,
-                    document_id=item.document_id,
-                    page_number=item.page_number,
-                    chunk_index=item.chunk_index,
-                    text=item.content,
-                    metadata=item.chunk_metadata or {},
-                    character_count=len(item.content)
-                )
-                results.append(SearchResult(chunk=doc_chunk, score=norm_score))
+                    if hasattr(emb, "tolist"):
+                        emb = emb.tolist()
 
-            results.sort(key=lambda s: s.score, reverse=True)
-            return results[:top_k]
+                    sim = sum(q * e for q, e in zip(query_emb, emb))
+                    norm_score = max(0.0, min(1.0, (sim + 1.0) / 2.0 if sim < 0 else sim))
+
+                    if filter_metadata:
+                        match = True
+                        for k, v in filter_metadata.items():
+                            if k in ["patient_id", "document_id"]:
+                                continue
+                            if item.chunk_metadata and item.chunk_metadata.get(k) != v:
+                                match = False
+                                break
+                        if not match:
+                            continue
+
+                    doc_chunk = DocumentChunk(
+                        chunk_id=item.chunk_id,
+                        document_id=item.document_id,
+                        page_number=item.page_number,
+                        chunk_index=item.chunk_index,
+                        text=item.content,
+                        metadata=item.chunk_metadata or {},
+                        character_count=len(item.content)
+                    )
+                    results.append(SearchResult(chunk=doc_chunk, score=norm_score))
+
+                results.sort(key=lambda s: s.score, reverse=True)
+                return results[:top_k]
 
         except Exception as e:
             logger.error(f"Error executing similarity_search in PostgresVectorStore: {str(e)}")

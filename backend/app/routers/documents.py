@@ -20,6 +20,8 @@ from backend.app.ai.ingestion import (
 
 router = APIRouter(prefix="/documents", tags=["Document Vault"])
 
+ALLOWED_EXTENSIONS = {".pdf", ".txt"}
+
 
 def run_background_ingestion(
     document_id: str,
@@ -52,13 +54,25 @@ async def upload_document(
     db: Session = Depends(get_db)
 ):
     if not file.filename:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No file uploaded")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No file uploaded.")
 
-    # Read binary content for ingestion
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid file format '{ext}'. Only PDF documents are supported."
+        )
+
     file_bytes = await file.read()
+    if len(file_bytes) == 0:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Uploaded file is empty."
+        )
+
     await file.seek(0)
 
-    # Save to encrypted local storage
+    # Save to storage service
     file_id, storage_path, file_size = await storage_service.save_file(file)
     date_str = report_date or datetime.now().strftime("%Y-%m-%d")
 
@@ -114,7 +128,6 @@ def get_document_ingestion_status(
     """
     Returns live ingestion status, stage, progress percentage, and extracted counts.
     """
-    # Verify report belongs to patient
     report = db.query(MedicalReport).filter(
         MedicalReport.id == document_id,
         MedicalReport.patient_id == current_patient.id

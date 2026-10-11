@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardTitle, CardDescription } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -8,6 +8,11 @@ import { MedicalCard } from '@/components/cards/MedicalCard';
 import { TimelineCard } from '@/components/cards/TimelineCard';
 import { VitalsTrendChart } from '@/components/charts/VitalsTrendChart';
 import { useUI } from '@/contexts/UIContext';
+import { useUser } from '@/contexts/UserContext';
+import { reportService } from '@/services/report.service';
+import { patientService } from '@/services/patient.service';
+import { timelineService } from '@/services/timeline.service';
+import type { MedicalReport, Disease, Medication, TimelineEvent } from '@/types';
 import {
   MOCK_REPORTS,
   MOCK_DISEASES,
@@ -33,11 +38,46 @@ import { motion } from 'framer-motion';
 export const DashboardPage: React.FC = () => {
   const { setUploadModalOpen, setSearchOpen } = useUI();
   const navigate = useNavigate();
+  const { patient } = useUser();
 
-  const activeDiseases = MOCK_DISEASES.filter(d => d.status === 'active' || d.status === 'chronic');
-  const activeMeds = MOCK_MEDICATIONS.filter(m => m.status === 'active');
-  const recentReports = MOCK_REPORTS.slice(0, 3);
-  const recentTimeline = MOCK_TIMELINE_EVENTS.slice(0, 3);
+  const [reports, setReports] = useState<MedicalReport[]>([]);
+  const [diseases, setDiseases] = useState<Disease[]>([]);
+  const [medications, setMedications] = useState<Medication[]>([]);
+  const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadDashboardData = async () => {
+      try {
+        const [reps, dis, meds, timeline] = await Promise.all([
+          reportService.getReports(),
+          patientService.getDiagnoses(),
+          patientService.getMedications(),
+          timelineService.getTimelineEvents(),
+        ]);
+        if (isMounted) {
+          setReports(reps && reps.length > 0 ? reps : MOCK_REPORTS);
+          setDiseases(dis && dis.length > 0 ? dis : MOCK_DISEASES);
+          setMedications(meds && meds.length > 0 ? meds : MOCK_MEDICATIONS);
+          setTimelineEvents(timeline && timeline.length > 0 ? timeline : MOCK_TIMELINE_EVENTS);
+        }
+      } catch {
+        if (isMounted) {
+          setReports(MOCK_REPORTS);
+          setDiseases(MOCK_DISEASES);
+          setMedications(MOCK_MEDICATIONS);
+          setTimelineEvents(MOCK_TIMELINE_EVENTS);
+        }
+      }
+    };
+    loadDashboardData();
+    return () => { isMounted = false; };
+  }, []);
+
+  const activeDiseases = diseases.filter(d => d.status === 'active' || d.status === 'chronic');
+  const activeMeds = medications.filter(m => m.status === 'active');
+  const recentReports = reports.slice(0, 3);
+  const recentTimeline = timelineEvents.slice(0, 3);
 
   return (
     <div className="space-y-8 pb-12">
@@ -54,7 +94,7 @@ export const DashboardPage: React.FC = () => {
             Welcome back, Alex Vance
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
-            Your patient memory contains <strong className="text-slate-800 dark:text-slate-200">{MOCK_REPORTS.length} medical documents</strong> across 7 years (2019 - 2026).
+            Your patient memory contains <strong className="text-slate-800 dark:text-slate-200">{reports.length} medical documents</strong> across longitudinal records.
           </p>
         </div>
 
@@ -83,7 +123,7 @@ export const DashboardPage: React.FC = () => {
         {[
           {
             title: 'Medical Documents',
-            value: MOCK_REPORTS.length.toString(),
+            value: reports.length.toString(),
             subtitle: '100% Extracted & Verified',
             icon: <FileText className="w-5 h-5 text-blue-500" />,
             badge: 'Vault',
@@ -91,20 +131,20 @@ export const DashboardPage: React.FC = () => {
           {
             title: 'Active Diagnoses',
             value: activeDiseases.length.toString(),
-            subtitle: 'Type 2 Diabetes & Hypertension',
+            subtitle: activeDiseases.map(d => d.name).slice(0, 2).join(' & ') || 'No active diagnoses',
             icon: <Activity className="w-5 h-5 text-rose-500" />,
             badge: 'Chronic',
           },
           {
             title: 'Ongoing Medications',
             value: activeMeds.length.toString(),
-            subtitle: 'Metformin, Lisinopril, Statin',
+            subtitle: activeMeds.map(m => m.name.split(' ')[0]).slice(0, 3).join(', ') || 'No active medications',
             icon: <Pill className="w-5 h-5 text-emerald-500" />,
             badge: 'Rx',
           },
           {
             title: 'Timeline Milestones',
-            value: MOCK_TIMELINE_EVENTS.length.toString(),
+            value: timelineEvents.length.toString(),
             subtitle: 'Spans 2019 to Present',
             icon: <GitCommit className="w-5 h-5 text-purple-500" />,
             badge: 'Timeline',
@@ -123,8 +163,8 @@ export const DashboardPage: React.FC = () => {
               </div>
               <p className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">{kpi.value}</p>
               <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between">
-                <span>{kpi.subtitle}</span>
-                <Badge variant="secondary" className="text-[10px]">{kpi.badge}</Badge>
+                <span className="truncate pr-2">{kpi.subtitle}</span>
+                <Badge variant="secondary" className="text-[10px] shrink-0">{kpi.badge}</Badge>
               </p>
             </Card>
           </motion.div>
@@ -248,7 +288,7 @@ export const DashboardPage: React.FC = () => {
               <FileText className="w-5 h-5 text-blue-500" /> Recent Uploaded Reports
             </h3>
             <Button variant="ghost" size="sm" onClick={() => navigate('/reports')}>
-              View All ({MOCK_REPORTS.length})
+              View All ({reports.length})
             </Button>
           </div>
           <div className="space-y-3">

@@ -1,5 +1,5 @@
 from typing import List
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from backend.app.core.database import get_db
@@ -97,6 +97,12 @@ def send_message(
         db.add(conv)
         db.flush()
 
+    # Extract bounded recent conversation history (last 6 messages = 3 turns) for follow-up resolution
+    recent_history = [
+        {"sender": m.sender, "text": m.text}
+        for m in (conv.messages or [])
+    ][-6:]
+
     # Save User message
     user_msg = ChatMessage(
         conversation_id=conv.id,
@@ -107,8 +113,13 @@ def send_message(
     db.add(user_msg)
     db.flush()
 
-    # Process AI reasoning with Capstone citations
-    ai_text, reasoning_type, citations = process_clinical_chat_query(db, current_patient, msg_in.text)
+    # Process AI reasoning with conversation history and grounded citations
+    ai_text, reasoning_type, citations = process_clinical_chat_query(
+        db=db,
+        patient=current_patient,
+        query=msg_in.text,
+        conversation_history=recent_history
+    )
 
     ai_msg = ChatMessage(
         conversation_id=conv.id,
@@ -119,6 +130,7 @@ def send_message(
         citations=citations
     )
     db.add(ai_msg)
+    conv.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(ai_msg)
 

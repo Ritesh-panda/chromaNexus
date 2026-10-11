@@ -2,13 +2,14 @@ import uuid
 from datetime import datetime, timezone
 from sqlalchemy import Column, String, Integer, ForeignKey, Text, JSON, DateTime
 from sqlalchemy.orm import relationship
+from pgvector.sqlalchemy import Vector
 from backend.app.core.database import Base
 
 
 class DocumentChunkModel(Base):
     """
     SQLAlchemy model for document chunks and vector embeddings.
-    Designed for PostgreSQL + pgvector (VECTOR type), with JSON fallback for SQLite/offline testing.
+    Uses pgvector (VECTOR type, dim=384) for vector similarity search in PostgreSQL.
     """
     __tablename__ = "document_chunks"
 
@@ -20,8 +21,8 @@ class DocumentChunkModel(Base):
     page_number = Column(Integer, default=1, nullable=False)
     content = Column(Text, nullable=False)
     
-    # Store embedding as JSON array by default, compatible with pgvector type casts
-    embedding = Column(JSON, nullable=True)
+    # Store embedding using pgvector Vector(384)
+    embedding = Column(Vector(384), nullable=True)
     chunk_metadata = Column(JSON, nullable=True, default=dict)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 

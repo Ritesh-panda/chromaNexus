@@ -1,19 +1,43 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Table } from '@/components/ui/Table';
 import type { Column } from '@/components/ui/Table';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Search } from '@/components/ui/Search';
 import { Button } from '@/components/ui/Button';
+import { reportService } from '@/services/report.service';
 import { MOCK_REPORTS } from '@/constants/mockData';
 import type { MedicalReport } from '@/types';
 import { FileCheck, Eye, Download, ShieldCheck } from 'lucide-react';
 
 export const ReportsPage: React.FC = () => {
-  const [reports] = useState<MedicalReport[]>(MOCK_REPORTS);
+  const [reports, setReports] = useState<MedicalReport[]>([]);
   const [search, setSearch] = useState('');
   const [hospitalFilter, setHospitalFilter] = useState('all');
-  const [selectedReport, setSelectedReport] = useState<MedicalReport | null>(reports[0]);
+  const [selectedReport, setSelectedReport] = useState<MedicalReport | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchReports = async () => {
+      try {
+        const data = await reportService.getReports(hospitalFilter === 'all' ? undefined : hospitalFilter, search || undefined);
+        if (isMounted) {
+          const res = data && data.length > 0 ? data : MOCK_REPORTS;
+          setReports(res);
+          if (!selectedReport && res.length > 0) {
+            setSelectedReport(res[0]);
+          }
+        }
+      } catch {
+        if (isMounted) {
+          setReports(MOCK_REPORTS);
+          if (!selectedReport) setSelectedReport(MOCK_REPORTS[0]);
+        }
+      }
+    };
+    fetchReports();
+    return () => { isMounted = false; };
+  }, [hospitalFilter, search]);
 
   const hospitals = Array.from(new Set(reports.map((r) => r.hospitalName)));
 
@@ -128,7 +152,7 @@ export const ReportsPage: React.FC = () => {
             <div className="space-y-2">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Extracted Entities</span>
               <div className="space-y-1.5">
-                {selectedReport.extractedEntities.map((ent, i) => (
+                {(selectedReport.extractedEntities || []).map((ent, i) => (
                   <div key={i} className="p-2.5 rounded-xl bg-slate-100/70 dark:bg-slate-800/60 flex items-center justify-between text-xs">
                     <span className="font-semibold">{ent.name}</span>
                     {ent.value && <span className="font-mono text-blue-600 font-bold">{ent.value} {ent.unit}</span>}

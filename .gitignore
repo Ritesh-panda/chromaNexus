@@ -1,3 +1,4 @@
+.env
 # Logs
 logs
 *.log
@@ -22,3 +23,21 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Local development artifacts
+*.db
+uploads/
+pgvector/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Local development artifacts
+*.db
+uploads/
+pgvector/

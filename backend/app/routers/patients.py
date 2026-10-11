@@ -1,11 +1,64 @@
+from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from backend.app.core.database import get_db
-from backend.app.schemas.patient import PatientResponse, PatientUpdate
+from backend.app.schemas.patient import (
+    PatientResponse,
+    PatientUpdate,
+    DiseaseResponse,
+    MedicationResponse,
+    LabResultResponse,
+)
 from backend.app.services.auth_service import get_current_patient
 from backend.app.models.patient import Patient
+from backend.app.models.clinical_entity import Disease, Medication, LabResult
 
 router = APIRouter(prefix="/patients", tags=["Patients"])
+
+
+def format_disease_response(d: Disease) -> DiseaseResponse:
+    return DiseaseResponse(
+        id=d.id,
+        name=d.name,
+        icdCode=d.icd_code,
+        status=d.status or "active",
+        diagnosedDate=d.diagnosed_date,
+        resolvedDate=d.resolved_date,
+        treatingDoctor=d.treating_doctor,
+        sourceReportId=d.source_report_id,
+        notes=d.notes
+    )
+
+
+def format_medication_response(m: Medication) -> MedicationResponse:
+    return MedicationResponse(
+        id=m.id,
+        name=m.name,
+        dosage=m.dosage,
+        frequency=m.frequency,
+        route=m.route or "oral",
+        startDate=m.start_date,
+        endDate=m.end_date,
+        status=m.status or "active",
+        prescribingDoctor=m.prescribing_doctor,
+        indication=m.indication,
+        sourceReportId=m.source_report_id
+    )
+
+
+def format_lab_result_response(l: LabResult) -> LabResultResponse:
+    return LabResultResponse(
+        id=l.id,
+        testName=l.test_name,
+        category=l.category or "metabolic",
+        value=l.value,
+        unit=l.unit,
+        referenceRange=l.reference_range,
+        status=l.status or "normal",
+        testDate=l.test_date,
+        sourceReportId=l.source_report_id,
+        hospitalName=l.hospital_name
+    )
 
 
 @router.get("/me", response_model=PatientResponse)
@@ -66,3 +119,30 @@ def update_patient_profile(
         insurance=current_patient.insurance or {},
         knownAllergies=current_patient.known_allergies or []
     )
+
+
+@router.get("/me/diagnoses", response_model=List[DiseaseResponse])
+def get_patient_diagnoses(
+    current_patient: Patient = Depends(get_current_patient),
+    db: Session = Depends(get_db)
+):
+    diseases = db.query(Disease).filter(Disease.patient_id == current_patient.id).order_by(Disease.diagnosed_date.desc()).all()
+    return [format_disease_response(d) for d in diseases]
+
+
+@router.get("/me/medications", response_model=List[MedicationResponse])
+def get_patient_medications(
+    current_patient: Patient = Depends(get_current_patient),
+    db: Session = Depends(get_db)
+):
+    meds = db.query(Medication).filter(Medication.patient_id == current_patient.id).order_by(Medication.start_date.desc()).all()
+    return [format_medication_response(m) for m in meds]
+
+
+@router.get("/me/labs", response_model=List[LabResultResponse])
+def get_patient_labs(
+    current_patient: Patient = Depends(get_current_patient),
+    db: Session = Depends(get_db)
+):
+    labs = db.query(LabResult).filter(LabResult.patient_id == current_patient.id).order_by(LabResult.test_date.desc()).all()
+    return [format_lab_result_response(l) for l in labs]

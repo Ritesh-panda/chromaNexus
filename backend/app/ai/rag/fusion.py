@@ -21,7 +21,7 @@ class ResultFusion:
     Removes exact duplicates, balances representation, and enforces length budgets.
     """
 
-    def __init__(self, max_items: int = 8):
+    def __init__(self, max_items: int = 10):
         self.max_items = max_items
 
     def fuse(
@@ -74,6 +74,35 @@ class ResultFusion:
                     }
                 ))
 
-        # 3. Sort by score descending
+        # 3. For MIXED_CLINICAL / overview queries, enforce balanced representation
+        if primary_intent == "MIXED_CLINICAL":
+            budget = max(self.max_items, 12)
+            by_type: Dict[str, List[FusedElement]] = {}
+            for elem in fused:
+                by_type.setdefault(elem.source_type, []).append(elem)
+
+            for t in by_type:
+                by_type[t].sort(key=lambda x: x.score, reverse=True)
+
+            balanced: List[FusedElement] = []
+            # Take top items from each key category
+            type_quotas = {
+                "structured_disease": 3,
+                "structured_medication": 3,
+                "structured_lab_result": 4,
+                "structured_timeline_event": 2,
+                "report_chunk": 2
+            }
+            for stype, quota in type_quotas.items():
+                balanced.extend(by_type.get(stype, [])[:quota])
+
+            # Fill remaining budget if needed
+            already_ids = {e.id for e in balanced}
+            remaining = [e for e in fused if e.id not in already_ids]
+            remaining.sort(key=lambda x: x.score, reverse=True)
+            balanced.extend(remaining[:max(0, budget - len(balanced))])
+            return balanced
+
+        # 4. Standard sort by score descending
         fused.sort(key=lambda x: x.score, reverse=True)
         return fused[:self.max_items]

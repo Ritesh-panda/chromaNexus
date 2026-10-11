@@ -26,17 +26,22 @@ export const UploadModal: React.FC = () => {
   };
 
   const pollStatus = async (docId: string): Promise<void> => {
-    const maxAttempts = 30;
+    const maxAttempts = 60;
     for (let i = 0; i < maxAttempts; i++) {
       await new Promise((r) => setTimeout(r, 1000));
       try {
         const status = await reportService.getIngestionStatus(docId);
         setIngestionStatus(status);
-        if (status.status === 'completed' || status.status === 'failed') {
+        const st = (status.status || '').toUpperCase();
+        if (st === 'COMPLETED') {
           return;
+        } else if (st === 'FAILED') {
+          throw new Error(status.error_message || status.error || 'Ingestion failed on server');
         }
-      } catch {
-        break;
+      } catch (err: any) {
+        if (err?.message?.includes('Ingestion failed') || err?.response?.status === 404) {
+          throw err;
+        }
       }
     }
   };
@@ -46,8 +51,8 @@ export const UploadModal: React.FC = () => {
     setIsUploading(true);
     setIngestionStatus({
       document_id: 'pending',
-      status: 'received',
-      progress: 10,
+      status: 'RECEIVED',
+      progress_percent: 5,
       current_stage: 'Uploading document...',
     });
 
@@ -62,8 +67,8 @@ export const UploadModal: React.FC = () => {
       if (uploaded?.id) {
         setIngestionStatus({
           document_id: uploaded.id,
-          status: 'processing',
-          progress: 30,
+          status: 'PROCESSING',
+          progress_percent: 15,
           current_stage: 'Analyzing document structure & OCR...',
         });
         await pollStatus(uploaded.id);
@@ -79,16 +84,28 @@ export const UploadModal: React.FC = () => {
         setFile(null);
         setIngestionStatus(null);
       }, 1200);
-    } catch {
+    } catch (err: any) {
+      const errorMsg =
+        err?.response?.data?.detail ||
+        err?.message ||
+        'Could not parse document. Please check file format.';
       addToast({
         type: 'error',
         title: 'Upload Failed',
-        message: 'Could not parse document. Please check file format.',
+        message: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg),
       });
+      setIngestionStatus(null);
     } finally {
       setIsUploading(false);
     }
   };
+
+  const currentProgress = ingestionStatus
+    ? (ingestionStatus.progress_percent ?? ingestionStatus.progress ?? 0)
+    : 0;
+  const statusUpper = ingestionStatus?.status ? ingestionStatus.status.toUpperCase() : '';
+  const counts = ingestionStatus?.extracted_counts || ingestionStatus?.extracted_entity_counts;
+  const chunkCount = ingestionStatus?.indexed_chunks_count ?? ingestionStatus?.indexed_chunk_count;
 
   return (
     <Modal
@@ -134,12 +151,12 @@ export const UploadModal: React.FC = () => {
                   <input
                     type="file"
                     className="hidden"
-                    accept=".pdf,.png,.jpg,.jpeg,.dcm"
+                    accept=".pdf,.txt,.png,.jpg,.jpeg,.dcm"
                     onChange={(e) => e.target.files && setFile(e.target.files[0])}
                   />
                 </label>
               </h4>
-              <p className="text-xs text-slate-400 mt-1">Supports PDF, PNG, JPG, DICOM (Max size: 25MB)</p>
+              <p className="text-xs text-slate-400 mt-1">Supports PDF, TXT, PNG, JPG, DICOM (Max size: 25MB)</p>
             </>
           )}
         </div>
@@ -185,45 +202,45 @@ export const UploadModal: React.FC = () => {
           <div className="p-4 rounded-2xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-900/60 space-y-2">
             <div className="flex items-center justify-between text-xs font-semibold text-blue-900 dark:text-blue-200">
               <span className="flex items-center gap-2">
-                {ingestionStatus.status === 'completed' ? (
+                {statusUpper === 'COMPLETED' ? (
                   <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                ) : ingestionStatus.status === 'failed' ? (
+                ) : statusUpper === 'FAILED' ? (
                   <AlertCircle className="w-4 h-4 text-rose-500" />
                 ) : (
                   <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
                 )}
                 {ingestionStatus.current_stage || 'Processing document...'}
               </span>
-              <span>{ingestionStatus.progress}%</span>
+              <span>{currentProgress}%</span>
             </div>
             
             <div className="w-full bg-blue-200/50 dark:bg-blue-900/50 h-2 rounded-full overflow-hidden">
               <div
                 className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full transition-all duration-300 rounded-full"
-                style={{ width: `${ingestionStatus.progress}%` }}
+                style={{ width: `${currentProgress}%` }}
               />
             </div>
 
-            {ingestionStatus.extracted_entity_counts && (
+            {counts && (
               <div className="flex flex-wrap gap-2 text-[11px] text-slate-600 dark:text-slate-400 pt-1">
-                {ingestionStatus.extracted_entity_counts.lab_results ? (
+                {counts.lab_results ? (
                   <span className="bg-white/80 dark:bg-slate-900/80 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-800">
-                    🔬 {ingestionStatus.extracted_entity_counts.lab_results} Labs
+                    🔬 {counts.lab_results} Labs
                   </span>
                 ) : null}
-                {ingestionStatus.extracted_entity_counts.medications ? (
+                {counts.medications ? (
                   <span className="bg-white/80 dark:bg-slate-900/80 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-800">
-                    💊 {ingestionStatus.extracted_entity_counts.medications} Meds
+                    💊 {counts.medications} Meds
                   </span>
                 ) : null}
-                {ingestionStatus.extracted_entity_counts.diseases ? (
+                {counts.diseases ? (
                   <span className="bg-white/80 dark:bg-slate-900/80 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-800">
-                    🩺 {ingestionStatus.extracted_entity_counts.diseases} Diagnoses
+                    🩺 {counts.diseases} Diagnoses
                   </span>
                 ) : null}
-                {ingestionStatus.indexed_chunk_count ? (
+                {chunkCount ? (
                   <span className="bg-white/80 dark:bg-slate-900/80 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-800">
-                    📑 {ingestionStatus.indexed_chunk_count} Chunks Indexed
+                    📑 {chunkCount} Chunks Indexed
                   </span>
                 ) : null}
               </div>

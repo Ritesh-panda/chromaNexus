@@ -57,3 +57,49 @@ class PatientResponse(PatientBase):
 
     model_config = ConfigDict(from_attributes=True)
 
+
+class DiseaseResponse(BaseModel):
+    id: str
+    name: str
+    icdCode: Optional[str] = None
+    status: str = "active"
+    diagnosedDate: str
+    resolvedDate: Optional[str] = None
+    treatingDoctor: Optional[str] = None
+    sourceReportId: Optional[str] = None
+    notes: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class MedicationResponse(BaseModel):
+    id: str
+    name: str
+    dosage: str
+    frequency: str
+    route: Optional[str] = "oral"
+    startDate: str
+    endDate: Optional[str] = None
+    status: str = "active"
+    prescribingDoctor: Optional[str] = None
+    indication: Optional[str] = None
+    sourceReportId: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class LabResultResponse(BaseModel):
+    id: str
+    testName: str
+    category: str = "metabolic"
+    value: str
+    unit: str
+    referenceRange: str
+    status: str = "normal"
+    testDate: str
+    sourceReportId: Optional[str] = None
+    hospitalName: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+

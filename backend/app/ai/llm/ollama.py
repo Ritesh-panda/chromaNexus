@@ -17,7 +17,7 @@ class OllamaProvider(LLMProvider):
         self,
         base_url: str = "http://localhost:11434",
         model: str = "llama3:8b",
-        timeout: float = 30.0
+        timeout: float = 90.0
     ):
         self.base_url = base_url.rstrip("/")
         self.model = model

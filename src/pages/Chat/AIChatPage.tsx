@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { ChatBubble } from '@/components/cards/ChatBubble';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
-import { MOCK_CHAT_MESSAGES } from '@/constants/mockData';
+import { useUI } from '@/contexts/UIContext';
 import type { ChatMessage, ConversationThread } from '@/types';
 import { chatService } from '@/services/chat.service';
 import {
@@ -13,26 +13,26 @@ import {
   Sparkles,
   ShieldCheck,
   HelpCircle,
-  Paperclip
+  Paperclip,
+  Loader2
 } from 'lucide-react';
 
 export const AIChatPage: React.FC = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>(MOCK_CHAT_MESSAGES);
-  const [threads, setThreads] = useState<ConversationThread[]>([
-    { id: 'th_1', title: 'Diabetes & Hypertension Medications', lastMessageDate: 'Today', messageCount: 4 },
-    { id: 'th_2', title: 'Cholesterol History 2021-2026', lastMessageDate: 'Yesterday', messageCount: 6 },
-    { id: 'th_3', title: 'Knee MRI Scan Discussion', lastMessageDate: '3 days ago', messageCount: 3 },
-  ]);
-  const [activeThreadId, setActiveThreadId] = useState('th_1');
+  const { addToast } = useUI();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [threads, setThreads] = useState<ConversationThread[]>([]);
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [inputQuery, setInputQuery] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [isLoadingThreads, setIsLoadingThreads] = useState(true);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const suggestedPrompts = [
+    'What are the MRI findings and impression for Alex Vance\'s right knee joint?',
+    'What is the patient\'s HbA1c level?',
     'What medicines did I take for high blood pressure?',
     'When was my highest cholesterol reading?',
-    'Show all MRI reports and meniscus findings.',
-    'Summarize my HbA1c trajectory from 2023 to 2026.',
   ];
 
   const scrollToBottom = () => {
@@ -40,12 +40,102 @@ export const AIChatPage: React.FC = () => {
   };
 
   useEffect(() => {
+    let isMounted = true;
+    const loadThreads = async () => {
+      setIsLoadingThreads(true);
+      try {
+        const fetchedThreads = await chatService.getThreads();
+        if (isMounted) {
+          setThreads(fetchedThreads);
+          if (fetchedThreads.length > 0) {
+            setActiveThreadId(fetchedThreads[0].id);
+          } else {
+            const newTh = await chatService.createConversation('New Clinical Inquiry');
+            setThreads([newTh]);
+            setActiveThreadId(newTh.id);
+          }
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          addToast({
+            type: 'error',
+            title: 'Failed to load conversations',
+            message: err?.response?.data?.detail || err?.message || 'Could not connect to AI Chat server.',
+          });
+        }
+      } finally {
+        if (isMounted) setIsLoadingThreads(false);
+      }
+    };
+    loadThreads();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!activeThreadId) return;
+    let isMounted = true;
+    const loadMessages = async () => {
+      setIsLoadingMessages(true);
+      try {
+        const msgs = await chatService.getMessages(activeThreadId);
+        if (isMounted) {
+          setMessages(msgs);
+        }
+      } catch (err: any) {
+        if (isMounted) {
+          setMessages([]);
+        }
+      } finally {
+        if (isMounted) setIsLoadingMessages(false);
+      }
+    };
+    loadMessages();
+    return () => {
+      isMounted = false;
+    };
+  }, [activeThreadId]);
+
+  useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]);
+
+  const handleNewConversation = async () => {
+    try {
+      const newTh = await chatService.createConversation('New Clinical Conversation');
+      setThreads((prev) => [newTh, ...prev]);
+      setActiveThreadId(newTh.id);
+      setMessages([]);
+    } catch (err: any) {
+      addToast({
+        type: 'error',
+        title: 'Conversation Creation Failed',
+        message: err?.response?.data?.detail || err?.message || 'Could not start new chat session.',
+      });
+    }
+  };
 
   const handleSend = async (textToSend?: string) => {
     const query = textToSend || inputQuery;
     if (!query.trim()) return;
+
+    let targetThreadId = activeThreadId;
+    if (!targetThreadId) {
+      try {
+        const newTh = await chatService.createConversation('New Clinical Inquiry');
+        setThreads((prev) => [newTh, ...prev]);
+        setActiveThreadId(newTh.id);
+        targetThreadId = newTh.id;
+      } catch {
+        addToast({
+          type: 'error',
+          title: 'Session Error',
+          message: 'Could not create conversation session.',
+        });
+        return;
+      }
+    }
 
     const userMsg: ChatMessage = {
       id: `msg_usr_${Date.now()}`,
@@ -59,8 +149,21 @@ export const AIChatPage: React.FC = () => {
     setIsTyping(true);
 
     try {
-      const response = await chatService.sendMessage(query);
+      const response = await chatService.sendMessage(query, targetThreadId);
       setMessages((prev) => [...prev, response]);
+      setThreads((prev) =>
+        prev.map((t) => (t.id === targetThreadId ? { ...t, messageCount: t.messageCount + 2 } : t))
+      );
+    } catch (err: any) {
+      const errorMsg =
+        err?.response?.data?.detail ||
+        err?.message ||
+        'Failed to process clinical query. Please verify backend connection.';
+      addToast({
+        type: 'error',
+        title: 'AI Chat Error',
+        message: typeof errorMsg === 'string' ? errorMsg : JSON.stringify(errorMsg),
+      });
     } finally {
       setIsTyping(false);
     }
@@ -74,17 +177,7 @@ export const AIChatPage: React.FC = () => {
           variant="primary"
           className="w-full justify-start"
           leftIcon={<Plus className="w-4 h-4" />}
-          onClick={() => {
-            const newTh: ConversationThread = {
-              id: `th_${Date.now()}`,
-              title: 'New Medical Inquiry',
-              lastMessageDate: 'Just now',
-              messageCount: 0,
-            };
-            setThreads([newTh, ...threads]);
-            setActiveThreadId(newTh.id);
-            setMessages([]);
-          }}
+          onClick={handleNewConversation}
         >
           New Clinical Conversation
         </Button>
@@ -93,22 +186,30 @@ export const AIChatPage: React.FC = () => {
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-2 block mb-2">
             Conversation History
           </span>
-          {threads.map((th) => (
-            <button
-              key={th.id}
-              onClick={() => setActiveThreadId(th.id)}
-              className={`w-full flex items-center justify-between p-3 rounded-2xl text-left text-xs font-semibold transition-all ${
-                activeThreadId === th.id
-                  ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
-              }`}
-            >
-              <span className="truncate flex items-center gap-2">
-                <MessageSquare className="w-3.5 h-3.5 shrink-0" /> {th.title}
-              </span>
-              <span className="text-[10px] opacity-60 shrink-0">{th.lastMessageDate}</span>
-            </button>
-          ))}
+          {isLoadingThreads ? (
+            <div className="flex items-center justify-center py-6 text-xs text-slate-400">
+              <Loader2 className="w-4 h-4 animate-spin mr-2" /> Loading threads...
+            </div>
+          ) : threads.length === 0 ? (
+            <p className="text-xs text-slate-400 px-2 py-4 text-center">No conversation history yet.</p>
+          ) : (
+            threads.map((th) => (
+              <button
+                key={th.id}
+                onClick={() => setActiveThreadId(th.id)}
+                className={`w-full flex items-center justify-between p-3 rounded-2xl text-left text-xs font-semibold transition-all ${
+                  activeThreadId === th.id
+                    ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/40'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/60'
+                }`}
+              >
+                <span className="truncate flex items-center gap-2">
+                  <MessageSquare className="w-3.5 h-3.5 shrink-0" /> {th.title}
+                </span>
+                <span className="text-[10px] opacity-60 shrink-0">{th.lastMessageDate}</span>
+              </button>
+            ))
+          )}
         </div>
 
         <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/30 text-[11px] text-emerald-800 dark:text-emerald-300 space-y-1">
@@ -131,7 +232,7 @@ export const AIChatPage: React.FC = () => {
               </h3>
               <p className="text-xs text-slate-400 flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Grounded in 8 Medical Documents • Local Privacy Enabled
+                Grounded in Patient Memory Graph • Local Privacy Enabled
               </p>
             </div>
           </div>
@@ -140,7 +241,12 @@ export const AIChatPage: React.FC = () => {
 
         {/* Messages Stream */}
         <div className="flex-1 p-6 overflow-y-auto space-y-6">
-          {messages.length === 0 ? (
+          {isLoadingMessages ? (
+            <div className="h-full flex flex-col items-center justify-center text-center space-y-3 text-xs text-slate-400">
+              <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+              <span>Loading clinical conversation history...</span>
+            </div>
+          ) : messages.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-12">
               <div className="p-4 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600">
                 <Sparkles className="w-8 h-8" />
@@ -156,8 +262,8 @@ export const AIChatPage: React.FC = () => {
 
           {isTyping && (
             <div className="flex items-center space-x-3 text-xs text-slate-400 animate-pulse">
-              <Bot className="w-4 h-4 text-blue-500" />
-              <span>ChronaNexus AI is reasoning over your medical memory graph...</span>
+              <Bot className="w-4 h-4 text-blue-500 animate-spin" />
+              <span>ChronaNexus AI is searching pgvector & structured medical memory...</span>
             </div>
           )}
 
@@ -173,7 +279,7 @@ export const AIChatPage: React.FC = () => {
             <button
               key={idx}
               onClick={() => handleSend(prompt)}
-              className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-blue-950/60 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors shrink-0"
+              className="px-3 py-1.5 rounded-xl bg-white dark:bg-slate-800/80 hover:bg-blue-50 dark:hover:bg-blue-950/60 border border-slate-200 dark:border-slate-700 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors shrink-0 text-left"
             >
               {prompt}
             </button>

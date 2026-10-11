@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
+import { timelineService } from '@/services/timeline.service';
 import { MOCK_TIMELINE_EVENTS } from '@/constants/mockData';
 import type { TimelineEvent } from '@/types';
 import { TimelineCard } from '@/components/cards/TimelineCard';
@@ -11,6 +12,25 @@ import { GitCommit, Filter, FileText } from 'lucide-react';
 export const TimelinePage: React.FC = () => {
   const [selectedType, setSelectedType] = useState<string>('all');
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
+  const [events, setEvents] = useState<TimelineEvent[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchTimeline = async () => {
+      try {
+        const data = await timelineService.getTimelineEvents(selectedType);
+        if (isMounted) {
+          setEvents(data && data.length > 0 ? data : MOCK_TIMELINE_EVENTS);
+        }
+      } catch {
+        if (isMounted) {
+          setEvents(MOCK_TIMELINE_EVENTS);
+        }
+      }
+    };
+    fetchTimeline();
+    return () => { isMounted = false; };
+  }, [selectedType]);
 
   const eventTypes = [
     { id: 'all', label: 'All Events' },
@@ -21,7 +41,7 @@ export const TimelinePage: React.FC = () => {
     { id: 'hospital_visit', label: 'Hospital Visits' },
   ];
 
-  const filteredEvents = MOCK_TIMELINE_EVENTS.filter((e) => {
+  const filteredEvents = events.filter((e) => {
     if (selectedType === 'all') return true;
     if (selectedType === 'medication_start') return e.type === 'medication_start' || e.type === 'medication_stop';
     return e.type === selectedType;

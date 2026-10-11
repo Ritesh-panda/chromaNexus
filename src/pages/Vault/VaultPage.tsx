@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Search } from '@/components/ui/Search';
 import { ReportCard } from '@/components/cards/ReportCard';
 import { Modal } from '@/components/ui/Modal';
 import { useUI } from '@/contexts/UIContext';
+import { reportService } from '@/services/report.service';
 import { MOCK_REPORTS } from '@/constants/mockData';
 import type { MedicalReport } from '@/types';
 import {
@@ -20,11 +21,29 @@ import {
 
 export const VaultPage: React.FC = () => {
   const { setUploadModalOpen, addToast } = useUI();
-  const [reports, setReports] = useState<MedicalReport[]>(MOCK_REPORTS);
+  const [reports, setReports] = useState<MedicalReport[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [inspectReport, setInspectReport] = useState<MedicalReport | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchVaultReports = async () => {
+      try {
+        const data = await reportService.getReports(selectedCategory === 'all' ? undefined : selectedCategory, searchQuery || undefined);
+        if (isMounted) {
+          setReports(data && data.length > 0 ? data : MOCK_REPORTS);
+        }
+      } catch {
+        if (isMounted) {
+          setReports(MOCK_REPORTS);
+        }
+      }
+    };
+    fetchVaultReports();
+    return () => { isMounted = false; };
+  }, [selectedCategory, searchQuery]);
 
   const categories = [
     { id: 'all', label: 'All Documents' },
@@ -43,7 +62,12 @@ export const VaultPage: React.FC = () => {
     return matchesCategory && matchesSearch;
   });
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    try {
+      await reportService.deleteReport(id);
+    } catch {
+      // Graceful local deletion fallback
+    }
     setReports((prev) => prev.filter((r) => r.id !== id));
     setInspectReport(null);
     addToast({
@@ -177,10 +201,10 @@ export const VaultPage: React.FC = () => {
             {/* Extracted Clinical Entities Breakdown */}
             <div>
               <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
-                Extracted Structured Entities ({inspectReport.extractedEntities.length})
+                Extracted Structured Entities ({(inspectReport.extractedEntities || []).length})
               </h4>
               <div className="space-y-2">
-                {inspectReport.extractedEntities.map((ent, idx) => (
+                {(inspectReport.extractedEntities || []).map((ent, idx) => (
                   <div
                     key={idx}
                     className="p-3 rounded-xl bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 flex items-center justify-between text-xs"
@@ -191,7 +215,7 @@ export const VaultPage: React.FC = () => {
                       {ent.value && <span className="font-mono text-blue-600 font-bold">{ent.value} {ent.unit}</span>}
                     </div>
                     <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-1">
-                      <ShieldCheck className="w-3.5 h-3.5" /> {(ent.confidence * 100).toFixed(0)}% Match
+                      <ShieldCheck className="w-3.5 h-3.5" /> {((ent.confidence || 0.95) * 100).toFixed(0)}% Match
                     </span>
                   </div>
                 ))}

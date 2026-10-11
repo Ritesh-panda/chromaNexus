@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { SummaryCard } from '@/components/cards/SummaryCard';
 import { Modal } from '@/components/ui/Modal';
 import { useUI } from '@/contexts/UIContext';
+import { summaryService } from '@/services/summary.service';
 import { MOCK_DOCTOR_SUMMARY } from '@/constants/mockData';
+import type { DoctorSummary } from '@/types';
 import {
   Stethoscope,
   Share2,
@@ -19,18 +21,36 @@ import {
 } from 'lucide-react';
 
 export const DoctorSummaryPage: React.FC = () => {
-  const [summary] = useState(MOCK_DOCTOR_SUMMARY);
+  const [summary, setSummary] = useState<DoctorSummary>(MOCK_DOCTOR_SUMMARY);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareLink, setShareLink] = useState('');
   const { addToast } = useUI();
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchSummary = async () => {
+      try {
+        const data = await summaryService.getDoctorSummary();
+        if (isMounted && data && data.summaryOverview) {
+          setSummary(data);
+        }
+      } catch {
+        if (isMounted) {
+          setSummary(MOCK_DOCTOR_SUMMARY);
+        }
+      }
+    };
+    fetchSummary();
+    return () => { isMounted = false; };
+  }, []);
 
   const handlePrintPdf = () => {
     window.print();
   };
 
   const handleGenerateShare = () => {
-    const link = `https://chronanexus.app/physician-view/share_${Math.random().toString(36).substring(7)}`;
-    setShareLink(link);
+    const token = summary.shareLink || `https://chronanexus.app/physician-view/share_${Math.random().toString(36).substring(7)}`;
+    setShareLink(token);
     setIsShareModalOpen(true);
   };
 
@@ -80,7 +100,7 @@ export const DoctorSummaryPage: React.FC = () => {
               Longitudinal Clinical Summary — {summary.patientName}
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-mono">
-              Demographics: {summary.gender} • Generated: {new Date(summary.generatedAt).toLocaleString()}
+              Demographics: {summary.gender} • Generated: {summary.generatedAt ? new Date(summary.generatedAt).toLocaleString() : new Date().toLocaleString()}
             </p>
           </div>
 
@@ -107,10 +127,10 @@ export const DoctorSummaryPage: React.FC = () => {
           <SummaryCard
             title="Active & Chronic Diagnoses"
             icon={<Activity className="w-4 h-4 text-rose-500" />}
-            badgeText={`${summary.currentDiseases.length} Active`}
+            badgeText={`${(summary.currentDiseases || []).length} Active`}
           >
             <div className="space-y-2.5">
-              {summary.currentDiseases.map((d) => (
+              {(summary.currentDiseases || []).map((d) => (
                 <div key={d.id} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 text-xs space-y-1">
                   <div className="flex items-center justify-between font-bold text-slate-900 dark:text-slate-100">
                     <span>{d.name}</span>
@@ -126,10 +146,10 @@ export const DoctorSummaryPage: React.FC = () => {
           <SummaryCard
             title="Active Pharmacotherapy"
             icon={<Pill className="w-4 h-4 text-emerald-500" />}
-            badgeText={`${summary.activeMedications.length} Prescriptions`}
+            badgeText={`${(summary.activeMedications || []).length} Prescriptions`}
           >
             <div className="space-y-2.5">
-              {summary.activeMedications.map((m) => (
+              {(summary.activeMedications || []).map((m) => (
                 <div key={m.id} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 text-xs space-y-1">
                   <div className="flex items-center justify-between font-bold text-slate-900 dark:text-slate-100">
                     <span>{m.name} ({m.dosage})</span>
@@ -147,7 +167,7 @@ export const DoctorSummaryPage: React.FC = () => {
             icon={<AlertTriangle className="w-4 h-4 text-amber-500" />}
           >
             <div className="space-y-2">
-              {summary.knownAllergies.map((allergy, idx) => (
+              {(summary.knownAllergies || []).map((allergy, idx) => (
                 <div key={idx} className="p-2.5 rounded-xl bg-amber-50/50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 text-xs font-semibold text-amber-800 dark:text-amber-300 flex items-center gap-2">
                   <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />
                   <span>{allergy}</span>
@@ -162,7 +182,7 @@ export const DoctorSummaryPage: React.FC = () => {
             icon={<Activity className="w-4 h-4 text-purple-500" />}
           >
             <div className="space-y-2">
-              {summary.abnormalLabs.map((lab) => (
+              {(summary.abnormalLabs || []).map((lab) => (
                 <div key={lab.id} className="p-2.5 rounded-xl bg-rose-50/50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40 text-xs flex items-center justify-between">
                   <span className="font-bold text-slate-800 dark:text-slate-200">{lab.testName}</span>
                   <span className="font-mono font-extrabold text-rose-600 dark:text-rose-400">{lab.value} {lab.unit} (Ref: {lab.referenceRange})</span>
@@ -178,7 +198,7 @@ export const DoctorSummaryPage: React.FC = () => {
             <Calendar className="w-4 h-4 text-purple-500" /> Key Longitudinal Chronology
           </h3>
           <div className="space-y-2">
-            {summary.timelineHighlights.map((hl, idx) => (
+            {(summary.timelineHighlights || []).map((hl, idx) => (
               <div key={idx} className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/40 text-xs text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-800/80 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0" />
                 <span>{hl}</span>
