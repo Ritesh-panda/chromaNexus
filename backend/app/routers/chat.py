@@ -134,11 +134,12 @@ def send_message(
     db.commit()
     db.refresh(ai_msg)
 
+    raw_citations: list[dict] = ai_msg.citations if isinstance(ai_msg.citations, list) else []
     return MessageResponse(
         id=ai_msg.id,
         sender=ai_msg.sender,
         text=ai_msg.text,
         timestamp=ai_msg.timestamp,
         reasoningType=ai_msg.reasoning_type,
-        citations=[CitationSchema(**c) for c in (ai_msg.citations or [])]
+        citations=[CitationSchema(**c) for c in raw_citations if isinstance(c, dict)]
     )

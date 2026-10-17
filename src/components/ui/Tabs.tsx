@@ -17,7 +17,7 @@ export interface TabsProps {
 
 export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className }) => {
   return (
-    <div className={cn('flex items-center space-x-1 border-b border-slate-200 dark:border-slate-800 overflow-x-auto pb-px', className)}>
+    <div className={cn('flex items-center space-x-1 border-b border-[#E5E7EB] dark:border-[#2F3540] overflow-x-auto pb-px', className)}>
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         return (
@@ -25,10 +25,10 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className
             key={tab.id}
             onClick={() => onChange(tab.id)}
             className={cn(
-              'flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 whitespace-nowrap transition-all duration-200',
+              'flex items-center gap-2 px-3.5 py-2.5 text-xs sm:text-sm font-medium border-b-2 whitespace-nowrap transition-all duration-150',
               isActive
-                ? 'border-blue-600 text-blue-600 dark:text-blue-400 font-semibold'
-                : 'border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:border-slate-300 dark:hover:border-slate-700'
+                ? 'border-[#10B981] text-[#1F2937] dark:text-[#F3F4F6] font-semibold'
+                : 'border-transparent text-[#6B7280] hover:text-[#1F2937] dark:text-[#9CA3AF] dark:hover:text-[#F3F4F6] hover:border-[#D1D5DB]'
             )}
           >
             {tab.icon}
@@ -36,10 +36,10 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, className
             {tab.badge !== undefined && (
               <span
                 className={cn(
-                  'ml-1 px-1.5 py-0.5 text-xs rounded-full font-semibold',
+                  'ml-1 px-1.5 py-0.5 text-[10px] rounded-full font-medium',
                   isActive
-                    ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                    ? 'bg-[#ECFDF5] text-[#15803D] dark:bg-emerald-950/40 dark:text-emerald-300'
+                    : 'bg-[#F3F1ED] text-[#6B7280] dark:bg-[#23272E] dark:text-[#9CA3AF]'
                 )}
               >
                 {tab.badge}

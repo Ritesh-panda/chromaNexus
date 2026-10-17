@@ -98,7 +98,9 @@ class HybridRetriever:
                 QueryIntent.REPORT_CONTENT,
                 QueryIntent.PROCEDURE_HISTORY,
                 QueryIntent.GENERAL_DOCUMENT_QUERY,
-                QueryIntent.MIXED_CLINICAL
+                QueryIntent.MIXED_CLINICAL,
+                QueryIntent.LAB_HISTORY,
+                QueryIntent.MEDICATION_HISTORY
             ] or
             len(structured_results) == 0  # Fallback if structured found nothing
         )

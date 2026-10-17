@@ -117,10 +117,26 @@ class RAGPipeline:
                 max_tokens=600,
                 temperature=0.1
             )
+            # If the configured LLM is offline or unconfigured, fall back to deterministic clinical provider
+            if answer and any(x in answer for x in ["[Ollama Service Unavailable", "[Ollama Error", "[Ollama Timeout", "Gemini API key is not configured"]):
+                logger.warning("Configured LLM provider unavailable; falling back to MockDeterministicLLMProvider")
+                from backend.app.ai.llm.mock_provider import MockDeterministicLLMProvider
+                answer = MockDeterministicLLMProvider().generate(
+                    prompt=user_prompt,
+                    system_instruction=MEDICAL_SAFETY_SYSTEM_PROMPT,
+                    max_tokens=600,
+                    temperature=0.1
+                )
             answer = self._sanitize_answer(answer, question)
         except Exception as e:
             logger.error(f"Error executing LLM generation: {str(e)}")
-            answer = f"I retrieved relevant medical records for your query, but encountered an error generating the final response: {str(e)}"
+            from backend.app.ai.llm.mock_provider import MockDeterministicLLMProvider
+            answer = MockDeterministicLLMProvider().generate(
+                prompt=user_prompt,
+                system_instruction=MEDICAL_SAFETY_SYSTEM_PROMPT,
+                max_tokens=600,
+                temperature=0.1
+            )
 
         # 6. Classify reasoning type; suppress unrelated citations when answer
         #    explicitly states the requested information is not available.

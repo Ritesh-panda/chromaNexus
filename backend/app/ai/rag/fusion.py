@@ -103,6 +103,6 @@ class ResultFusion:
             balanced.extend(remaining[:max(0, budget - len(balanced))])
             return balanced
 
-        # 4. Standard sort by score descending
-        fused.sort(key=lambda x: x.score, reverse=True)
+        # 4. Standard sort by score descending, with date descending as secondary tie-breaker
+        fused.sort(key=lambda x: (round(x.score, 2), str(x.date or "")), reverse=True)
         return fused[:self.max_items]

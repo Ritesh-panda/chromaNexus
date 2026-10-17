@@ -1,4 +1,12 @@
+import sys
+from pathlib import Path
 from contextlib import asynccontextmanager
+
+# Ensure project root is in sys.path so 'backend.app...' imports always resolve
+_project_root = str(Path(__file__).resolve().parent.parent.parent)
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from backend.app.core.config import settings

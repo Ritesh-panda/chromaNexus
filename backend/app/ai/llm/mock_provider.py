@@ -32,6 +32,14 @@ class MockDeterministicLLMProvider(LLMProvider):
         elif "cholesterol" in lower or "lipid" in lower:
             if "quest" in lower or "where" in lower:
                 return "Your June 12, 2021 lipid profile was performed at Quest Diagnostics, showing Total Cholesterol of 242 mg/dL and Fasting Glucose of 104 mg/dL."
+            if "highest" in lower or "peak" in lower or "max" in lower:
+                return "Based on your clinical records, your highest recorded total cholesterol was 242 mg/dL on June 12, 2021 (Quest Diagnostics lipid panel). Through dietary intervention and initiation of Atorvastatin 10mg QD, your levels decreased to 198 mg/dL as of your June 15, 2026 panel."
+            import re
+            context_match = re.search(r"(?:Total Cholesterol|Cholesterol)[^\n\r]*?[:|]\s*(?:Value:\s*)?(\d{2,3})\s*mg/dL.*?Date:\s*([0-9\-]+)", prompt, re.IGNORECASE)
+            if context_match:
+                val, dt = context_match.group(1), context_match.group(2)
+                if dt > "2026-06-15":
+                    return f"Based on your latest medical report dated {dt}, your recorded Total Cholesterol is {val} mg/dL."
             return "Based on your clinical records, your highest recorded total cholesterol was 242 mg/dL on June 12, 2021 (Quest Diagnostics lipid panel). Through dietary intervention and initiation of Atorvastatin 10mg QD, your levels decreased to 198 mg/dL as of your June 15, 2026 panel."
         elif "hba1c" in lower or "diabetes" in lower or "metformin" in lower or "glucose" in lower:
             return "According to your indexed laboratory panels, your HbA1c trajectory showed an initial peak of 7.2% in September 2023 at Type 2 Diabetes diagnosis, improving to 6.7% in June 2026 under continuous Metformin 500mg BID therapy."

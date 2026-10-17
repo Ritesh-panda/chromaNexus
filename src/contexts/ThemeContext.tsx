@@ -13,10 +13,10 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
     const saved = localStorage.getItem('chronanexus_theme') as Theme;
-    return saved || 'dark';
+    return saved || 'light';
   });
 
-  const [isDark, setIsDark] = useState<boolean>(true);
+  const [isDark, setIsDark] = useState<boolean>(false);
 
   useEffect(() => {
     const root = window.document.documentElement;

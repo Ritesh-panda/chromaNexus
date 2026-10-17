@@ -29,7 +29,7 @@ export const LoginPage: React.FC = () => {
       await login({ email, password, rememberMe });
       addToast({
         type: 'success',
-        title: 'Welcome back!',
+        title: 'Welcome back',
         message: 'Authenticated securely into ChronaNexus Vault.',
       });
       navigate('/dashboard');
@@ -41,23 +41,23 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2 text-center sm:text-left">
-        <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
-          Sign In to ChronaNexus
+    <div className="space-y-5">
+      <div className="space-y-1 text-center sm:text-left">
+        <h2 className="text-xl font-semibold tracking-tight text-[#1F2937] dark:text-[#F3F4F6]">
+          Sign in to ChronaNexus
         </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
           Access your continuous longitudinal medical memory vault.
         </p>
       </div>
 
       {error && (
-        <div className="p-3 rounded-2xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/40 text-xs font-semibold text-rose-600 dark:text-rose-400">
+        <div className="p-3 rounded-xl bg-[#FEF2F2] dark:bg-rose-950/40 border border-rose-200/80 dark:border-rose-900/40 text-xs font-medium text-[#B91C1C] dark:text-rose-400">
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3.5">
         <Input
           label="Email Address"
           type="email"
@@ -78,17 +78,17 @@ export const LoginPage: React.FC = () => {
           required
         />
 
-        <div className="flex items-center justify-between text-xs">
+        <div className="flex items-center justify-between text-xs pt-1">
           <label className="flex items-center space-x-2 cursor-pointer">
             <input
               type="checkbox"
               checked={rememberMe}
               onChange={(e) => setRememberMe(e.target.checked)}
-              className="rounded text-blue-600 focus:ring-blue-500"
+              className="rounded text-[#10B981] focus:ring-emerald-500/20"
             />
-            <span className="text-slate-600 dark:text-slate-400 font-medium">Remember me</span>
+            <span className="text-[#6B7280] dark:text-[#9CA3AF] font-medium">Remember me</span>
           </label>
-          <Link to="/forgot-password" className="font-semibold text-blue-600 dark:text-blue-400 hover:underline">
+          <Link to="/forgot-password" className="font-medium text-[#10B981] hover:underline">
             Forgot Password?
           </Link>
         </div>
@@ -97,7 +97,7 @@ export const LoginPage: React.FC = () => {
           type="submit"
           variant="primary"
           size="lg"
-          className="w-full"
+          className="w-full mt-2"
           isLoading={isSubmitting}
           rightIcon={<ArrowRight className="w-4 h-4" />}
         >
@@ -106,21 +106,21 @@ export const LoginPage: React.FC = () => {
       </form>
 
       {/* Quick Demo Login Option */}
-      <div className="pt-4 border-t border-slate-200 dark:border-slate-800 space-y-3">
+      <div className="pt-3.5 border-t border-[#E5E7EB]/80 dark:border-[#2F3540] space-y-2.5">
         <button
           type="button"
           onClick={() => {
             setEmail('alex.vance@example.com');
             setPassword('Demo123!');
           }}
-          className="w-full py-2.5 px-4 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/40 text-blue-700 dark:text-blue-300 text-xs font-semibold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2"
+          className="w-full py-2 px-3 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E] border border-[#E5E7EB] dark:border-[#2F3540] text-[#1F2937] dark:text-[#F3F4F6] text-xs font-medium hover:bg-[#F3F1ED] transition-colors flex items-center justify-center gap-2"
         >
-          <KeyRound className="w-4 h-4" /> Autofill Demo Credentials (Alex Vance)
+          <KeyRound className="w-3.5 h-3.5 text-[#10B981]" /> Autofill Demo Credentials (Alex Vance)
         </button>
 
-        <p className="text-center text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-center text-xs text-[#6B7280] dark:text-[#9CA3AF]">
           Don't have an account?{' '}
-          <Link to="/signup" className="font-bold text-blue-600 dark:text-blue-400 hover:underline">
+          <Link to="/signup" className="font-semibold text-[#10B981] hover:underline">
             Create Patient Account
           </Link>
         </p>

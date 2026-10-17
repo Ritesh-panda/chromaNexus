@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useCallback } from 'react';
 
 export interface ToastMessage {
   id: string;
@@ -28,19 +28,19 @@ export const UIProvider: React.FC<{ children: React.ReactNode }> = ({ children }
   const [uploadModalOpen, setUploadModalOpen] = useState<boolean>(false);
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
-  const toggleSidebar = () => setSidebarOpen((prev) => !prev);
+  const toggleSidebar = useCallback(() => setSidebarOpen((prev) => !prev), []);
 
-  const addToast = (toast: Omit<ToastMessage, 'id'>) => {
+  const removeToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  const addToast = useCallback((toast: Omit<ToastMessage, 'id'>) => {
     const id = `toast_${Date.now()}_${Math.random()}`;
     setToasts((prev) => [...prev, { ...toast, id }]);
     setTimeout(() => {
       removeToast(id);
     }, 4000);
-  };
-
-  const removeToast = (id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  };
+  }, [removeToast]);
 
   return (
     <UIContext.Provider

@@ -1,0 +1,383 @@
+================================================================================
+                    CAPSTONE PROJECT WEEKLY PROGRESS SHEET
+================================================================================
+
+Project Title : ChronaNexus — AI Longitudinal Medical Intelligence Platform
+Institution   : [Your Institution Name]
+Programme     : B.Tech / MCA (specify as applicable)
+Batch         : [Your Batch Year]
+Guide         : [Guide Name & Designation]
+
+Team Members  :
+  1. Ritesh Panda          — Reg. No. [REG_NO]
+  2. Ashutosh Dash         — Reg. No. [REG_NO]
+  3. Sidharth Pattnaik     — Reg. No. [REG_NO]
+  4. Ayush Meshram         — Reg. No. [REG_NO]
+
+Day of Weekly Meeting : Every Tuesday
+================================================================================
+
+
+================================================================================
+                            PAGE 1 — WEEKS 1 & 2
+================================================================================
+
+Capstone Project Weekly Progress Sheet
+
+Week Number: 1  Period From: 04-08-2025  To: 10-08-2025
+Date of Meeting: 05-08-2025
+
+Members attended (Mentioned the registration number):
+  1. Ritesh Panda (Reg. No. [REG_NO])
+  2. Ashutosh Dash (Reg. No. [REG_NO])
+  3. Sidharth Pattnaik (Reg. No. [REG_NO])
+  4. Ayush Meshram (Reg. No. [REG_NO])
+
+Tasks Completed:
+  1. Finalised capstone project title and scope: ChronaNexus (Privacy-First AI Longitudinal Medical Intelligence Platform).
+  2. Analyzed existing clinical document fragmentation problems and formulated system requirements based on capstone reference specifications.
+  3. Formulated architecture separating 6 core engines: Document Vault, Medical Understanding (OCR/NLP), Patient Memory, Timeline Engine, Medical Intelligence (RAG Chat), and Doctor Summary.
+  4. Selected tech stack: React 19, TypeScript, Vite, TailwindCSS 4, FastAPI (Python), PostgreSQL, SQLAlchemy, Alembic, and Ollama/Gemini API for LLM providers.
+  5. Initialized project Git repository and structured repository directories (frontend, backend, docs).
+  6. Configured local team development environments and code formatting conventions.
+
+Tasks Planned Next Week:
+  1. Initialize React 19 + TypeScript + Vite frontend project scaffold.
+  2. Design core UI theme, typography, HSL color tokens, and responsive layout structures.
+  3. Define TypeScript interfaces for clinical domain data models (Patients, Reports, Diseases, Medications, Labs, Timeline).
+  4. Implement Landing page and reusable atomic UI component library.
+
+Comments/ Suggestion by the Guide:
+
+
+Signature of the Guide: ___________________________
+
+
+--------------------------------------------------------------------------------
+
+Capstone Project Weekly Progress Sheet
+
+Week Number: 2  Period From: 11-08-2025  To: 17-08-2025
+Date of Meeting: 12-08-2025
+
+Members attended (Mentioned the registration number):
+  1. Ritesh Panda (Reg. No. [REG_NO])
+  2. Ashutosh Dash (Reg. No. [REG_NO])
+  3. Sidharth Pattnaik (Reg. No. [REG_NO])
+  4. Ayush Meshram (Reg. No. [REG_NO])
+
+Tasks Completed:
+  1. Scaffolded frontend using React 19, Vite, and TypeScript with `@/*` path aliases.
+  2. Configured TailwindCSS v4 with `@tailwindcss/vite` and established dark/light glassmorphic UI design tokens in `index.css`.
+  3. Created reusable UI component primitives: Button, Input, Modal, Badge, Card, Avatar, Tabs, Toast, Loading, Skeleton, EmptyState, ErrorState, Search, Table, Accordion.
+  4. Implemented full TypeScript domain definitions for all entities (chat, disease, labResult, medication, notification, patient, report, summary, timeline, user).
+  5. Built public Landing Page featuring animated hero section, value propositions, feature cards, and interactive CTA triggers.
+  6. Set up React Router v7 scaffolding for public and protected routes.
+
+Tasks Planned Next Week:
+  1. Build authentication UI views (Login, Signup, OTP verification).
+  2. Implement state management providers for Authentication, Theme, and UI modals.
+  3. Create main DashboardLayout with responsive Sidebar and TopBar navigation.
+  4. Generate realistic clinical mock dataset (Alex Vance profile) for client-side prototype verification.
+
+Comments/ Suggestion by the Guide:
+
+
+Signature of the Guide: ___________________________
+
+
+================================================================================
+                            PAGE 2 — WEEKS 3 & 4
+================================================================================
+
+Capstone Project Weekly Progress Sheet
+
+Week Number: 3  Period From: 18-08-2025  To: 24-08-2025
+Date of Meeting: 19-08-2025
+
+Members attended (Mentioned the registration number):
+  1. Ritesh Panda (Reg. No. [REG_NO])
+  2. Ashutosh Dash (Reg. No. [REG_NO])
+  3. Sidharth Pattnaik (Reg. No. [REG_NO])
+  4. Ayush Meshram (Reg. No. [REG_NO])
+
+Tasks Completed:
+  1. Developed Authentication screens with React Hook Form and Zod schema validations (Login, Signup with Doctor/Patient roles, OTP modal).
+  2. Implemented `AuthContext`, `ThemeContext`, and `UIContext` providers with localStorage persistence and simulation modes.
+  3. Built application shell layout: collapsible Sidebar, dynamic TopBar with search shortcut, notifications drawer, and user profile switcher.
+  4. Created rich clinical mock dataset (`src/constants/mockData.ts`) covering 8 multi-specialty reports, 5 chronic conditions, 4 active prescriptions, and multi-year vital trends for patient Alex Vance.
+  5. Implemented main Dashboard view featuring health summary cards, quick action panels, recent report feed, and urgent clinical alerts.
+
+Tasks Planned Next Week:
+  1. Implement Medical Vault and Reports management view with multi-category filtering.
+  2. Develop drag-and-drop Document Upload modal with simulated OCR/processing feedback.
+  3. Build Global Search dialog (Ctrl+K) with cross-entity filtering.
+  4. Implement interactive Medical Timeline page with chronological milestones.
+
+Comments/ Suggestion by the Guide:
+
+
+Signature of the Guide: ___________________________
+
+
+--------------------------------------------------------------------------------
+
+Capstone Project Weekly Progress Sheet
+
+Week Number: 4  Period From: 25-08-2025  To: 31-08-2025
+Date of Meeting: 26-08-2025
+
+Members attended (Mentioned the registration number):
+  1. Ritesh Panda (Reg. No. [REG_NO])
+  2. Ashutosh Dash (Reg. No. [REG_NO])
+  3. Sidharth Pattnaik (Reg. No. [REG_NO])
+  4. Ayush Meshram (Reg. No. [REG_NO])
+
+Tasks Completed:
+  1. Implemented Medical Vault / Reports directory with category filtering (Blood, Imaging, Prescriptions, Discharge, Vaccines).
+  2. Built interactive Report Card components displaying hospital metadata, dates, AI confidence score, and extracted clinical entity chips.
+  3. Developed Document Upload modal supporting drag-and-drop file staging, category selection, provider tagging, and privacy indicators.
+  4. Built Global Search modal (Ctrl+K) allowing instant querying across reports, medications, and diagnoses.
+  5. Built Medical Timeline page with vertical milestone cards, year-based grouping, and expandable encounter details.
+  6. Implemented `VitalsTrendChart` using Recharts to visualize longitudinal biomarker trajectories (HbA1c, Cholesterol, Blood Pressure).
+
+Tasks Planned Next Week:
+  1. Build AI Clinical Chat assistant interface with citation cards and reasoning type badges.
+  2. Build Doctor Summary generation view with printable export layout.
+  3. Complete Patient Profile and Application Settings screens.
+  4. Complete Phase 1 frontend build verification and code quality audit.
+
+Comments/ Suggestion by the Guide:
+
+
+Signature of the Guide: ___________________________
+
+
+================================================================================
+                            PAGE 3 — WEEKS 5 & 6
+================================================================================
+
+Capstone Project Weekly Progress Sheet
+
+Week Number: 5  Period From: 01-09-2025  To: 07-09-2025
+Date of Meeting: 02-09-2025
+
+Members attended (Mentioned the registration number):
+  1. Ritesh Panda (Reg. No. [REG_NO])
+  2. Ashutosh Dash (Reg. No. [REG_NO])
+  3. Sidharth Pattnaik (Reg. No. [REG_NO])
+  4. Ayush Meshram (Reg. No. [REG_NO])
+
+Tasks Completed:
+  1. Implemented AI Chat assistant page featuring multi-turn conversation history, fact/inference reasoning badges, and expandable citation cards linked to source reports.
+  2. Built Doctor Summary page allowing 60-second synthesized physician handoff summaries with structured sections (Chief Complaints, Active Conditions, Medications, Lab Trajectories, Recommendations).
+  3. Completed Patient Profile and Settings pages (privacy toggles, local-only AI mode, data export, notification preferences).
+  4. Integrated mock service layer with realistic network delays and error boundaries.
+  5. Executed full frontend verification: resolved TypeScript compiler warnings, verified strict typing, and validated responsive layouts.
+  6. Completed Phase 1 (Frontend Prototype) verification successfully.
+
+Tasks Planned Next Week:
+  1. Initialize FastAPI backend architecture (Phase 2).
+  2. Design relational database schema and define SQLAlchemy ORM models.
+  3. Set up Alembic migration environment.
+  4. Implement JWT authentication system and password hashing.
+
+Comments/ Suggestion by the Guide:
+
+
+Signature of the Guide: ___________________________
+
+
+--------------------------------------------------------------------------------
+
+Capstone Project Weekly Progress Sheet
+
+Week Number: 6  Period From: 08-09-2025  To: 14-09-2025
+Date of Meeting: 09-09-2025
+
+Members attended (Mentioned the registration number):
+  1. Ritesh Panda (Reg. No. [REG_NO])
+  2. Ashutosh Dash (Reg. No. [REG_NO])
+  3. Sidharth Pattnaik (Reg. No. [REG_NO])
+  4. Ayush Meshram (Reg. No. [REG_NO])
+
+Tasks Completed:
+  1. Set up FastAPI backend architecture with modular layer separation (core, models, schemas, routers, services).
+  2. Configured database engine, session management, and settings via `pydantic-settings` (.env driven).
+  3. Defined SQLAlchemy ORM models for all domain entities: User, Patient, MedicalReport, ExtractedEntity, Disease, Medication, LabResult, TimelineEvent, ChatConversation, ChatMessage, DoctorSummary.
+  4. Created Pydantic v2 schemas for request validation and response serialization with `from_attributes=True`.
+  5. Implemented JWT authentication (bcrypt password hashing, access token generation, `get_current_user` dependency guard).
+  6. Initialized Alembic database migration environment and authored initial baseline migration script.
+  7. Configured CORS middleware for frontend-backend communication.
+
+Tasks Planned Next Week:
+  1. Implement CRUD REST API endpoints for Reports, Documents, Timeline, Chat, Summaries, and Search.
+  2. Create database seeding utility to initialize default patient demo records.
+  3. Connect React frontend API services to live FastAPI backend endpoints.
+  4. Write automated integration tests for backend APIs using Pytest.
+
+Comments/ Suggestion by the Guide:
+
+
+Signature of the Guide: ___________________________
+
+
+================================================================================
+                            PAGE 4 — WEEKS 7 & 8
+================================================================================
+
+Capstone Project Weekly Progress Sheet
+
+Week Number: 7  Period From: 15-09-2025  To: 21-09-2025
+Date of Meeting: 16-09-2025
+
+Members attended (Mentioned the registration number):
+  1. Ritesh Panda (Reg. No. [REG_NO])
+  2. Ashutosh Dash (Reg. No. [REG_NO])
+  3. Sidharth Pattnaik (Reg. No. [REG_NO])
+  4. Ayush Meshram (Reg. No. [REG_NO])
+
+Tasks Completed:
+  1. Implemented complete suite of 9 FastAPI API routers under `/api/v1` (auth, users, patients, reports, documents, timeline, chat, summaries, search).
+  2. Implemented clinical chat router with intent resolution and grounding citation schema generator.
+  3. Implemented doctor summary generation engine aggregating longitudinal lab results, active diagnoses, and current medications.
+  4. Built local encrypted file storage abstraction for document uploads.
+  5. Implemented database seeder (`seed_data.py`) automatically populating demo records upon initial startup.
+  6. Connected frontend Axios client to live backend endpoints with Bearer token authentication and seamless fallback to mock data when backend is disconnected.
+  7. Authored initial automated Pytest test suite with 17 integration tests passing.
+
+Tasks Planned Next Week:
+  1. Begin Phase 3A: AI/RAG Foundation Architecture.
+  2. Implement pluggable LLM provider abstractions (Ollama, Gemini, Deterministic Mock).
+  3. Implement embedding provider and sliding-window document chunking utilities.
+  4. Define vector store interface and in-memory cosine similarity search adapter.
+
+Comments/ Suggestion by the Guide:
+
+
+Signature of the Guide: ___________________________
+
+
+--------------------------------------------------------------------------------
+
+Capstone Project Weekly Progress Sheet
+
+Week Number: 8  Period From: 22-09-2025  To: 28-09-2025
+Date of Meeting: 23-09-2025
+
+Members attended (Mentioned the registration number):
+  1. Ritesh Panda (Reg. No. [REG_NO])
+  2. Ashutosh Dash (Reg. No. [REG_NO])
+  3. Sidharth Pattnaik (Reg. No. [REG_NO])
+  4. Ayush Meshram (Reg. No. [REG_NO])
+
+Tasks Completed:
+  1. Phase 3A: Built modular LLM Provider abstraction layer:
+       - `LLMProvider` abstract base class with synchronous and asynchronous text generation interfaces.
+       - `OllamaLLMProvider` for local offline GPU/CPU inference.
+       - `GeminiLLMProvider` for Google Gemini API integration.
+       - `MockDeterministicLLMProvider` with deterministic clinical logic for zero-dependency test environments.
+  2. Built Embedding Provider interface with `LocalLightweightEmbeddingProvider` (deterministic 384-dimensional vector projection requiring zero external model weights).
+  3. Built `DocumentProcessor` and `DocumentChunker` implementing sliding-window token chunking (500 tokens, 100 overlap) while preserving page numbers and source metadata.
+  4. Built `VectorStore` abstraction with `InMemoryVectorStore` and `PostgresVectorStore` skeleton.
+  5. Created `DocumentChunk` SQLAlchemy model for storing chunk embeddings.
+  6. Expanded automated backend test suite to 37 passing unit/integration tests.
+
+Tasks Planned Next Week:
+  1. Begin Phase 3B: Hybrid RAG Pipeline & Evaluation.
+  2. Implement Clinical Query Classifier (detecting lab, medication, imaging, and timeline queries).
+  3. Implement Structured SQL Retriever and Vector Semantic Retriever.
+  4. Implement Reciprocal Rank Fusion (RRF) and Clinical Reranker.
+  5. Create automated RAG evaluation benchmark suite.
+
+Comments/ Suggestion by the Guide:
+
+
+Signature of the Guide: ___________________________
+
+
+================================================================================
+                            PAGE 5 — WEEKS 9 & 10
+================================================================================
+
+Capstone Project Weekly Progress Sheet
+
+Week Number: 9  Period From: 29-09-2025  To: 05-10-2025
+Date of Meeting: 30-09-2025
+
+Members attended (Mentioned the registration number):
+  1. Ritesh Panda (Reg. No. [REG_NO])
+  2. Ashutosh Dash (Reg. No. [REG_NO])
+  3. Sidharth Pattnaik (Reg. No. [REG_NO])
+  4. Ayush Meshram (Reg. No. [REG_NO])
+
+Tasks Completed:
+  1. Phase 3B: Implemented complete multi-stage Hybrid RAG retrieval pipeline:
+       - `QueryClassifier`: Detects 8 clinical intent types (lab lookup, medication query, imaging, timeline event, etc.).
+       - `StructuredRetriever`: Direct SQLAlchemy relational query engine ensuring 100% numerical precision for exact lab/date lookups.
+       - `ResultFusion`: Reciprocal Rank Fusion algorithm merging relational records with semantic vector chunks.
+       - `ClinicalReranker`: Contextual boosting based on detected query intent.
+       - `ContextBuilder`: Constructs verified clinical prompt blocks with source metadata and citation tags.
+       - `RAGEvaluator`: Automated benchmark suite with 10 clinical test scenarios assessing retrieval accuracy and hallucination prevention.
+  2. Integrated pgvector-compatible PostgreSQL vector queries into `PostgresVectorStore`.
+  3. Connected Hybrid RAG pipeline directly into the `/api/v1/chat` endpoint.
+  4. Resolved frontend TypeScript configuration issues in `tsconfig.app.json` and verified zero lint errors across entire frontend.
+  5. Expanded automated Pytest suite to 54 passing tests.
+
+Tasks Planned Next Week:
+  1. Begin Phase 3C: Real Document Intelligence Ingestion Pipeline.
+  2. Implement page-aware PDF text extractor and scanned document detection.
+  3. Implement OCR abstraction layer (Tesseract and Mock providers).
+  4. Build clinical entity extractor (Regex rule-based + LLM structured JSON).
+  5. Build background ingestion orchestrator and real-time frontend upload progress tracker.
+
+Comments/ Suggestion by the Guide:
+
+
+Signature of the Guide: ___________________________
+
+
+--------------------------------------------------------------------------------
+
+Capstone Project Weekly Progress Sheet
+
+Week Number: 10  Period From: 06-10-2025  To: 06-10-2025
+Date of Meeting: 06-10-2025
+
+Members attended (Mentioned the registration number):
+  1. Ritesh Panda (Reg. No. [REG_NO])
+  2. Ashutosh Dash (Reg. No. [REG_NO])
+  3. Sidharth Pattnaik (Reg. No. [REG_NO])
+  4. Ayush Meshram (Reg. No. [REG_NO])
+
+Tasks Completed:
+  1. Phase 3C: Implemented complete Real Document Intelligence Ingestion Pipeline:
+       - `PDFExtractor`: Page-aware text extraction with automatic character density thresholding to detect scanned/image-only PDFs.
+       - `OCRProvider` Architecture: Abstract base class with `TesseractOCRProvider` (pytesseract wrapper) and `MockOCRProvider` (realistic clinical transcripts).
+       - `ClinicalEntityExtractor`: Rule-based regex engine and LLM-driven structured JSON extractor for labs, medications, diagnoses, and procedures.
+       - `ClinicalDataValidator`: Normalizes clinical dates (ISO YYYY-MM-DD), validates numeric lab ranges, standardizes units, and checks ICD-10 diagnostic codes.
+       - `DocumentIngestionOrchestrator` & `IngestionStatusRegistry`: Thread-safe 7-stage background task execution (RECEIVED -> PROCESSING -> OCR -> EXTRACTING -> INDEXING -> COMPLETED).
+       - Document API endpoints: `POST /upload` (asynchronous background ingestion) and `GET /{id}/status` (polling).
+  2. Integrated real-time ingestion UX into frontend `UploadModal.tsx` with dynamic multi-stage progress bar, extraction metrics counters, and animated completion status.
+  3. Fixed JSON column type casting bug in chat router (`chat.py`) ensuring clean Pydantic `CitationSchema` unpacking.
+  4. Expanded automated test suite from 54 to 74 tests across backend modules — 100% passing (74 passed in ~5s).
+  5. Executed complete system audit: Frontend build (`npm run build`), Linter (`npm run lint`), and Backend tests (`pytest`) all passing with 0 errors.
+
+Tasks Planned Next Week:
+  1. Phase 4: Build Longitudinal Patient Memory & Clinical Reasoning Engine (knowledge graph edges between diagnoses, drugs, and lab changes).
+  2. Implement temporal trajectory analysis and automatic contraindication/drug interaction detection.
+  3. Implement exportable clinical PDF summary generation.
+  4. Prepare final capstone presentation slides, demo walkthrough video, and project report documentation.
+
+Comments/ Suggestion by the Guide:
+
+
+Signature of the Guide: ___________________________
+
+
+================================================================================
+                         END OF CAPSTONE PROGRESS DIARY
+                      ChronaNexus | Aug 04 — Oct 06, 2025
+================================================================================
+
+

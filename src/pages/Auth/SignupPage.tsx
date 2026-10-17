@@ -36,51 +36,51 @@ export const SignupPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2 text-center sm:text-left">
-        <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+    <div className="space-y-5">
+      <div className="space-y-1 text-center sm:text-left">
+        <h2 className="text-xl font-semibold tracking-tight text-[#1F2937] dark:text-[#F3F4F6]">
           Create ChronaNexus Account
         </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
           Initialize your privacy-first longitudinal medical intelligence vault.
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-3.5">
         {/* Role Selector Tabs */}
         <div>
-          <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5 block">
+          <label className="text-xs font-medium text-[#4B5563] dark:text-[#9CA3AF] mb-1.5 block">
             Account Type
           </label>
           <div className="grid grid-cols-2 gap-2">
             <button
               type="button"
               onClick={() => setRole('patient')}
-              className={`flex items-center justify-center gap-2 p-3 rounded-2xl border text-xs font-semibold transition-all ${
+              className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-medium transition-colors ${
                 role === 'patient'
-                  ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-50'
+                  ? 'bg-[#ECFDF5] dark:bg-emerald-950/40 border-[#10B981] text-[#15803D] dark:text-emerald-300 font-semibold'
+                  : 'border-[#E5E7EB] dark:border-[#2F3540] text-[#6B7280] dark:text-[#9CA3AF] hover:bg-[#FAF8F5]'
               }`}
             >
-              <UserIcon className="w-4 h-4" /> Patient / Personal
+              <UserIcon className="w-3.5 h-3.5" /> Patient / Personal
             </button>
             <button
               type="button"
               onClick={() => setRole('doctor')}
-              className={`flex items-center justify-center gap-2 p-3 rounded-2xl border text-xs font-semibold transition-all ${
+              className={`flex items-center justify-center gap-2 p-2.5 rounded-xl border text-xs font-medium transition-colors ${
                 role === 'doctor'
-                  ? 'bg-blue-50 dark:bg-blue-950/60 border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-slate-200 dark:border-slate-800 text-slate-500 hover:bg-slate-50'
+                  ? 'bg-[#ECFDF5] dark:bg-emerald-950/40 border-[#10B981] text-[#15803D] dark:text-emerald-300 font-semibold'
+                  : 'border-[#E5E7EB] dark:border-[#2F3540] text-[#6B7280] dark:text-[#9CA3AF] hover:bg-[#FAF8F5]'
               }`}
             >
-              <Stethoscope className="w-4 h-4" /> Healthcare Provider
+              <Stethoscope className="w-3.5 h-3.5" /> Healthcare Provider
             </button>
           </div>
         </div>
 
         <Input
           label="Full Name"
-          placeholder="e.g. Dr. Alex Vance"
+          placeholder="e.g. Alex Vance"
           value={name}
           onChange={(e) => setName(e.target.value)}
           leftIcon={<UserIcon className="w-4 h-4" />}
@@ -108,16 +108,16 @@ export const SignupPage: React.FC = () => {
         />
 
         {/* Terms Checkbox */}
-        <label className="flex items-start space-x-2 cursor-pointer text-xs text-slate-600 dark:text-slate-400">
+        <label className="flex items-start space-x-2 cursor-pointer text-xs text-[#6B7280] dark:text-[#9CA3AF] pt-1">
           <input
             type="checkbox"
             checked={agreed}
             onChange={(e) => setAgreed(e.target.checked)}
-            className="rounded text-blue-600 focus:ring-blue-500 mt-0.5"
+            className="rounded text-[#10B981] focus:ring-emerald-500/20 mt-0.5"
             required
           />
           <span>
-            I agree to the <a href="#" className="text-blue-600 hover:underline">Terms of Service</a> and acknowledge the <a href="#" className="text-blue-600 hover:underline">HIPAA Data Privacy Notice</a>.
+            I agree to the <a href="#" className="text-[#10B981] hover:underline">Terms of Service</a> and acknowledge the <a href="#" className="text-[#10B981] hover:underline">HIPAA Data Privacy Notice</a>.
           </span>
         </label>
 
@@ -125,7 +125,7 @@ export const SignupPage: React.FC = () => {
           type="submit"
           variant="primary"
           size="lg"
-          className="w-full"
+          className="w-full mt-2"
           isLoading={isSubmitting}
           rightIcon={<ArrowRight className="w-4 h-4" />}
         >
@@ -133,9 +133,9 @@ export const SignupPage: React.FC = () => {
         </Button>
       </form>
 
-      <p className="text-center text-xs text-slate-500 dark:text-slate-400 pt-2">
+      <p className="text-center text-xs text-[#6B7280] dark:text-[#9CA3AF] pt-1">
         Already have an account?{' '}
-        <Link to="/login" className="font-bold text-blue-600 dark:text-blue-400 hover:underline">
+        <Link to="/login" className="font-semibold text-[#10B981] hover:underline">
           Sign In
         </Link>
       </p>

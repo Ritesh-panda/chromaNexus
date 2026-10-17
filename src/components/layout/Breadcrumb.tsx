@@ -13,12 +13,12 @@ export const Breadcrumb: React.FC = () => {
   };
 
   return (
-    <nav className="flex items-center space-x-2 text-xs text-slate-400 mb-6">
+    <nav className="flex items-center space-x-1.5 text-xs text-[#9CA3AF] mb-5">
       <Link
         to="/dashboard"
-        className="flex items-center gap-1 hover:text-slate-700 dark:hover:text-slate-200 transition-colors font-medium"
+        className="flex items-center gap-1 text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#1F2937] dark:hover:text-[#F3F4F6] transition-colors font-medium"
       >
-        <Home className="w-3.5 h-3.5" />
+        <Home className="w-3.5 h-3.5 text-[#9CA3AF]" />
         <span>ChronaNexus</span>
       </Link>
 
@@ -28,15 +28,15 @@ export const Breadcrumb: React.FC = () => {
 
         return (
           <React.Fragment key={to}>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+            <ChevronRight className="w-3.5 h-3.5 text-[#9CA3AF]" />
             {isLast ? (
-              <span className="font-semibold text-blue-600 dark:text-blue-400">
+              <span className="font-semibold text-[#1F2937] dark:text-[#F3F4F6]">
                 {formatPath(value)}
               </span>
             ) : (
               <Link
                 to={to}
-                className="hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+                className="text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#1F2937] dark:hover:text-[#F3F4F6] transition-colors"
               >
                 {formatPath(value)}
               </Link>

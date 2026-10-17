@@ -12,14 +12,18 @@ export interface SummaryCardProps {
 
 export const SummaryCard: React.FC<SummaryCardProps> = ({ title, icon, badgeText, children, className }) => {
   return (
-    <Card className={cn('p-6 space-y-4 border-slate-200 dark:border-slate-800', className)}>
-      <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800/80">
+    <Card className={cn('p-5 space-y-3.5 border-[#E5E7EB] dark:border-[#2F3540] bg-white dark:bg-[#1B1E23]', className)}>
+      <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB]/80 dark:border-[#2F3540]">
         <div className="flex items-center space-x-2.5">
-          {icon && <div className="p-2 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400">{icon}</div>}
-          <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">{title}</h3>
+          {icon && (
+            <div className="p-1.5 rounded-xl bg-[#F3F1ED] dark:bg-[#23272E] text-[#10B981]">
+              {icon}
+            </div>
+          )}
+          <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6]">{title}</h3>
         </div>
         {badgeText && (
-          <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400">
+          <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#F3F1ED] dark:bg-[#23272E] text-[#6B7280] dark:text-[#9CA3AF] border border-[#E5E7EB] dark:border-[#2F3540]">
             {badgeText}
           </span>
         )}

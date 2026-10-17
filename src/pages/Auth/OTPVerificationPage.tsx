@@ -29,7 +29,7 @@ export const OTPVerificationPage: React.FC = () => {
       setIsVerifying(false);
       addToast({
         type: 'success',
-        title: 'Identity Verified!',
+        title: 'Identity Verified',
         message: 'Your ChronaNexus patient vault is now active.',
       });
       navigate('/dashboard');
@@ -37,22 +37,22 @@ export const OTPVerificationPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 text-center">
-      <div className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto">
+    <div className="space-y-5 text-center">
+      <div className="w-11 h-11 rounded-2xl bg-[#ECFDF5] dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 text-[#10B981] flex items-center justify-center mx-auto">
         <ShieldCheck className="w-6 h-6" />
       </div>
 
-      <div className="space-y-2">
-        <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+      <div className="space-y-1">
+        <h2 className="text-xl font-semibold tracking-tight text-[#1F2937] dark:text-[#F3F4F6]">
           Enter 6-Digit Security PIN
         </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+        <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] max-w-xs mx-auto">
           We sent a verification code to your registered mobile device.
         </p>
       </div>
 
       {/* 6-Digit Input Boxes */}
-      <div className="flex justify-center space-x-2 py-4">
+      <div className="flex justify-center space-x-2 py-3">
         {otp.map((digit, idx) => (
           <input
             key={idx}
@@ -61,7 +61,7 @@ export const OTPVerificationPage: React.FC = () => {
             maxLength={1}
             value={digit}
             onChange={(e) => handleOtpChange(e.target.value, idx)}
-            className="w-11 h-12 text-center text-lg font-bold rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/50 focus:outline-none transition-all"
+            className="w-10 sm:w-11 h-12 text-center text-lg font-semibold rounded-xl border border-[#E5E7EB] dark:border-[#2F3540] bg-white dark:bg-[#1B1E23] text-[#1F2937] dark:text-[#F3F4F6] focus:border-[#10B981] focus:ring-2 focus:ring-emerald-500/15 focus:outline-none transition-all tabular-nums"
           />
         ))}
       </div>
@@ -77,14 +77,14 @@ export const OTPVerificationPage: React.FC = () => {
         Verify & Access Vault
       </Button>
 
-      <div className="flex items-center justify-center gap-2 text-xs text-slate-500">
+      <div className="flex items-center justify-center gap-1.5 text-xs text-[#6B7280] dark:text-[#9CA3AF] pt-1">
         <span>Didn't receive code?</span>
         <button
           type="button"
-          onClick={() => addToast({ type: 'info', title: 'New OTP Sent', message: 'Check your mobile SMS.' })}
-          className="font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+          onClick={() => addToast({ type: 'info', title: 'New OTP Sent', message: 'Check your mobile device.' })}
+          className="font-medium text-[#10B981] hover:underline flex items-center gap-1"
         >
-          <RotateCcw className="w-3.5 h-3.5" /> Resend Code
+          <RotateCcw className="w-3 h-3" /> Resend Code
         </button>
       </div>
     </div>

@@ -71,7 +71,7 @@ class StructuredRetriever:
                         "status": r.status,
                         "hospital": r.hospital_name
                     },
-                    relevance_score=0.98 if r.status in ["high", "low", "critical"] else 0.92
+                    relevance_score=0.96 if r.status in ["high", "low", "critical"] else 0.95
                 ))
 
             return results[:limit]

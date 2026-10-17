@@ -17,29 +17,29 @@ export interface TableProps<T> {
 
 export function Table<T>({ columns, data, keyExtractor, onRowClick, className }: TableProps<T>) {
   return (
-    <div className={cn('w-full overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800', className)}>
+    <div className={cn('w-full overflow-x-auto rounded-2xl border border-[#E5E7EB] dark:border-[#2F3540] bg-white dark:bg-[#1B1E23]', className)}>
       <table className="w-full text-left text-sm border-collapse">
-        <thead className="bg-slate-100/70 dark:bg-slate-800/60 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+        <thead className="bg-[#F3F1ED]/70 dark:bg-[#23272E] text-xs font-medium text-[#6B7280] dark:text-[#9CA3AF]">
           <tr>
             {columns.map((col, idx) => (
-              <th key={idx} className={cn('py-3.5 px-4', col.className)}>
+              <th key={idx} className={cn('py-3 px-4 font-medium', col.className)}>
                 {col.header}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-slate-100 dark:divide-slate-800/80 bg-white/60 dark:bg-[#131B2E]/60">
+        <tbody className="divide-y divide-[#E5E7EB]/70 dark:divide-[#2F3540] bg-white dark:bg-[#1B1E23]">
           {data.map((row) => (
             <tr
               key={keyExtractor(row)}
               onClick={() => onRowClick && onRowClick(row)}
               className={cn(
                 'transition-colors duration-150',
-                onRowClick && 'cursor-pointer hover:bg-slate-50/80 dark:hover:bg-slate-800/40'
+                onRowClick && 'cursor-pointer hover:bg-[#FAF8F5] dark:hover:bg-[#23272E]/50'
               )}
             >
               {columns.map((col, idx) => (
-                <td key={idx} className={cn('py-3.5 px-4 text-slate-700 dark:text-slate-200', col.className)}>
+                <td key={idx} className={cn('py-3.5 px-4 text-[#1F2937] dark:text-[#F3F4F6]', col.className)}>
                   {typeof col.accessor === 'function'
                     ? col.accessor(row)
                     : (row[col.accessor] as unknown as React.ReactNode)}

@@ -41,41 +41,41 @@ export const TopBar: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-30 h-16 w-full glass-panel border-b border-slate-200 dark:border-slate-800/80 px-4 sm:px-6 flex items-center justify-between gap-3">
-      {/* Mobile hamburger — hidden on lg+ since sidebar has its own toggle */}
+    <header className="sticky top-0 z-30 h-14 w-full bg-[#FAF8F5]/90 dark:bg-[#121417]/90 backdrop-blur-md border-b border-[#E5E7EB] dark:border-[#2F3540] px-4 sm:px-6 flex items-center justify-between gap-3">
+      {/* Mobile hamburger */}
       <button
         onClick={toggleSidebar}
         aria-label="Toggle navigation menu"
-        className="lg:hidden p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors shrink-0"
+        className="lg:hidden p-1.5 rounded-xl text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F3F1ED] dark:text-[#9CA3AF] dark:hover:text-[#F3F4F6] dark:hover:bg-[#23272E] transition-colors shrink-0"
       >
         <Menu className="w-5 h-5" />
       </button>
 
-      {/* Search trigger */}
-      <div className="flex items-center space-x-4 flex-1 max-w-md">
+      {/* Global search trigger */}
+      <div className="flex items-center space-x-3 flex-1 max-w-md">
         <button
           onClick={() => setSearchOpen(true)}
           aria-label="Open global search"
-          className="w-full flex items-center justify-between px-4 py-2.5 rounded-2xl bg-slate-100/80 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-700/50 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-all text-xs font-medium group"
+          className="w-full flex items-center justify-between px-3.5 py-1.5 rounded-xl bg-white dark:bg-[#1B1E23] border border-[#E5E7EB] dark:border-[#2F3540] text-[#9CA3AF] hover:text-[#1F2937] dark:hover:text-[#F3F4F6] hover:border-[#D1D5DB] transition-all text-xs font-normal group shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]"
         >
           <span className="flex items-center gap-2">
-            <SearchIcon className="w-4 h-4 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform" />
-            <span>Search patient memory (Cmd + K)...</span>
+            <SearchIcon className="w-3.5 h-3.5 text-[#9CA3AF] group-hover:text-[#10B981] transition-colors" />
+            <span>Search patient records, labs, reports...</span>
           </span>
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-mono bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-md text-slate-500">
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono bg-[#F3F1ED] dark:bg-[#23272E] border border-[#E5E7EB] dark:border-[#2F3540] rounded text-[#6B7280] dark:text-[#9CA3AF]">
             ⌘K
           </kbd>
         </button>
       </div>
 
       {/* Right Controls */}
-      <div className="flex items-center space-x-3">
+      <div className="flex items-center space-x-2">
         {/* Upload Button */}
         <button
           onClick={() => setUploadModalOpen(true)}
-          className="hidden sm:inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-md shadow-blue-500/20 transition-all active:scale-95"
+          className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#10B981] hover:bg-[#059669] text-white text-xs font-medium shadow-sm transition-all active:scale-95"
         >
-          <Upload className="w-4 h-4" />
+          <Upload className="w-3.5 h-3.5" />
           <span>Upload Record</span>
         </button>
 
@@ -87,41 +87,44 @@ export const TopBar: React.FC = () => {
               setProfileOpen(false);
               setThemeMenuOpen(false);
             }}
-            className="relative p-2.5 rounded-2xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="relative p-2 rounded-xl text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F3F1ED] dark:text-[#9CA3AF] dark:hover:text-[#F3F4F6] dark:hover:bg-[#23272E] transition-colors"
+            aria-label="View notifications"
           >
-            <Bell className="w-5 h-5" />
+            <Bell className="w-4 h-4" />
             {unreadCount > 0 && (
-              <span className="absolute top-2 right-2 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white dark:ring-slate-900 animate-pulse" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#B91C1C] rounded-full ring-2 ring-white dark:ring-[#121417]" />
             )}
           </button>
 
           <AnimatePresence>
             {notifOpen && (
               <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                initial={{ opacity: 0, y: 6, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="absolute right-0 mt-2 w-80 glass-card border border-slate-200 dark:border-slate-800 p-4 shadow-2xl z-50 space-y-3"
+                exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 mt-2 w-80 rounded-2xl bg-white dark:bg-[#1B1E23] border border-[#E5E7EB] dark:border-[#2F3540] shadow-xl p-3 z-50 space-y-2"
               >
-                <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-                  <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Notifications</h4>
-                  <Badge variant="default">{unreadCount} New</Badge>
+                <div className="flex items-center justify-between pb-2 border-b border-[#E5E7EB] dark:border-[#2F3540]">
+                  <span className="text-xs font-semibold text-[#1F2937] dark:text-[#F3F4F6]">Notifications</span>
+                  {unreadCount > 0 && (
+                    <Badge variant="success" className="text-[10px] py-0 px-1.5">
+                      {unreadCount} new
+                    </Badge>
+                  )}
                 </div>
-                <div className="space-y-2 max-h-64 overflow-y-auto">
+
+                <div className="space-y-1.5 max-h-60 overflow-y-auto">
                   {MOCK_NOTIFICATIONS.map((n) => (
                     <div
                       key={n.id}
-                      onClick={() => {
-                        if (n.actionUrl) navigate(n.actionUrl);
-                        setNotifOpen(false);
-                      }}
-                      className="p-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800/60 cursor-pointer transition-colors space-y-1"
+                      className="p-2.5 rounded-xl hover:bg-[#FAF8F5] dark:hover:bg-[#23272E] transition-colors text-xs space-y-1 border border-transparent hover:border-[#E5E7EB] dark:hover:border-[#2F3540]"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-900 dark:text-slate-100">{n.title}</span>
-                        <span className="text-[10px] text-slate-400">{n.timestamp}</span>
+                        <span className="font-medium text-[#1F2937] dark:text-[#F3F4F6] truncate">{n.title}</span>
+                        <span className="text-[10px] text-[#9CA3AF] tabular-nums shrink-0">{n.timestamp}</span>
                       </div>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-2">{n.message}</p>
+                      <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] line-clamp-2 leading-relaxed">{n.message}</p>
                     </div>
                   ))}
                 </div>
@@ -130,7 +133,7 @@ export const TopBar: React.FC = () => {
           </AnimatePresence>
         </div>
 
-        {/* Theme Selector */}
+        {/* Theme Picker Dropdown */}
         <div className="relative">
           <button
             onClick={() => {
@@ -138,23 +141,25 @@ export const TopBar: React.FC = () => {
               setNotifOpen(false);
               setProfileOpen(false);
             }}
-            className="p-2.5 rounded-2xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-xl text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F3F1ED] dark:text-[#9CA3AF] dark:hover:text-[#F3F4F6] dark:hover:bg-[#23272E] transition-colors"
+            aria-label="Change interface theme"
           >
-            {theme === 'dark' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+            {theme === 'dark' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
           </button>
 
           <AnimatePresence>
             {themeMenuOpen && (
               <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                initial={{ opacity: 0, y: 6, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="absolute right-0 mt-2 w-40 glass-card border border-slate-200 dark:border-slate-800 p-2 shadow-2xl z-50 space-y-1"
+                exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 mt-2 w-36 rounded-2xl bg-white dark:bg-[#1B1E23] border border-[#E5E7EB] dark:border-[#2F3540] shadow-xl p-1.5 z-50 space-y-0.5 text-xs font-medium"
               >
                 {[
-                  { id: 'light', label: 'Light', icon: <Sun className="w-4 h-4" /> },
-                  { id: 'dark', label: 'Dark', icon: <Moon className="w-4 h-4" /> },
-                  { id: 'system', label: 'System', icon: <Laptop className="w-4 h-4" /> },
+                  { id: 'light', label: 'Light', icon: <Sun className="w-3.5 h-3.5" /> },
+                  { id: 'dark', label: 'Dark', icon: <Moon className="w-3.5 h-3.5" /> },
+                  { id: 'system', label: 'System', icon: <Laptop className="w-3.5 h-3.5" /> },
                 ].map((item) => (
                   <button
                     key={item.id}
@@ -162,16 +167,12 @@ export const TopBar: React.FC = () => {
                       setTheme(item.id as 'light' | 'dark' | 'system');
                       setThemeMenuOpen(false);
                     }}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors ${
-                      theme === item.id
-                        ? 'bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold'
-                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-                    }`}
+                    className="w-full flex items-center justify-between px-2.5 py-1.5 rounded-xl hover:bg-[#FAF8F5] dark:hover:bg-[#23272E] text-[#1F2937] dark:text-[#F3F4F6] transition-colors"
                   >
                     <span className="flex items-center gap-2">
                       {item.icon} {item.label}
                     </span>
-                    {theme === item.id && <Check className="w-3.5 h-3.5" />}
+                    {theme === item.id && <Check className="w-3.5 h-3.5 text-[#10B981]" />}
                   </button>
                 ))}
               </motion.div>
@@ -179,7 +180,7 @@ export const TopBar: React.FC = () => {
           </AnimatePresence>
         </div>
 
-        {/* Profile Dropdown */}
+        {/* User Profile Dropdown */}
         <div className="relative">
           <button
             onClick={() => {
@@ -187,62 +188,65 @@ export const TopBar: React.FC = () => {
               setNotifOpen(false);
               setThemeMenuOpen(false);
             }}
-            className="flex items-center space-x-2 p-1.5 rounded-2xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="flex items-center space-x-2 p-1 pl-1.5 pr-2 rounded-xl hover:bg-[#F3F1ED] dark:hover:bg-[#23272E] transition-colors"
+            aria-label="User menu"
           >
             <Avatar src={user?.avatarUrl} name={user?.name || 'Alex Vance'} size="sm" />
-            <span className="hidden md:inline-block text-xs font-semibold text-slate-800 dark:text-slate-200">
+            <span className="hidden md:block text-xs font-medium text-[#1F2937] dark:text-[#F3F4F6] max-w-[100px] truncate">
               {user?.name || 'Alex Vance'}
             </span>
-            <ChevronDown className="w-4 h-4 text-slate-400" />
+            <ChevronDown className="w-3.5 h-3.5 text-[#9CA3AF]" />
           </button>
 
           <AnimatePresence>
             {profileOpen && (
               <motion.div
-                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                initial={{ opacity: 0, y: 6, scale: 0.98 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                className="absolute right-0 mt-2 w-56 glass-card border border-slate-200 dark:border-slate-800 p-2 shadow-2xl z-50 space-y-1"
+                exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 mt-2 w-52 rounded-2xl bg-white dark:bg-[#1B1E23] border border-[#E5E7EB] dark:border-[#2F3540] shadow-xl p-2 z-50 space-y-1 text-xs"
               >
-                <div className="p-2 border-b border-slate-100 dark:border-slate-800">
-                  <p className="text-xs font-bold text-slate-900 dark:text-slate-100">{user?.name || 'Alex Vance'}</p>
-                  <p className="text-[11px] text-slate-400 truncate">{user?.email || 'alex.vance@example.com'}</p>
-                  <div className="mt-2 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-[10px] font-semibold border border-emerald-200 dark:border-emerald-800/40">
-                    <ShieldCheck className="w-3 h-3" /> Isolated Patient Vault
+                <div className="px-2.5 py-2 border-b border-[#E5E7EB] dark:border-[#2F3540]">
+                  <p className="font-semibold text-[#1F2937] dark:text-[#F3F4F6] truncate">{user?.name || 'Alex Vance'}</p>
+                  <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] truncate font-mono">{user?.email || 'patient@chronanexus.app'}</p>
+                  <div className="mt-1 flex items-center gap-1 text-[10px] text-[#15803D]">
+                    <ShieldCheck className="w-3 h-3" />
+                    <span>Memory Synced</span>
                   </div>
                 </div>
 
                 <button
                   onClick={() => {
-                    navigate('/profile');
                     setProfileOpen(false);
+                    navigate('/profile');
                   }}
-                  className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="w-full flex items-center space-x-2.5 px-2.5 py-2 rounded-xl hover:bg-[#FAF8F5] dark:hover:bg-[#23272E] text-[#1F2937] dark:text-[#F3F4F6] transition-colors"
                 >
-                  <User className="w-4 h-4 text-blue-500" />
-                  <span>My Health Profile</span>
+                  <User className="w-3.5 h-3.5 text-[#6B7280] dark:text-[#9CA3AF]" />
+                  <span>My Profile</span>
                 </button>
 
                 <button
                   onClick={() => {
-                    navigate('/settings');
                     setProfileOpen(false);
+                    navigate('/settings');
                   }}
-                  className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  className="w-full flex items-center space-x-2.5 px-2.5 py-2 rounded-xl hover:bg-[#FAF8F5] dark:hover:bg-[#23272E] text-[#1F2937] dark:text-[#F3F4F6] transition-colors"
                 >
-                  <Settings className="w-4 h-4 text-purple-500" />
-                  <span>Account Settings</span>
+                  <Settings className="w-3.5 h-3.5 text-[#6B7280] dark:text-[#9CA3AF]" />
+                  <span>Settings & Privacy</span>
                 </button>
 
-                <div className="pt-1 border-t border-slate-100 dark:border-slate-800">
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl text-xs font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Log Out</span>
-                  </button>
-                </div>
+                <div className="border-t border-[#E5E7EB] dark:border-[#2F3540] my-1" />
+
+                <button
+                  onClick={handleLogout}
+                  className="w-full flex items-center space-x-2.5 px-2.5 py-2 rounded-xl text-[#B91C1C] hover:bg-[#FEF2F2] dark:hover:bg-rose-950/30 transition-colors font-medium"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Log Out</span>
+                </button>
               </motion.div>
             )}
           </AnimatePresence>

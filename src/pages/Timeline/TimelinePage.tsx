@@ -1,16 +1,24 @@
 import React, { useEffect, useState } from 'react';
-
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { timelineService } from '@/services/timeline.service';
 import { MOCK_TIMELINE_EVENTS } from '@/constants/mockData';
 import type { TimelineEvent } from '@/types';
-import { TimelineCard } from '@/components/cards/TimelineCard';
 import { Modal } from '@/components/ui/Modal';
-import { GitCommit, Filter, FileText } from 'lucide-react';
+import {
+  GitCommit,
+  Filter,
+  FileText,
+  Building2,
+  Activity,
+  Pill,
+  ChevronRight,
+  Stethoscope
+} from 'lucide-react';
 
 export const TimelinePage: React.FC = () => {
   const [selectedType, setSelectedType] = useState<string>('all');
+  const [selectedYear, setSelectedYear] = useState<string>('all');
   const [selectedEvent, setSelectedEvent] = useState<TimelineEvent | null>(null);
   const [events, setEvents] = useState<TimelineEvent[]>([]);
 
@@ -29,56 +37,113 @@ export const TimelinePage: React.FC = () => {
       }
     };
     fetchTimeline();
-    return () => { isMounted = false; };
+    return () => {
+      isMounted = false;
+    };
   }, [selectedType]);
 
   const eventTypes = [
-    { id: 'all', label: 'All Events' },
+    { id: 'all', label: 'All Categories' },
     { id: 'diagnosis', label: 'Diagnoses' },
-    { id: 'medication_start', label: 'Medication Changes' },
+    { id: 'medication_start', label: 'Medications' },
     { id: 'lab_test', label: 'Lab Tests' },
     { id: 'imaging', label: 'Imaging / MRI' },
-    { id: 'hospital_visit', label: 'Hospital Visits' },
+    { id: 'hospital_visit', label: 'Consultations' },
   ];
 
   const filteredEvents = events.filter((e) => {
-    if (selectedType === 'all') return true;
-    if (selectedType === 'medication_start') return e.type === 'medication_start' || e.type === 'medication_stop';
-    return e.type === selectedType;
+    const matchesType =
+      selectedType === 'all'
+        ? true
+        : selectedType === 'medication_start'
+        ? e.type === 'medication_start' || e.type === 'medication_stop'
+        : e.type === selectedType;
+    const matchesYear = selectedYear === 'all' || e.year.toString() === selectedYear;
+    return matchesType && matchesYear;
   });
 
-  // Group events by Year
-  const years = Array.from(new Set(filteredEvents.map((e) => e.year))).sort((a, b) => b - a);
+  const availableYears = Array.from(new Set(events.map((e) => e.year))).sort((a, b) => b - a);
+  const displayedYears = Array.from(new Set(filteredEvents.map((e) => e.year))).sort((a, b) => b - a);
+
+  const getEventIcon = (type: string) => {
+    switch (type) {
+      case 'diagnosis':
+        return <Activity className="w-4 h-4 text-[#B91C1C]" />;
+      case 'medication_start':
+      case 'medication_stop':
+        return <Pill className="w-4 h-4 text-[#10B981]" />;
+      case 'hospital_visit':
+        return <Stethoscope className="w-4 h-4 text-[#2563EB]" />;
+      default:
+        return <FileText className="w-4 h-4 text-[#4B5563]" />;
+    }
+  };
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-6 sm:space-y-8 pb-12">
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <GitCommit className="w-6 h-6 text-purple-500" /> Longitudinal Medical Timeline
+          <h1 className="text-xl sm:text-2xl font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
+            <GitCommit className="w-5 h-5 text-[#10B981]" /> Longitudinal Medical Timeline
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400">
-            Automatically constructed timeline of diagnoses, surgeries, medications, and clinical events (2019 - 2026).
+          <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">
+            Chronological record of diagnoses, transitions, prescriptions, and clinical encounters (2019 - 2026).
           </p>
         </div>
 
         <div className="flex items-center space-x-2">
-          <Badge variant="success">Auto-Reasoning Connected</Badge>
+          <Badge variant="success">Auto-Constructed Trajectory</Badge>
+          <span className="text-xs text-[#6B7280] dark:text-[#9CA3AF] font-mono tabular-nums">
+            {filteredEvents.length} milestones
+          </span>
         </div>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="glass-card p-3 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center space-x-2 overflow-x-auto">
-        <Filter className="w-4 h-4 text-slate-400 ml-2 shrink-0" />
+      {/* Year Scrubber / Fast Jump Strip */}
+      <div className="bg-white dark:bg-[#1B1E23] p-3 rounded-2xl border border-[#E5E7EB] dark:border-[#2F3540] shadow-[0_1px_2px_0_rgba(0,0,0,0.02)] space-y-3">
+        <div className="flex items-center justify-between text-xs text-[#6B7280] dark:text-[#9CA3AF] px-1">
+          <span className="font-semibold uppercase tracking-wider text-[10px] text-[#9CA3AF]">Timeline Year Scrubber</span>
+          <span>Jump to historical period</span>
+        </div>
+        <div className="flex items-center gap-2 overflow-x-auto pb-1">
+          <button
+            onClick={() => setSelectedYear('all')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors ${
+              selectedYear === 'all'
+                ? 'bg-[#1F2937] text-white dark:bg-[#10B981] dark:text-white shadow-sm'
+                : 'bg-[#FAF8F5] dark:bg-[#23272E] text-[#6B7280] dark:text-[#9CA3AF] hover:bg-[#F3F1ED] dark:hover:bg-[#2D323B]'
+            }`}
+          >
+            All Years (2019-2026)
+          </button>
+          {availableYears.map((yr) => (
+            <button
+              key={yr}
+              onClick={() => setSelectedYear(yr.toString())}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-mono font-medium whitespace-nowrap transition-colors tabular-nums ${
+                selectedYear === yr.toString()
+                  ? 'bg-[#10B981] text-white shadow-sm font-semibold'
+                  : 'bg-[#FAF8F5] dark:bg-[#23272E] text-[#6B7280] dark:text-[#9CA3AF] hover:bg-[#F3F1ED] dark:hover:bg-[#2D323B]'
+              }`}
+            >
+              {yr}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Filter Tabs Strip */}
+      <div className="bg-white dark:bg-[#1B1E23] p-2 sm:p-2.5 rounded-2xl border border-[#E5E7EB] dark:border-[#2F3540] flex items-center space-x-1.5 overflow-x-auto shadow-[0_1px_2px_0_rgba(0,0,0,0.02)]">
+        <Filter className="w-3.5 h-3.5 text-[#9CA3AF] ml-2 shrink-0" />
         {eventTypes.map((t) => (
           <button
             key={t.id}
             onClick={() => setSelectedType(t.id)}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors ${
               selectedType === t.id
-                ? 'bg-purple-600 text-white shadow-md shadow-purple-500/20'
-                : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                ? 'bg-[#1F2937] text-white dark:bg-[#10B981] dark:text-white shadow-sm'
+                : 'text-[#6B7280] dark:text-[#9CA3AF] hover:bg-[#F3F1ED] dark:hover:bg-[#23272E]'
             }`}
           >
             {t.label}
@@ -86,34 +151,84 @@ export const TimelinePage: React.FC = () => {
         ))}
       </div>
 
-      {/* Vertical Interactive Longitudinal Timeline */}
-      <div className="relative pl-6 sm:pl-10 space-y-12 border-l-2 border-purple-500/30 dark:border-purple-500/20 ml-4 sm:ml-6">
-        {years.map((yr) => {
-          const eventsInYr = filteredEvents.filter((e) => e.year === yr);
-          return (
-            <div key={yr} className="space-y-6 relative">
-              {/* Year Marker Pill */}
-              <div className="absolute -left-[31px] sm:-left-[47px] top-0 flex items-center space-x-3">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-purple-600 text-white font-extrabold text-xs sm:text-sm flex items-center justify-center shadow-lg ring-4 ring-slate-50 dark:ring-[#0B0F19]">
-                  {yr}
+      {/* Vertical Longitudinal Timeline Stream */}
+      {displayedYears.length === 0 ? (
+        <div className="p-12 text-center bg-white dark:bg-[#1B1E23] rounded-2xl border border-[#E5E7EB] dark:border-[#2F3540] space-y-3">
+          <GitCommit className="w-8 h-8 text-[#9CA3AF] mx-auto opacity-50" />
+          <h3 className="text-base font-semibold text-[#1F2937] dark:text-[#F3F4F6]">No Milestones Found</h3>
+          <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+            No clinical records matched the selected year and category filters.
+          </p>
+          <Button variant="secondary" size="sm" onClick={() => { setSelectedType('all'); setSelectedYear('all'); }}>
+            Reset Filters
+          </Button>
+        </div>
+      ) : (
+        <div className="relative pl-6 sm:pl-10 space-y-12 border-l-2 border-[#E5E7EB] dark:border-[#2F3540] ml-4 sm:ml-6">
+          {displayedYears.map((yr) => {
+            const eventsInYr = filteredEvents.filter((e) => e.year === yr);
+            return (
+              <div key={yr} className="space-y-4 relative">
+                {/* Year Marker Badge */}
+                <div className="absolute -left-[31px] sm:-left-[47px] top-0 flex items-center space-x-3">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white dark:bg-[#1B1E23] border-2 border-[#10B981] text-[#1F2937] dark:text-[#F3F4F6] font-semibold text-xs sm:text-sm flex items-center justify-center shadow-sm tabular-nums ring-4 ring-[#FAF8F5] dark:ring-[#121417]">
+                    {yr}
+                  </div>
+                </div>
+
+                <div className="pt-1 pl-3 sm:pl-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-semibold text-[#6B7280] dark:text-[#9CA3AF] tracking-wider uppercase tabular-nums">
+                      {yr} Clinical Records ({eventsInYr.length})
+                    </span>
+                  </div>
+
+                  <div className="space-y-3">
+                    {eventsInYr.map((event) => (
+                      <div
+                        key={event.id}
+                        onClick={() => setSelectedEvent(event)}
+                        className="p-4 sm:p-5 rounded-2xl bg-white dark:bg-[#1B1E23] border border-[#E5E7EB] dark:border-[#2F3540] hover:border-[#10B981]/50 cursor-pointer transition-all shadow-[0_1px_2px_0_rgba(0,0,0,0.02)] group flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      >
+                        <div className="flex items-start gap-3.5 min-w-0">
+                          <div className="p-2.5 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E] border border-[#E5E7EB] dark:border-[#2F3540] shrink-0 mt-0.5">
+                            {getEventIcon(event.type)}
+                          </div>
+                          <div className="min-w-0 space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="text-xs font-mono font-semibold text-[#10B981] tabular-nums">
+                                {event.date}
+                              </span>
+                              <Badge variant="secondary" className="text-[10px] py-0">{event.type.replace('_', ' ')}</Badge>
+                              {event.facility && (
+                                <span className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] flex items-center gap-1">
+                                  <Building2 className="w-3 h-3" /> {event.facility}
+                                </span>
+                              )}
+                            </div>
+                            <h4 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] group-hover:text-[#10B981] transition-colors">
+                              {event.title}
+                            </h4>
+                            <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] leading-relaxed line-clamp-2">
+                              {event.description}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                          <span className="text-xs text-[#10B981] font-medium hidden sm:inline-flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                            Clinical Context <ChevronRight className="w-3.5 h-3.5" />
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
-
-              <div className="pt-1.5 pl-4 sm:pl-6 space-y-4">
-                <span className="text-xs font-bold text-purple-600 dark:text-purple-400 tracking-wider uppercase">
-                  {yr} Milestones ({eventsInYr.length})
-                </span>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {eventsInYr.map((event) => (
-                    <TimelineCard key={event.id} event={event} onSelect={(e) => setSelectedEvent(e)} />
-                  ))}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
 
       {/* Event Inspection Modal */}
       {selectedEvent && (
@@ -121,17 +236,21 @@ export const TimelinePage: React.FC = () => {
           isOpen={!!selectedEvent}
           onClose={() => setSelectedEvent(null)}
           title={selectedEvent.title}
-          description={`Logged Date: ${selectedEvent.date} • Facility: ${selectedEvent.facility || 'Verified Health Record'}`}
+          description={`Recorded: ${selectedEvent.date} • Facility: ${selectedEvent.facility || 'Verified Health Record'}`}
         >
-          <div className="space-y-4 pt-2">
-            <div className="p-4 rounded-2xl bg-purple-50/40 dark:bg-purple-950/20 border border-purple-200/50 dark:border-purple-800/40 space-y-2">
-              <span className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase">Milestone Context</span>
-              <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">{selectedEvent.description}</p>
+          <div className="space-y-4 pt-1">
+            <div className="p-4 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540] space-y-1.5">
+              <span className="text-[10px] font-semibold text-[#6B7280] dark:text-[#9CA3AF] uppercase tracking-wider">
+                Clinical Context & Narrative
+              </span>
+              <p className="text-xs text-[#4B5563] dark:text-[#D1D5DB] leading-relaxed">{selectedEvent.description}</p>
             </div>
 
             {selectedEvent.connectedEntities && (
               <div className="space-y-2">
-                <span className="text-xs font-bold text-slate-400 uppercase">Connected Medical Entities</span>
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-[#6B7280] dark:text-[#9CA3AF]">
+                  Connected Clinical Entities
+                </span>
                 {selectedEvent.connectedEntities.diseases && (
                   <div className="flex flex-wrap gap-1.5">
                     {selectedEvent.connectedEntities.diseases.map((d, idx) => (
@@ -150,16 +269,16 @@ export const TimelinePage: React.FC = () => {
             )}
 
             {selectedEvent.sourceReportTitle && (
-              <div className="p-3 rounded-xl bg-slate-100 dark:bg-slate-800/60 flex items-center justify-between text-xs">
-                <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                  <FileText className="w-4 h-4 text-blue-500" /> {selectedEvent.sourceReportTitle}
+              <div className="p-3 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/60 border border-[#E5E7EB] dark:border-[#2F3540] flex items-center justify-between text-xs">
+                <span className="font-medium text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5 text-[#10B981]" /> {selectedEvent.sourceReportTitle}
                 </span>
-                <span className="text-blue-600 font-bold">Cited Record</span>
+                <span className="text-[#10B981] font-medium text-[11px]">Cited Record</span>
               </div>
             )}
 
             <Button variant="primary" className="w-full mt-2" onClick={() => setSelectedEvent(null)}>
-              Close Timeline Detail
+              Close
             </Button>
           </div>
         </Modal>

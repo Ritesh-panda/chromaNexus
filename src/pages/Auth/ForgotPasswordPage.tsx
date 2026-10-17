@@ -23,33 +23,33 @@ export const ForgotPasswordPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <Link to="/login" className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline">
-        <ArrowLeft className="w-4 h-4" /> Back to Sign In
+    <div className="space-y-5">
+      <Link to="/login" className="inline-flex items-center gap-1.5 text-xs font-medium text-[#10B981] hover:underline">
+        <ArrowLeft className="w-3.5 h-3.5" /> Back to Sign In
       </Link>
 
-      <div className="space-y-2">
-        <h2 className="text-2xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100">
+      <div className="space-y-1">
+        <h2 className="text-xl font-semibold tracking-tight text-[#1F2937] dark:text-[#F3F4F6]">
           Reset Your Password
         </h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
           Enter your registered email address to receive password reset instructions.
         </p>
       </div>
 
       {sent ? (
-        <div className="p-6 glass-card border border-emerald-200 dark:border-emerald-900/40 bg-emerald-50/20 text-center space-y-3 rounded-2xl">
-          <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
-          <h4 className="text-base font-bold text-slate-900 dark:text-slate-100">Check Your Inbox</h4>
-          <p className="text-xs text-slate-600 dark:text-slate-300">
-            We sent a password reset link to <strong className="text-slate-800 dark:text-slate-100">{email}</strong>.
+        <div className="p-6 bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540] text-center space-y-2.5 rounded-2xl">
+          <CheckCircle2 className="w-8 h-8 text-[#10B981] mx-auto" />
+          <h4 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6]">Check Your Inbox</h4>
+          <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+            We sent a password reset link to <strong className="text-[#1F2937] dark:text-[#F3F4F6]">{email}</strong>.
           </p>
-          <Button variant="outline" size="sm" onClick={() => setSent(false)} className="mt-2">
+          <Button variant="secondary" size="sm" onClick={() => setSent(false)} className="mt-2">
             Resend Email
           </Button>
         </div>
       ) : (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3.5">
           <Input
             label="Email Address"
             type="email"
@@ -60,7 +60,7 @@ export const ForgotPasswordPage: React.FC = () => {
             required
           />
 
-          <Button type="submit" variant="primary" size="lg" className="w-full" isLoading={isLoading}>
+          <Button type="submit" variant="primary" size="lg" className="w-full mt-1" isLoading={isLoading}>
             Send Reset Instructions
           </Button>
         </form>

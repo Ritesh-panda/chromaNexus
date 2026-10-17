@@ -25,21 +25,21 @@ export const ProfilePage: React.FC = () => {
   return (
     <div className="space-y-6 pb-12">
       <div>
-        <h1 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-          <User className="w-6 h-6 text-blue-500" /> Patient Medical Profile
+        <h1 className="text-xl sm:text-2xl font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
+          <User className="w-5 h-5 text-[#10B981]" /> Patient Medical Profile
         </h1>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">
           Personal identification, emergency contact, and baseline biometric data.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Card Summary */}
-        <Card className="p-6 text-center space-y-4 border-slate-200 dark:border-slate-800 h-fit">
+        <Card className="p-6 text-center space-y-4 border-[#E5E7EB] dark:border-[#2F3540] bg-white dark:bg-[#1B1E23] h-fit">
           <Avatar src={user?.avatarUrl} name={user?.name || 'Alex Vance'} size="xl" className="mx-auto" />
           <div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">{user?.name || 'Alex Vance'}</h3>
-            <p className="text-xs text-slate-400 font-mono">{user?.email}</p>
+            <h3 className="text-base font-semibold text-[#1F2937] dark:text-[#F3F4F6]">{user?.name || 'Alex Vance'}</h3>
+            <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] font-mono mt-0.5">{user?.email}</p>
           </div>
 
           <div className="flex justify-center gap-2">
@@ -47,23 +47,27 @@ export const ProfilePage: React.FC = () => {
             <Badge variant="success">Age: 38</Badge>
           </div>
 
-          <div className="pt-4 border-t border-slate-100 dark:border-slate-800 text-left text-xs space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">Height / Weight:</span>
-              <span className="font-semibold">{patient.heightCm} cm / {patient.weightKg} kg</span>
+          <div className="pt-4 border-t border-[#E5E7EB]/80 dark:border-[#2F3540] text-left text-xs space-y-2.5">
+            <div className="flex items-center justify-between text-[#6B7280] dark:text-[#9CA3AF]">
+              <span>Height / Weight:</span>
+              <span className="font-medium text-[#1F2937] dark:text-[#F3F4F6] tabular-nums">
+                {patient.heightCm} cm / {patient.weightKg} kg
+              </span>
             </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400">Primary Physician:</span>
-              <span className="font-semibold text-right">{patient.primaryCarePhysician}</span>
+            <div className="flex items-center justify-between text-[#6B7280] dark:text-[#9CA3AF]">
+              <span>Primary Physician:</span>
+              <span className="font-medium text-[#1F2937] dark:text-[#F3F4F6] text-right">
+                {patient.primaryCarePhysician}
+              </span>
             </div>
           </div>
         </Card>
 
         {/* Edit Details */}
-        <Card className="lg:col-span-2 p-6 border-slate-200 dark:border-slate-800 space-y-6">
-          <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">Personal Information</h3>
-            <p className="text-xs text-slate-500">Demographic info synced with your patient memory graph.</p>
+        <Card className="lg:col-span-2 p-6 border-[#E5E7EB] dark:border-[#2F3540] bg-white dark:bg-[#1B1E23] space-y-6">
+          <div className="border-b border-[#E5E7EB]/80 dark:border-[#2F3540] pb-3.5">
+            <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6]">Personal Information</h3>
+            <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">Demographic data synced with your patient memory graph.</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -73,9 +77,9 @@ export const ProfilePage: React.FC = () => {
             <Input label="Primary Care Physician" defaultValue={patient.primaryCarePhysician} />
           </div>
 
-          <div className="border-t border-slate-100 dark:border-slate-800 pt-4 space-y-4">
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <Phone className="w-4 h-4 text-rose-500" /> Emergency Contact Details
+          <div className="border-t border-[#E5E7EB]/80 dark:border-[#2F3540] pt-4 space-y-4">
+            <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
+              <Phone className="w-4 h-4 text-[#B91C1C]" /> Emergency Contact Details
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -85,7 +89,7 @@ export const ProfilePage: React.FC = () => {
             </div>
           </div>
 
-          <div className="border-t border-slate-100 dark:border-slate-800 pt-4 flex justify-end">
+          <div className="border-t border-[#E5E7EB]/80 dark:border-[#2F3540] pt-4 flex justify-end">
             <Button variant="primary" onClick={handleSave} leftIcon={<Save className="w-4 h-4" />}>
               Save Profile Changes
             </Button>

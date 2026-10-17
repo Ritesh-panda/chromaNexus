@@ -4,22 +4,22 @@ import { cn } from '@/utils/cn';
 import { Loader2 } from 'lucide-react';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center font-medium rounded-2xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98]',
+  'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 disabled:opacity-45 disabled:cursor-not-allowed select-none active:scale-[0.98]',
   {
     variants: {
       variant: {
-        primary: 'bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/20 focus:ring-blue-500',
-        secondary: 'bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-800 dark:hover:bg-slate-700 focus:ring-slate-700',
-        outline: 'border border-slate-200 dark:border-slate-800 bg-transparent text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/60 focus:ring-blue-500',
-        ghost: 'bg-transparent text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60 focus:ring-slate-400',
-        danger: 'bg-red-500 hover:bg-red-600 text-white shadow-md shadow-red-500/20 focus:ring-red-500',
-        success: 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-md shadow-emerald-500/20 focus:ring-emerald-500',
+        primary: 'bg-[#10B981] hover:bg-[#059669] text-white shadow-sm hover:shadow focus-visible:ring-emerald-500/25',
+        secondary: 'bg-white text-[#1F2937] border border-[#E5E7EB] hover:bg-[#F3F1ED] hover:border-[#D1D5DB] shadow-sm dark:bg-[#1B1E23] dark:text-[#F3F4F6] dark:border-[#2F3540] dark:hover:bg-[#23272E] focus-visible:ring-neutral-400',
+        outline: 'border border-[#E5E7EB] bg-transparent text-[#1F2937] hover:bg-[#FAF8F5] dark:border-[#2F3540] dark:text-[#F3F4F6] dark:hover:bg-[#23272E] focus-visible:ring-neutral-400',
+        ghost: 'bg-transparent text-[#6B7280] hover:text-[#1F2937] hover:bg-[#F3F1ED] dark:text-[#9CA3AF] dark:hover:text-[#F3F4F6] dark:hover:bg-[#23272E] focus-visible:ring-neutral-400',
+        danger: 'bg-[#B91C1C] hover:bg-[#991B1B] text-white shadow-sm focus-visible:ring-rose-500/25',
+        success: 'bg-[#15803D] hover:bg-[#166534] text-white shadow-sm focus-visible:ring-emerald-600/25',
       },
       size: {
         sm: 'h-8 px-3 text-xs gap-1.5',
-        md: 'h-10 px-4 text-sm gap-2',
-        lg: 'h-12 px-6 text-base gap-2.5',
-        icon: 'h-10 w-10 p-0 rounded-2xl',
+        md: 'h-9 px-4 text-xs sm:text-sm gap-2',
+        lg: 'h-11 px-5 text-sm sm:text-base gap-2.5',
+        icon: 'h-9 w-9 p-0 rounded-xl',
       },
     },
     defaultVariants: {
