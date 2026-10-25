@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from backend.app.core.database import get_db
 from backend.app.schemas.chat import (
-    ConversationResponse, ConversationCreate, MessageResponse, MessageCreate, CitationSchema
+    ConversationResponse, ConversationCreate, MessageResponse, MessageCreate, CitationSchema, StructuredTrendSchema
 )
 from backend.app.services.auth_service import get_current_patient
 from backend.app.services.chat_service import process_clinical_chat_query
@@ -113,12 +113,13 @@ def send_message(
     db.add(user_msg)
     db.flush()
 
-    # Process AI reasoning with conversation history and grounded citations
-    ai_text, reasoning_type, citations = process_clinical_chat_query(
+    # Process AI reasoning with conversation history, grounded citations, and structured trends (Phase 5)
+    ai_text, reasoning_type, citations, structured_trend = process_clinical_chat_query(
         db=db,
         patient=current_patient,
         query=msg_in.text,
-        conversation_history=recent_history
+        conversation_history=recent_history,
+        return_trend=True
     )
 
     ai_msg = ChatMessage(
@@ -141,5 +142,6 @@ def send_message(
         text=ai_msg.text,
         timestamp=ai_msg.timestamp,
         reasoningType=ai_msg.reasoning_type,
-        citations=[CitationSchema(**c) for c in raw_citations if isinstance(c, dict)]
+        citations=[CitationSchema(**c) for c in raw_citations if isinstance(c, dict)],
+        structuredTrend=StructuredTrendSchema(**structured_trend) if structured_trend else None
     )

@@ -1,0 +1,17 @@
+.git
+.gitignore
+.pytest_cache
+node_modules
+dist
+data/chroma_db
+chronanexus.db
+backend/chronanexus.db
+test_chronanexus.db
+tests/benchmarks/*.db
+*.log
+__pycache__
+*.pyc
+.env
+.env.local
+uploads/*
+!uploads/.gitkeep

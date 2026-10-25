@@ -39,3 +39,5 @@ class Patient(Base):
     timeline_events = relationship("TimelineEvent", back_populates="patient", cascade="all, delete-orphan")
     summaries = relationship("DoctorSummary", back_populates="patient", cascade="all, delete-orphan")
     conversations = relationship("ChatConversation", back_populates="patient", cascade="all, delete-orphan")
+    allergies = relationship("Allergy", back_populates="patient", cascade="all, delete-orphan")
+

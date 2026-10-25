@@ -1,0 +1,1628 @@
+{
+  "alembic_version": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "version_num",
+        "type": "VARCHAR(32)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": true
+      }
+    ],
+    "foreign_keys": [],
+    "indexes": [
+      {
+        "seq": 0,
+        "name": "sqlite_autoindex_alembic_version_1",
+        "unique": true,
+        "origin": "pk",
+        "partial": false
+      }
+    ],
+    "row_count": 1
+  },
+  "allergies": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": true
+      },
+      {
+        "cid": 1,
+        "name": "patient_id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 2,
+        "name": "allergen",
+        "type": "VARCHAR(255)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 3,
+        "name": "category",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 4,
+        "name": "severity",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 5,
+        "name": "reaction",
+        "type": "VARCHAR(255)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 6,
+        "name": "drug_classes",
+        "type": "JSON",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 7,
+        "name": "cross_reactivities",
+        "type": "JSON",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 8,
+        "name": "status",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 9,
+        "name": "source_report_id",
+        "type": "VARCHAR(36)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 10,
+        "name": "notes",
+        "type": "TEXT",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 11,
+        "name": "source_page_number",
+        "type": "INTEGER",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 12,
+        "name": "bounding_box",
+        "type": "JSON",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 13,
+        "name": "extraction_confidence",
+        "type": "FLOAT",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      }
+    ],
+    "foreign_keys": [
+      {
+        "id": 0,
+        "seq": 0,
+        "table": "patients",
+        "from": "patient_id",
+        "to": "id",
+        "on_update": "NO ACTION",
+        "on_delete": "CASCADE"
+      }
+    ],
+    "indexes": [
+      {
+        "seq": 0,
+        "name": "ix_allergies_patient_id",
+        "unique": false,
+        "origin": "c",
+        "partial": false
+      },
+      {
+        "seq": 1,
+        "name": "sqlite_autoindex_allergies_1",
+        "unique": true,
+        "origin": "pk",
+        "partial": false
+      }
+    ],
+    "row_count": 0
+  },
+  "chat_conversations": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": true
+      },
+      {
+        "cid": 1,
+        "name": "patient_id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 2,
+        "name": "title",
+        "type": "VARCHAR(255)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 3,
+        "name": "created_at",
+        "type": "DATETIME",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 4,
+        "name": "updated_at",
+        "type": "DATETIME",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      }
+    ],
+    "foreign_keys": [
+      {
+        "id": 0,
+        "seq": 0,
+        "table": "patients",
+        "from": "patient_id",
+        "to": "id",
+        "on_update": "NO ACTION",
+        "on_delete": "CASCADE"
+      }
+    ],
+    "indexes": [
+      {
+        "seq": 0,
+        "name": "ix_chat_conversations_patient_id",
+        "unique": false,
+        "origin": "c",
+        "partial": false
+      },
+      {
+        "seq": 1,
+        "name": "sqlite_autoindex_chat_conversations_1",
+        "unique": true,
+        "origin": "pk",
+        "partial": false
+      }
+    ],
+    "row_count": 1
+  },
+  "chat_messages": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": true
+      },
+      {
+        "cid": 1,
+        "name": "conversation_id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 2,
+        "name": "sender",
+        "type": "VARCHAR(20)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 3,
+        "name": "text",
+        "type": "TEXT",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 4,
+        "name": "timestamp",
+        "type": "VARCHAR(50)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 5,
+        "name": "reasoning_type",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 6,
+        "name": "citations",
+        "type": "JSON",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 7,
+        "name": "created_at",
+        "type": "DATETIME",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      }
+    ],
+    "foreign_keys": [
+      {
+        "id": 0,
+        "seq": 0,
+        "table": "chat_conversations",
+        "from": "conversation_id",
+        "to": "id",
+        "on_update": "NO ACTION",
+        "on_delete": "CASCADE"
+      }
+    ],
+    "indexes": [
+      {
+        "seq": 0,
+        "name": "ix_chat_messages_conversation_id",
+        "unique": false,
+        "origin": "c",
+        "partial": false
+      },
+      {
+        "seq": 1,
+        "name": "sqlite_autoindex_chat_messages_1",
+        "unique": true,
+        "origin": "pk",
+        "partial": false
+      }
+    ],
+    "row_count": 2
+  },
+  "diseases": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": true
+      },
+      {
+        "cid": 1,
+        "name": "patient_id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 2,
+        "name": "name",
+        "type": "VARCHAR(255)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 3,
+        "name": "icd_code",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 4,
+        "name": "status",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 5,
+        "name": "diagnosed_date",
+        "type": "VARCHAR(50)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 6,
+        "name": "resolved_date",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 7,
+        "name": "treating_doctor",
+        "type": "VARCHAR(255)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 8,
+        "name": "source_report_id",
+        "type": "VARCHAR(36)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 9,
+        "name": "notes",
+        "type": "TEXT",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      }
+    ],
+    "foreign_keys": [
+      {
+        "id": 0,
+        "seq": 0,
+        "table": "patients",
+        "from": "patient_id",
+        "to": "id",
+        "on_update": "NO ACTION",
+        "on_delete": "CASCADE"
+      }
+    ],
+    "indexes": [
+      {
+        "seq": 0,
+        "name": "ix_diseases_patient_id",
+        "unique": false,
+        "origin": "c",
+        "partial": false
+      },
+      {
+        "seq": 1,
+        "name": "sqlite_autoindex_diseases_1",
+        "unique": true,
+        "origin": "pk",
+        "partial": false
+      }
+    ],
+    "row_count": 5
+  },
+  "doctor_summaries": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": true
+      },
+      {
+        "cid": 1,
+        "name": "patient_id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 2,
+        "name": "patient_name",
+        "type": "VARCHAR(255)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 3,
+        "name": "age",
+        "type": "INTEGER",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 4,
+        "name": "gender",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 5,
+        "name": "generated_at",
+        "type": "DATETIME",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 6,
+        "name": "summary_overview",
+        "type": "TEXT",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 7,
+        "name": "current_diseases",
+        "type": "JSON",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 8,
+        "name": "past_diseases",
+        "type": "JSON",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 9,
+        "name": "active_medications",
+        "type": "JSON",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 10,
+        "name": "known_allergies",
+        "type": "JSON",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 11,
+        "name": "abnormal_labs",
+        "type": "JSON",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 12,
+        "name": "risk_factors",
+        "type": "JSON",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 13,
+        "name": "recent_reports",
+        "type": "JSON",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 14,
+        "name": "timeline_highlights",
+        "type": "JSON",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 15,
+        "name": "share_token",
+        "type": "VARCHAR(100)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      }
+    ],
+    "foreign_keys": [
+      {
+        "id": 0,
+        "seq": 0,
+        "table": "patients",
+        "from": "patient_id",
+        "to": "id",
+        "on_update": "NO ACTION",
+        "on_delete": "CASCADE"
+      }
+    ],
+    "indexes": [
+      {
+        "seq": 0,
+        "name": "ix_doctor_summaries_patient_id",
+        "unique": false,
+        "origin": "c",
+        "partial": false
+      },
+      {
+        "seq": 1,
+        "name": "ix_doctor_summaries_share_token",
+        "unique": true,
+        "origin": "c",
+        "partial": false
+      },
+      {
+        "seq": 2,
+        "name": "sqlite_autoindex_doctor_summaries_1",
+        "unique": true,
+        "origin": "pk",
+        "partial": false
+      }
+    ],
+    "row_count": 1
+  },
+  "document_chunks": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": true
+      },
+      {
+        "cid": 1,
+        "name": "document_id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 2,
+        "name": "patient_id",
+        "type": "VARCHAR(36)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 3,
+        "name": "chunk_id",
+        "type": "VARCHAR(100)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 4,
+        "name": "chunk_index",
+        "type": "INTEGER",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 5,
+        "name": "page_number",
+        "type": "INTEGER",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 6,
+        "name": "content",
+        "type": "TEXT",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 7,
+        "name": "embedding",
+        "type": "JSON",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 8,
+        "name": "chunk_metadata",
+        "type": "JSON",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 9,
+        "name": "created_at",
+        "type": "DATETIME",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      }
+    ],
+    "foreign_keys": [
+      {
+        "id": 0,
+        "seq": 0,
+        "table": "patients",
+        "from": "patient_id",
+        "to": "id",
+        "on_update": "NO ACTION",
+        "on_delete": "CASCADE"
+      },
+      {
+        "id": 1,
+        "seq": 0,
+        "table": "medical_reports",
+        "from": "document_id",
+        "to": "id",
+        "on_update": "NO ACTION",
+        "on_delete": "CASCADE"
+      }
+    ],
+    "indexes": [
+      {
+        "seq": 0,
+        "name": "ix_document_chunks_patient_id",
+        "unique": false,
+        "origin": "c",
+        "partial": false
+      },
+      {
+        "seq": 1,
+        "name": "ix_document_chunks_document_id",
+        "unique": false,
+        "origin": "c",
+        "partial": false
+      },
+      {
+        "seq": 2,
+        "name": "ix_document_chunks_chunk_id",
+        "unique": true,
+        "origin": "c",
+        "partial": false
+      },
+      {
+        "seq": 3,
+        "name": "sqlite_autoindex_document_chunks_1",
+        "unique": true,
+        "origin": "pk",
+        "partial": false
+      }
+    ],
+    "row_count": 33
+  },
+  "extracted_entities": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": true
+      },
+      {
+        "cid": 1,
+        "name": "report_id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 2,
+        "name": "category",
+        "type": "VARCHAR(50)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 3,
+        "name": "name",
+        "type": "VARCHAR(255)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 4,
+        "name": "confidence",
+        "type": "FLOAT",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 5,
+        "name": "value",
+        "type": "VARCHAR(100)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 6,
+        "name": "unit",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 7,
+        "name": "notes",
+        "type": "TEXT",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      }
+    ],
+    "foreign_keys": [
+      {
+        "id": 0,
+        "seq": 0,
+        "table": "medical_reports",
+        "from": "report_id",
+        "to": "id",
+        "on_update": "NO ACTION",
+        "on_delete": "CASCADE"
+      }
+    ],
+    "indexes": [
+      {
+        "seq": 0,
+        "name": "ix_extracted_entities_report_id",
+        "unique": false,
+        "origin": "c",
+        "partial": false
+      },
+      {
+        "seq": 1,
+        "name": "sqlite_autoindex_extracted_entities_1",
+        "unique": true,
+        "origin": "pk",
+        "partial": false
+      }
+    ],
+    "row_count": 21
+  },
+  "lab_results": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": true
+      },
+      {
+        "cid": 1,
+        "name": "patient_id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 2,
+        "name": "test_name",
+        "type": "VARCHAR(255)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 3,
+        "name": "category",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 4,
+        "name": "value",
+        "type": "VARCHAR(100)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 5,
+        "name": "unit",
+        "type": "VARCHAR(50)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 6,
+        "name": "reference_range",
+        "type": "VARCHAR(100)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 7,
+        "name": "status",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 8,
+        "name": "test_date",
+        "type": "VARCHAR(50)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 9,
+        "name": "source_report_id",
+        "type": "VARCHAR(36)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 10,
+        "name": "hospital_name",
+        "type": "VARCHAR(255)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      }
+    ],
+    "foreign_keys": [
+      {
+        "id": 0,
+        "seq": 0,
+        "table": "patients",
+        "from": "patient_id",
+        "to": "id",
+        "on_update": "NO ACTION",
+        "on_delete": "CASCADE"
+      }
+    ],
+    "indexes": [
+      {
+        "seq": 0,
+        "name": "ix_lab_results_patient_id",
+        "unique": false,
+        "origin": "c",
+        "partial": false
+      },
+      {
+        "seq": 1,
+        "name": "sqlite_autoindex_lab_results_1",
+        "unique": true,
+        "origin": "pk",
+        "partial": false
+      }
+    ],
+    "row_count": 6
+  },
+  "medical_reports": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": true
+      },
+      {
+        "cid": 1,
+        "name": "patient_id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 2,
+        "name": "title",
+        "type": "VARCHAR(255)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 3,
+        "name": "file_name",
+        "type": "VARCHAR(255)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 4,
+        "name": "file_size",
+        "type": "INTEGER",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 5,
+        "name": "file_type",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 6,
+        "name": "category",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 7,
+        "name": "hospital_name",
+        "type": "VARCHAR(255)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 8,
+        "name": "doctor_name",
+        "type": "VARCHAR(255)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 9,
+        "name": "report_date",
+        "type": "VARCHAR(50)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 10,
+        "name": "upload_date",
+        "type": "DATETIME",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 11,
+        "name": "status",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 12,
+        "name": "confidence_score",
+        "type": "FLOAT",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 13,
+        "name": "raw_text",
+        "type": "TEXT",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 14,
+        "name": "summary",
+        "type": "TEXT",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 15,
+        "name": "file_url",
+        "type": "VARCHAR(500)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 16,
+        "name": "storage_path",
+        "type": "VARCHAR(500)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      }
+    ],
+    "foreign_keys": [
+      {
+        "id": 0,
+        "seq": 0,
+        "table": "patients",
+        "from": "patient_id",
+        "to": "id",
+        "on_update": "NO ACTION",
+        "on_delete": "CASCADE"
+      }
+    ],
+    "indexes": [
+      {
+        "seq": 0,
+        "name": "ix_medical_reports_patient_id",
+        "unique": false,
+        "origin": "c",
+        "partial": false
+      },
+      {
+        "seq": 1,
+        "name": "sqlite_autoindex_medical_reports_1",
+        "unique": true,
+        "origin": "pk",
+        "partial": false
+      }
+    ],
+    "row_count": 8
+  },
+  "medications": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": true
+      },
+      {
+        "cid": 1,
+        "name": "patient_id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 2,
+        "name": "name",
+        "type": "VARCHAR(255)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 3,
+        "name": "dosage",
+        "type": "VARCHAR(100)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 4,
+        "name": "frequency",
+        "type": "VARCHAR(100)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 5,
+        "name": "route",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 6,
+        "name": "start_date",
+        "type": "VARCHAR(50)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 7,
+        "name": "end_date",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 8,
+        "name": "status",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 9,
+        "name": "prescribing_doctor",
+        "type": "VARCHAR(255)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 10,
+        "name": "indication",
+        "type": "VARCHAR(255)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 11,
+        "name": "source_report_id",
+        "type": "VARCHAR(36)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      }
+    ],
+    "foreign_keys": [
+      {
+        "id": 0,
+        "seq": 0,
+        "table": "patients",
+        "from": "patient_id",
+        "to": "id",
+        "on_update": "NO ACTION",
+        "on_delete": "CASCADE"
+      }
+    ],
+    "indexes": [
+      {
+        "seq": 0,
+        "name": "ix_medications_patient_id",
+        "unique": false,
+        "origin": "c",
+        "partial": false
+      },
+      {
+        "seq": 1,
+        "name": "sqlite_autoindex_medications_1",
+        "unique": true,
+        "origin": "pk",
+        "partial": false
+      }
+    ],
+    "row_count": 4
+  },
+  "patients": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": true
+      },
+      {
+        "cid": 1,
+        "name": "user_id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 2,
+        "name": "date_of_birth",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 3,
+        "name": "gender",
+        "type": "VARCHAR(20)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 4,
+        "name": "blood_group",
+        "type": "VARCHAR(10)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 5,
+        "name": "height_cm",
+        "type": "FLOAT",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 6,
+        "name": "weight_kg",
+        "type": "FLOAT",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 7,
+        "name": "primary_care_physician",
+        "type": "VARCHAR(255)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 8,
+        "name": "emergency_contact",
+        "type": "JSON",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 9,
+        "name": "insurance",
+        "type": "JSON",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 10,
+        "name": "known_allergies",
+        "type": "JSON",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      }
+    ],
+    "foreign_keys": [
+      {
+        "id": 0,
+        "seq": 0,
+        "table": "users",
+        "from": "user_id",
+        "to": "id",
+        "on_update": "NO ACTION",
+        "on_delete": "CASCADE"
+      }
+    ],
+    "indexes": [
+      {
+        "seq": 0,
+        "name": "sqlite_autoindex_patients_2",
+        "unique": true,
+        "origin": "u",
+        "partial": false
+      },
+      {
+        "seq": 1,
+        "name": "sqlite_autoindex_patients_1",
+        "unique": true,
+        "origin": "pk",
+        "partial": false
+      }
+    ],
+    "row_count": 1
+  },
+  "timeline_events": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": true
+      },
+      {
+        "cid": 1,
+        "name": "patient_id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 2,
+        "name": "date",
+        "type": "VARCHAR(50)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 3,
+        "name": "year",
+        "type": "INTEGER",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 4,
+        "name": "title",
+        "type": "VARCHAR(255)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 5,
+        "name": "description",
+        "type": "TEXT",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 6,
+        "name": "event_type",
+        "type": "VARCHAR(50)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 7,
+        "name": "severity",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 8,
+        "name": "doctor_name",
+        "type": "VARCHAR(255)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 9,
+        "name": "facility",
+        "type": "VARCHAR(255)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 10,
+        "name": "source_report_id",
+        "type": "VARCHAR(36)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 11,
+        "name": "source_report_title",
+        "type": "VARCHAR(255)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 12,
+        "name": "connected_entities",
+        "type": "JSON",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      }
+    ],
+    "foreign_keys": [
+      {
+        "id": 0,
+        "seq": 0,
+        "table": "patients",
+        "from": "patient_id",
+        "to": "id",
+        "on_update": "NO ACTION",
+        "on_delete": "CASCADE"
+      }
+    ],
+    "indexes": [
+      {
+        "seq": 0,
+        "name": "ix_timeline_events_patient_id",
+        "unique": false,
+        "origin": "c",
+        "partial": false
+      },
+      {
+        "seq": 1,
+        "name": "ix_timeline_events_year",
+        "unique": false,
+        "origin": "c",
+        "partial": false
+      },
+      {
+        "seq": 2,
+        "name": "sqlite_autoindex_timeline_events_1",
+        "unique": true,
+        "origin": "pk",
+        "partial": false
+      }
+    ],
+    "row_count": 8
+  },
+  "users": {
+    "columns": [
+      {
+        "cid": 0,
+        "name": "id",
+        "type": "VARCHAR(36)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": true
+      },
+      {
+        "cid": 1,
+        "name": "name",
+        "type": "VARCHAR(255)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 2,
+        "name": "email",
+        "type": "VARCHAR(255)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 3,
+        "name": "hashed_password",
+        "type": "VARCHAR(255)",
+        "notnull": true,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 4,
+        "name": "role",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 5,
+        "name": "avatar_url",
+        "type": "VARCHAR(500)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 6,
+        "name": "phone_number",
+        "type": "VARCHAR(50)",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 7,
+        "name": "preferences",
+        "type": "JSON",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 8,
+        "name": "created_at",
+        "type": "DATETIME",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      },
+      {
+        "cid": 9,
+        "name": "updated_at",
+        "type": "DATETIME",
+        "notnull": false,
+        "dflt_value": null,
+        "pk": false
+      }
+    ],
+    "foreign_keys": [],
+    "indexes": [
+      {
+        "seq": 0,
+        "name": "ix_users_email",
+        "unique": true,
+        "origin": "c",
+        "partial": false
+      },
+      {
+        "seq": 1,
+        "name": "sqlite_autoindex_users_1",
+        "unique": true,
+        "origin": "pk",
+        "partial": false
+      }
+    ],
+    "row_count": 1
+  }
+}

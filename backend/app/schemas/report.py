@@ -9,6 +9,7 @@ class ExtractedEntitySchema(BaseModel):
     value: Optional[str] = None
     unit: Optional[str] = None
     notes: Optional[str] = None
+    sourcePageNumber: Optional[int] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -27,6 +28,9 @@ class ReportBase(BaseModel):
     rawText: Optional[str] = None
     summary: Optional[str] = None
     fileUrl: Optional[str] = None
+    checksum: Optional[str] = None
+    contentChecksum: Optional[str] = None
+    pageCount: Optional[int] = 1
 
 
 class ReportCreate(BaseModel):
@@ -50,6 +54,7 @@ class ReportResponse(ReportBase):
     id: str
     uploadDate: Optional[str] = None
     extractedEntities: List[ExtractedEntitySchema] = Field(default_factory=list)
+    linkedEntities: Optional[dict] = None
 
     model_config = ConfigDict(from_attributes=True)
 

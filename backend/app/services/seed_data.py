@@ -3,6 +3,7 @@ from backend.app.models.user import User
 from backend.app.models.patient import Patient
 from backend.app.models.report import MedicalReport
 from backend.app.models.clinical_entity import ExtractedEntity, Disease, Medication, LabResult
+from backend.app.models.allergy import Allergy
 from backend.app.models.timeline import TimelineEvent
 from backend.app.models.chat import ChatConversation, ChatMessage
 from backend.app.models.summary import DoctorSummary
@@ -195,6 +196,42 @@ def seed_initial_data(db: Session):
     ]
     for m in medications:
         db.add(m)
+
+    # 4.1 Create Structured Allergies
+    allergies = [
+        Allergy(
+            id="all_001",
+            patient_id=patient.id,
+            allergen="Penicillin",
+            category="medication",
+            severity="severe",
+            reaction="Anaphylaxis & Generalized Urticaria",
+            drug_classes=["Penicillins", "Beta-lactam antibacterials"],
+            cross_reactivities=["amoxicillin", "ampicillin", "augmentin", "amoxicillin-clavulanate", "piperacillin"],
+            status="active",
+            source_report_id="rep_001",
+            source_page_number=1,
+            extraction_confidence=0.99,
+            notes="Documented severe anaphylactic reaction. Beta-lactam aminopenicillins strictly contraindicated."
+        ),
+        Allergy(
+            id="all_002",
+            patient_id=patient.id,
+            allergen="Sulfa Drugs",
+            category="medication",
+            severity="moderate",
+            reaction="Severe Erythematous Maculopapular Rash",
+            drug_classes=["Sulfonamides"],
+            cross_reactivities=["bactrim", "septra", "sulfamethoxazole"],
+            status="active",
+            source_report_id="rep_001",
+            source_page_number=1,
+            extraction_confidence=0.98,
+            notes="Sulfonamide antibacterial hypersensitivity."
+        ),
+    ]
+    for a in allergies:
+        db.add(a)
 
     # 5. Create Lab Results
     lab_results = [

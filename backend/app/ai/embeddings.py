@@ -1,4 +1,4 @@
-import math
+﻿import math
 import hashlib
 import logging
 import httpx
@@ -73,11 +73,57 @@ class LocalLightweightEmbeddingProvider(EmbeddingProvider):
         return [self.embed_text(t) for t in texts]
 
 
+class BGEEmbeddingProvider(EmbeddingProvider):
+    """
+    Production offline dense embedding provider using BAAI/bge-small-en-v1.5.
+    Runs completely on CPU, generating true 384-dimensional normalized dense vectors.
+    Operates 100% offline using locally cached model weights.
+    """
+
+    def __init__(self, model_name: str = "BAAI/bge-small-en-v1.5", dim: int = 384):
+        self._dim = dim
+        self._model_name = model_name
+        self._model = None
+        self._fallback = LocalLightweightEmbeddingProvider(dim=dim)
+        try:
+            import os
+            from sentence_transformers import SentenceTransformer
+            os.environ["HF_HUB_OFFLINE"] = "1"
+            self._model = SentenceTransformer(model_name)
+        except Exception as e:
+            logger.warning(f"BGE model loading failed: {e}. Falling back to {self._fallback_provider.__class__.__name__}.")
+
+    def dimension(self) -> int:
+        return self._dim
+
+    def embed_text(self, text: str) -> List[float]:
+        if not text or not text.strip():
+            return [0.0] * self._dim
+        if self._model is not None:
+            try:
+                vec = self._model.encode(text, normalize_embeddings=True, show_progress_bar=False)
+                return vec.tolist()
+            except Exception as e:
+                logger.warning(f"BGE embed_text failed: {e}")
+        return self._fallback.embed_text(text)
+
+    def embed_texts(self, texts: List[str]) -> List[List[float]]:
+        if not texts:
+            return []
+        if self._model is not None:
+            try:
+                vecs = self._model.encode(texts, normalize_embeddings=True, show_progress_bar=False)
+                return vecs.tolist()
+            except Exception as e:
+                logger.warning(f"BGE embed_texts failed: {e}")
+        return self._fallback.embed_texts(texts)
+
+
 class OllamaEmbeddingProvider(EmbeddingProvider):
     """
     Production-grade Ollama Embedding Provider.
     Generates real semantic embeddings using local Ollama models (e.g., 'all-minilm').
-    Provides automatic fallback to LocalLightweightEmbeddingProvider if Ollama is unreachable.
+    Provides automatic fallback to BGEEmbeddingProvider or LocalLightweightEmbeddingProvider if Ollama is unreachable.
     """
 
     def __init__(
@@ -101,7 +147,10 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
         self._base_url = (base_url or default_url).rstrip("/")
         self._dim = dim or default_dim
         self._timeout = timeout
-        self._fallback_provider = LocalLightweightEmbeddingProvider(dim=self._dim)
+        try:
+            self._fallback_provider = BGEEmbeddingProvider(dim=self._dim)
+        except Exception:
+            self._fallback_provider = LocalLightweightEmbeddingProvider(dim=self._dim)
 
     def dimension(self) -> int:
         return self._dim
@@ -138,7 +187,7 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
                     if len(embedding) == self._dim:
                         return embedding
         except Exception as e:
-            logger.warning(f"Ollama embedding request failed for model '{self._model_name}': {str(e)}. Falling back to LocalLightweightEmbeddingProvider.")
+            logger.warning(f"Ollama embedding request failed for model '{self._model_name}': {str(e)}. Falling back to {self._fallback_provider.__class__.__name__}.")
 
         return self._fallback_provider.embed_text(text)
 
@@ -167,26 +216,34 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
                             result[idx] = emb
                         return result
         except Exception as e:
-            logger.warning(f"Ollama batch embedding request failed for model '{self._model_name}': {str(e)}. Falling back to LocalLightweightEmbeddingProvider.")
+            logger.warning(f"Ollama batch embedding request failed for model '{self._model_name}': {str(e)}. Falling back to {self._fallback_provider.__class__.__name__}.")
 
-        return [self.embed_text(t) for t in texts]
+        return self._fallback_provider.embed_texts(texts)
 
 
 def get_embedding_provider(provider_type: Optional[str] = None) -> EmbeddingProvider:
     """
     Factory to retrieve configured embedding provider.
-    Defaults to OllamaEmbeddingProvider (with all-minilm) or LocalLightweightEmbeddingProvider based on configuration.
+    Defaults to BGEEmbeddingProvider / OllamaEmbeddingProvider / LocalLightweightEmbeddingProvider.
     """
     prov_str = provider_type
     if not prov_str:
         try:
             from backend.app.core.config import settings
-            prov_str = getattr(settings, "EMBEDDING_PROVIDER", "ollama")
+            prov_str = getattr(settings, "EMBEDDING_PROVIDER", "bge")
         except Exception:
-            prov_str = "ollama"
+            prov_str = "bge"
 
-    prov = (prov_str or "ollama").lower()
+    prov = (prov_str or "bge").lower()
+    if prov in ["bge", "bge_small", "bge-small", "local_semantic"]:
+        return BGEEmbeddingProvider()
     if prov in ["ollama", "ollama_embedding", "real"]:
         return OllamaEmbeddingProvider()
+    if prov in ["local", "lightweight", "hash", "mock", "test"]:
+        return LocalLightweightEmbeddingProvider(dim=384)
     
-    return LocalLightweightEmbeddingProvider(dim=384)
+    try:
+        return BGEEmbeddingProvider()
+    except Exception:
+        return LocalLightweightEmbeddingProvider(dim=384)
+

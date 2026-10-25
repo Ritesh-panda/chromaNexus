@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chronanexus-backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+      - SECRET_KEY=replace-with-secure-32-byte-secret-in-production
+      - DATABASE_URL=sqlite:////app/data/chronanexus.db
+      - UPLOAD_DIR=/app/uploads
+      - VECTOR_STORE_BACKEND=chroma
+      - CHROMA_PERSIST_DIRECTORY=/app/data/chroma_db
+      - LLM_PROVIDER=ollama
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_MODEL=llama3.2:3b
+      - EMBEDDING_PROVIDER=ollama
+      - OLLAMA_EMBEDDING_MODEL=all-minilm
+    volumes:
+      - chronanexus-data:/app/data
+      - chronanexus-uploads:/app/uploads
+    depends_on:
+      ollama:
+        condition: service_started
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: chronanexus-ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+
+volumes:
+  chronanexus-data:
+    name: chronanexus_db_data
+  chronanexus-uploads:
+    name: chronanexus_uploads
+  ollama-models:
+    name: chronanexus_ollama_models

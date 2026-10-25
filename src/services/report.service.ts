@@ -10,6 +10,17 @@ export interface UploadReportParams {
   reportDate?: string;
 }
 
+export interface GetReportsParams {
+  category?: string;
+  hospital?: string;
+  search?: string;
+  status?: string;
+  startDate?: string;
+  endDate?: string;
+  sortBy?: 'clinical_date' | 'upload_date';
+  sortOrder?: 'asc' | 'desc';
+}
+
 export interface DocumentIngestionStatus {
   document_id: string;
   status:
@@ -54,20 +65,44 @@ export interface DocumentIngestionStatus {
 }
 
 export const reportService = {
-  async getReports(category?: string, search?: string): Promise<MedicalReport[]> {
+  async getReports(paramsOrCategory?: string | GetReportsParams, search?: string): Promise<MedicalReport[]> {
     try {
       const params: Record<string, string> = {};
-      if (category && category !== 'all') params.category = category;
-      if (search) params.search = search;
+      if (typeof paramsOrCategory === 'string') {
+        if (paramsOrCategory && paramsOrCategory !== 'all') params.category = paramsOrCategory;
+        if (search) params.search = search;
+      } else if (paramsOrCategory) {
+        if (paramsOrCategory.category && paramsOrCategory.category !== 'all') params.category = paramsOrCategory.category;
+        if (paramsOrCategory.hospital && paramsOrCategory.hospital !== 'all') params.hospital = paramsOrCategory.hospital;
+        if (paramsOrCategory.search) params.search = paramsOrCategory.search;
+        if (paramsOrCategory.status && paramsOrCategory.status !== 'all') params.status = paramsOrCategory.status;
+        if (paramsOrCategory.startDate) params.start_date = paramsOrCategory.startDate;
+        if (paramsOrCategory.endDate) params.end_date = paramsOrCategory.endDate;
+        if (paramsOrCategory.sortBy) params.sort_by = paramsOrCategory.sortBy;
+        if (paramsOrCategory.sortOrder) params.sort_order = paramsOrCategory.sortOrder;
+      }
+
       const response = await api.get('/reports', { params });
       return response.data;
     } catch {
       let reports = [...MOCK_REPORTS];
+      const category = typeof paramsOrCategory === 'string' ? paramsOrCategory : paramsOrCategory?.category;
+      const q = (typeof paramsOrCategory === 'string' ? search : paramsOrCategory?.search)?.toLowerCase();
+      const status = typeof paramsOrCategory === 'object' ? paramsOrCategory?.status : undefined;
+      const hospital = typeof paramsOrCategory === 'object' ? paramsOrCategory?.hospital : undefined;
+      const sortBy = typeof paramsOrCategory === 'object' ? paramsOrCategory?.sortBy : 'clinical_date';
+      const sortOrder = typeof paramsOrCategory === 'object' ? paramsOrCategory?.sortOrder : 'desc';
+
       if (category && category !== 'all') {
         reports = reports.filter((r) => r.category === category);
       }
-      if (search) {
-        const q = search.toLowerCase();
+      if (hospital && hospital !== 'all') {
+        reports = reports.filter((r) => r.hospitalName.toLowerCase().includes(hospital.toLowerCase()));
+      }
+      if (status && status !== 'all') {
+        reports = reports.filter((r) => r.status === status);
+      }
+      if (q) {
         reports = reports.filter(
           (r) =>
             r.title.toLowerCase().includes(q) ||
@@ -75,7 +110,25 @@ export const reportService = {
             (r.summary && r.summary.toLowerCase().includes(q))
         );
       }
+
+      // Sort
+      reports.sort((a, b) => {
+        const valA = sortBy === 'upload_date' ? a.uploadDate || a.reportDate : a.reportDate;
+        const valB = sortBy === 'upload_date' ? b.uploadDate || b.reportDate : b.reportDate;
+        return sortOrder === 'asc' ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      });
+
       return reports;
+    }
+  },
+
+  async getFacilities(): Promise<string[]> {
+    try {
+      const response = await api.get('/reports/facilities');
+      return response.data;
+    } catch {
+      const unique = Array.from(new Set(MOCK_REPORTS.map((r) => r.hospitalName)));
+      return unique;
     }
   },
 
@@ -113,7 +166,7 @@ export const reportService = {
       await api.delete(`/reports/${id}`);
       return true;
     } catch {
-      return true;
+      return false;
     }
   },
 };

@@ -1,5 +1,5 @@
-from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, status
+from typing import List, Optional, Dict, Any, Set
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 from backend.app.core.database import get_db
 from backend.app.schemas.patient import (
@@ -8,10 +8,21 @@ from backend.app.schemas.patient import (
     DiseaseResponse,
     MedicationResponse,
     LabResultResponse,
+    AnalyteSummarySchema,
+    AnalyteListResponse,
 )
+from backend.app.schemas.chat import StructuredTrendSchema, MeasurementPointSchema, CitationSchema
 from backend.app.services.auth_service import get_current_patient
 from backend.app.models.patient import Patient
 from backend.app.models.clinical_entity import Disease, Medication, LabResult
+from backend.app.models.report import MedicalReport
+from backend.app.clinical.terminology.biomarkers import resolve_biomarker
+from backend.app.clinical.structured_query.engine import StructuredClinicalQueryEngine
+from backend.app.clinical.structured_query.models import (
+    StructuredQueryType,
+    TimeWindow,
+    StructuredQueryIntent,
+)
 
 router = APIRouter(prefix="/patients", tags=["Patients"])
 
@@ -146,3 +157,131 @@ def get_patient_labs(
 ):
     labs = db.query(LabResult).filter(LabResult.patient_id == current_patient.id).order_by(LabResult.test_date.desc()).all()
     return [format_lab_result_response(l) for l in labs]
+
+
+@router.get("/me/labs/analytes", response_model=AnalyteListResponse)
+def get_patient_analytes(
+    current_patient: Patient = Depends(get_current_patient),
+    db: Session = Depends(get_db)
+):
+    """
+    Returns distinct lab analytes recorded for the patient with summary statistics.
+    """
+    labs = db.query(LabResult).filter(LabResult.patient_id == current_patient.id).order_by(LabResult.test_date.desc()).all()
+
+    # Group by canonical name or test name
+    grouped: Dict[str, Dict[str, Any]] = {}
+    for lab in labs:
+        # Resolve canonical name
+        defn = resolve_biomarker(lab.test_name)
+        c_name = defn.canonical_name if defn else (lab.canonical_name or lab.test_name)
+        loinc = defn.loinc_code if defn else lab.loinc_code
+
+        key = c_name.lower().strip()
+        if key not in grouped:
+            grouped[key] = {
+                "testName": lab.test_name,
+                "canonicalName": c_name,
+                "loincCode": loinc,
+                "count": 0,
+                "latestDate": lab.test_date,
+                "latestValue": lab.value,
+                "unit": lab.unit,
+                "referenceRange": lab.reference_range,
+                "facilities": set(),
+            }
+
+        item = grouped[key]
+        item["count"] += 1
+        if lab.hospital_name and lab.hospital_name.strip():
+            item["facilities"].add(lab.hospital_name.strip())
+
+    result_list = []
+    for item in grouped.values():
+        result_list.append(
+            AnalyteSummarySchema(
+                testName=item["testName"],
+                canonicalName=item["canonicalName"],
+                loincCode=item["loincCode"],
+                count=item["count"],
+                latestDate=item["latestDate"],
+                latestValue=item["latestValue"],
+                unit=item["unit"],
+                referenceRange=item["referenceRange"],
+                facilities=sorted(list(item["facilities"]))
+            )
+        )
+
+    # Sort by count descending, then canonical name
+    result_list.sort(key=lambda a: (-a.count, a.canonicalName))
+    return AnalyteListResponse(analytes=result_list)
+
+
+@router.get("/me/labs/trends", response_model=StructuredTrendSchema)
+def get_patient_lab_trend(
+    analyte: str = Query(..., description="Analyte name or biomarker (e.g. Potassium, Glucose, Total Cholesterol)"),
+    time_window: Optional[str] = Query(None, description="Time window: 3m, 6m, 1y, or all"),
+    start_date: Optional[str] = Query(None, description="Start date YYYY-MM-DD"),
+    end_date: Optional[str] = Query(None, description="End date YYYY-MM-DD"),
+    current_patient: Patient = Depends(get_current_patient),
+    db: Session = Depends(get_db)
+):
+    """
+    Executes a clinical lab trend query for the patient with full chronological series,
+    unit mismatch detection, multi-facility conflict detection, and source report citations.
+    """
+    if not analyte or not analyte.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Analyte query parameter is required")
+
+    # Map time_window string or date range to TimeWindow model
+    tw_model = None
+    if time_window:
+        tw_clean = time_window.lower().strip()
+        if tw_clean in ["3m", "3_months", "three_months"]:
+            tw_model = TimeWindow(days=90, descriptor="Past 3 Months")
+        elif tw_clean in ["6m", "6_months", "six_months"]:
+            tw_model = TimeWindow(days=180, descriptor="Past 6 Months")
+        elif tw_clean in ["1y", "1_year", "one_year"]:
+            tw_model = TimeWindow(days=365, descriptor="Past 1 Year")
+
+    if start_date or end_date:
+        tw_model = TimeWindow(start_date=start_date, end_date=end_date, descriptor=f"{start_date or 'Earliest'} to {end_date or 'Latest'}")
+
+    defn = resolve_biomarker(analyte)
+    canonical = defn.canonical_name if defn else analyte.strip()
+
+    intent = StructuredQueryIntent(
+        is_structured_query=True,
+        query_type=StructuredQueryType.MEASUREMENT_HISTORY,
+        analyte_term=analyte.strip(),
+        canonical_name=canonical,
+        loinc_code=defn.loinc_code if defn else None,
+        time_window=tw_model,
+        is_multi_analyte=False,
+        is_generic_latest=False,
+        raw_query=f"Trend for {analyte.strip()}"
+    )
+
+    engine = StructuredClinicalQueryEngine(db_session=db)
+    trend_result = engine.execute_query(intent, patient_id=current_patient.id)
+
+    # If start_date or end_date are provided, filter measurements while preserving clinical integrity
+    if start_date or end_date:
+        filtered_points = trend_result.all_measurements
+        if start_date:
+            filtered_points = [p for p in filtered_points if p.test_date >= start_date]
+        if end_date:
+            filtered_points = [p for p in filtered_points if p.test_date <= end_date]
+
+        trend_result.all_measurements = filtered_points
+        if filtered_points:
+            trend_result.latest_measurement = filtered_points[-1]
+            trend_result.previous_measurement = filtered_points[-2] if len(filtered_points) > 1 else None
+            trend_result.has_sufficient_data = len(filtered_points) >= 2
+        else:
+            trend_result.latest_measurement = None
+            trend_result.previous_measurement = None
+            trend_result.has_sufficient_data = False
+
+    raw_dict = trend_result.model_dump()
+    return StructuredTrendSchema(**raw_dict)

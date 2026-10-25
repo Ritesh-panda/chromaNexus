@@ -1,0 +1,1532 @@
+{
+  "backend": {
+    "backend/alembic/env.py": {
+      "lines": 57,
+      "classes": [],
+      "functions": [
+        "run_migrations_offline",
+        "run_migrations_online"
+      ],
+      "parse_error": false
+    },
+    "backend/alembic/versions/001_initial_schema.py": {
+      "lines": 267,
+      "classes": [],
+      "functions": [
+        "upgrade",
+        "downgrade"
+      ],
+      "parse_error": false
+    },
+    "backend/alembic/versions/002_add_document_chunks_and_pgvector.py": {
+      "lines": 97,
+      "classes": [],
+      "functions": [
+        "upgrade",
+        "downgrade"
+      ],
+      "parse_error": false
+    },
+    "backend/alembic/versions/003_add_provenance_and_allergies.py": {
+      "lines": 247,
+      "classes": [],
+      "functions": [
+        "upgrade",
+        "downgrade"
+      ],
+      "parse_error": false
+    },
+    "backend/alembic/versions/004_add_checksum_and_page_metadata.py": {
+      "lines": 0,
+      "classes": [],
+      "functions": [],
+      "parse_error": "invalid non-printable character U+FEFF (<unknown>, line 1)"
+    },
+    "backend/app/main.py": {
+      "lines": 93,
+      "classes": [],
+      "functions": [
+        "health_check",
+        "root"
+      ],
+      "parse_error": false
+    },
+    "backend/app/__init__.py": {
+      "lines": 1,
+      "classes": [],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/ai/chunker.py": {
+      "lines": 0,
+      "classes": [],
+      "functions": [],
+      "parse_error": "invalid non-printable character U+FEFF (<unknown>, line 1)"
+    },
+    "backend/app/ai/document_ingestion.py": {
+      "lines": 94,
+      "classes": [
+        "IngestionResult",
+        "DocumentIngestionPipeline"
+      ],
+      "functions": [
+        "__init__",
+        "ingest_document"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/document_processor.py": {
+      "lines": 103,
+      "classes": [
+        "ProcessedPage",
+        "ProcessedDocument",
+        "DocumentProcessor"
+      ],
+      "functions": [
+        "clean_text",
+        "process_text",
+        "process_pages"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/embeddings.py": {
+      "lines": 0,
+      "classes": [],
+      "functions": [],
+      "parse_error": "invalid non-printable character U+FEFF (<unknown>, line 1)"
+    },
+    "backend/app/ai/retrieval.py": {
+      "lines": 368,
+      "classes": [
+        "SearchResult",
+        "VectorStore",
+        "InMemoryVectorStore",
+        "PostgresVectorStore"
+      ],
+      "functions": [
+        "get_vector_store",
+        "add_documents",
+        "similarity_search",
+        "delete_document",
+        "health_check",
+        "__init__",
+        "add_documents",
+        "similarity_search",
+        "delete_document",
+        "health_check",
+        "__init__",
+        "_get_db",
+        "add_documents",
+        "similarity_search",
+        "delete_document",
+        "health_check"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/__init__.py": {
+      "lines": 65,
+      "classes": [],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/ai/clinical_extractor/base.py": {
+      "lines": 21,
+      "classes": [
+        "ClinicalEntityExtractor"
+      ],
+      "functions": [
+        "extract_entities"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/clinical_extractor/llm_extractor.py": {
+      "lines": 0,
+      "classes": [],
+      "functions": [],
+      "parse_error": "invalid non-printable character U+FEFF (<unknown>, line 1)"
+    },
+    "backend/app/ai/clinical_extractor/models.py": {
+      "lines": 15,
+      "classes": [
+        "ExtractedClinicalEntity"
+      ],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/ai/clinical_extractor/rule_based.py": {
+      "lines": 220,
+      "classes": [
+        "RuleBasedClinicalExtractor"
+      ],
+      "functions": [
+        "extract_entities"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/clinical_extractor/validator.py": {
+      "lines": 186,
+      "classes": [
+        "ValidatedLab",
+        "ValidatedMedication",
+        "ValidatedDisease",
+        "ClinicalDataValidator"
+      ],
+      "functions": [
+        "validate_and_normalize_date",
+        "validate_lab_result",
+        "validate_medication",
+        "validate_disease"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/clinical_extractor/__init__.py": {
+      "lines": 36,
+      "classes": [],
+      "functions": [
+        "get_clinical_extractor"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/extractors/pdf_extractor.py": {
+      "lines": 0,
+      "classes": [],
+      "functions": [],
+      "parse_error": "invalid non-printable character U+FEFF (<unknown>, line 1)"
+    },
+    "backend/app/ai/ingestion/ingestion_status.py": {
+      "lines": 88,
+      "classes": [
+        "IngestionStage",
+        "IngestionStatus",
+        "IngestionStatusRegistry"
+      ],
+      "functions": [
+        "__new__",
+        "set_status",
+        "get_status"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/ingestion/orchestrator.py": {
+      "lines": 0,
+      "classes": [],
+      "functions": [],
+      "parse_error": "invalid non-printable character U+FEFF (<unknown>, line 1)"
+    },
+    "backend/app/ai/ingestion/__init__.py": {
+      "lines": 19,
+      "classes": [],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/ai/llm/base.py": {
+      "lines": 35,
+      "classes": [
+        "LLMProvider"
+      ],
+      "functions": [
+        "generate",
+        "health_check",
+        "provider_name"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/llm/gemini.py": {
+      "lines": 104,
+      "classes": [
+        "GeminiProvider"
+      ],
+      "functions": [
+        "__init__",
+        "provider_name",
+        "generate",
+        "health_check"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/llm/mock_provider.py": {
+      "lines": 58,
+      "classes": [
+        "MockDeterministicLLMProvider"
+      ],
+      "functions": [
+        "__init__",
+        "provider_name",
+        "generate",
+        "health_check"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/llm/ollama.py": {
+      "lines": 85,
+      "classes": [
+        "OllamaProvider"
+      ],
+      "functions": [
+        "__init__",
+        "provider_name",
+        "generate",
+        "health_check"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/llm/__init__.py": {
+      "lines": 41,
+      "classes": [],
+      "functions": [
+        "get_llm_provider"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/ocr/base.py": {
+      "lines": 44,
+      "classes": [
+        "OCROutputPage",
+        "OCRResult",
+        "OCRProvider"
+      ],
+      "functions": [
+        "extract_text_from_pdf_bytes",
+        "extract_text_from_image_bytes",
+        "is_available",
+        "provider_name"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/ocr/mock_ocr.py": {
+      "lines": 40,
+      "classes": [
+        "MockOCRProvider"
+      ],
+      "functions": [
+        "__init__",
+        "provider_name",
+        "is_available",
+        "extract_text_from_image_bytes",
+        "extract_text_from_pdf_bytes"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/ocr/tesseract.py": {
+      "lines": 100,
+      "classes": [
+        "TesseractOCRProvider"
+      ],
+      "functions": [
+        "__init__",
+        "provider_name",
+        "is_available",
+        "extract_text_from_image_bytes",
+        "extract_text_from_pdf_bytes"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/ocr/__init__.py": {
+      "lines": 38,
+      "classes": [],
+      "functions": [
+        "get_ocr_provider"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/rag/classifier.py": {
+      "lines": 181,
+      "classes": [
+        "QueryIntent",
+        "ClassificationResult",
+        "QueryClassifier"
+      ],
+      "functions": [
+        "classify"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/rag/context_builder.py": {
+      "lines": 108,
+      "classes": [
+        "Citation",
+        "RAGContext",
+        "RAGContextBuilder"
+      ],
+      "functions": [
+        "__init__",
+        "build_context"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/rag/evaluator.py": {
+      "lines": 214,
+      "classes": [
+        "EvaluationTestCase",
+        "EvaluationResult",
+        "RAGEvaluator"
+      ],
+      "functions": [
+        "__init__",
+        "evaluate_test_case",
+        "run_all"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/rag/fusion.py": {
+      "lines": 108,
+      "classes": [
+        "FusedElement",
+        "ResultFusion"
+      ],
+      "functions": [
+        "__init__",
+        "fuse"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/rag/hybrid_retriever.py": {
+      "lines": 143,
+      "classes": [
+        "HybridRetrievalResult",
+        "HybridRetriever"
+      ],
+      "functions": [
+        "__init__",
+        "retrieve"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/rag/pipeline.py": {
+      "lines": 255,
+      "classes": [
+        "RAGResponse",
+        "RAGPipeline"
+      ],
+      "functions": [
+        "__init__",
+        "query",
+        "_sanitize_answer",
+        "_answer_indicates_missing_data"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/rag/prompts.py": {
+      "lines": 0,
+      "classes": [],
+      "functions": [],
+      "parse_error": "invalid non-printable character U+FEFF (<unknown>, line 1)"
+    },
+    "backend/app/ai/rag/query_resolver.py": {
+      "lines": 362,
+      "classes": [
+        "ResolvedQuery",
+        "ConversationQueryResolver"
+      ],
+      "functions": [
+        "resolve",
+        "_is_overview_query",
+        "_detect_topic",
+        "_find_prior_topic",
+        "_format_history"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/rag/reranker.py": {
+      "lines": 100,
+      "classes": [
+        "ClinicalReranker"
+      ],
+      "functions": [
+        "_extract_iso_date",
+        "rerank"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/rag/structured_retriever.py": {
+      "lines": 376,
+      "classes": [
+        "StructuredClinicalResult",
+        "StructuredRetriever"
+      ],
+      "functions": [
+        "__init__",
+        "retrieve_labs",
+        "retrieve_medications",
+        "retrieve_allergies",
+        "retrieve_diagnoses",
+        "retrieve_timeline"
+      ],
+      "parse_error": false
+    },
+    "backend/app/ai/rag/__init__.py": {
+      "lines": 32,
+      "classes": [],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/clinical/__init__.py": {
+      "lines": 3,
+      "classes": [],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/clinical/terminology/allergies.py": {
+      "lines": 206,
+      "classes": [],
+      "functions": [
+        "find_drug_class",
+        "check_drug_allergy_conflict"
+      ],
+      "parse_error": false
+    },
+    "backend/app/clinical/terminology/biomarkers.py": {
+      "lines": 396,
+      "classes": [
+        "BiomarkerDefinition"
+      ],
+      "functions": [
+        "resolve_biomarker",
+        "get_biomarker_by_loinc",
+        "is_specimen_compatible"
+      ],
+      "parse_error": false
+    },
+    "backend/app/clinical/terminology/__init__.py": {
+      "lines": 26,
+      "classes": [],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/core/config.py": {
+      "lines": 42,
+      "classes": [
+        "Settings"
+      ],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/core/database.py": {
+      "lines": 24,
+      "classes": [],
+      "functions": [
+        "get_db"
+      ],
+      "parse_error": false
+    },
+    "backend/app/core/security.py": {
+      "lines": 43,
+      "classes": [],
+      "functions": [
+        "verify_password",
+        "get_password_hash",
+        "create_access_token",
+        "decode_access_token"
+      ],
+      "parse_error": false
+    },
+    "backend/app/models/allergy.py": {
+      "lines": 28,
+      "classes": [
+        "Allergy"
+      ],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/models/chat.py": {
+      "lines": 33,
+      "classes": [
+        "ChatConversation",
+        "ChatMessage"
+      ],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/models/clinical_entity.py": {
+      "lines": 96,
+      "classes": [
+        "ExtractedEntity",
+        "Disease",
+        "Medication",
+        "LabResult"
+      ],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/models/document_chunk.py": {
+      "lines": 31,
+      "classes": [
+        "DocumentChunkModel"
+      ],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/models/patient.py": {
+      "lines": 43,
+      "classes": [
+        "Patient"
+      ],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/models/report.py": {
+      "lines": 35,
+      "classes": [
+        "MedicalReport"
+      ],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/models/summary.py": {
+      "lines": 28,
+      "classes": [
+        "DoctorSummary"
+      ],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/models/timeline.py": {
+      "lines": 28,
+      "classes": [
+        "TimelineEvent"
+      ],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/models/user.py": {
+      "lines": 36,
+      "classes": [
+        "User"
+      ],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/models/__init__.py": {
+      "lines": 29,
+      "classes": [],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/routers/auth.py": {
+      "lines": 96,
+      "classes": [],
+      "functions": [
+        "signup",
+        "login",
+        "get_me",
+        "refresh_token",
+        "logout"
+      ],
+      "parse_error": false
+    },
+    "backend/app/routers/chat.py": {
+      "lines": 145,
+      "classes": [],
+      "functions": [
+        "get_conversations",
+        "create_conversation",
+        "get_conversation_messages",
+        "send_message"
+      ],
+      "parse_error": false
+    },
+    "backend/app/routers/documents.py": {
+      "lines": 0,
+      "classes": [],
+      "functions": [],
+      "parse_error": "invalid non-printable character U+FEFF (<unknown>, line 1)"
+    },
+    "backend/app/routers/patients.py": {
+      "lines": 148,
+      "classes": [],
+      "functions": [
+        "format_disease_response",
+        "format_medication_response",
+        "format_lab_result_response",
+        "get_patient_profile",
+        "update_patient_profile",
+        "get_patient_diagnoses",
+        "get_patient_medications",
+        "get_patient_labs"
+      ],
+      "parse_error": false
+    },
+    "backend/app/routers/reports.py": {
+      "lines": 158,
+      "classes": [],
+      "functions": [
+        "format_report_response",
+        "get_reports",
+        "get_report",
+        "create_report",
+        "update_report",
+        "delete_report"
+      ],
+      "parse_error": false
+    },
+    "backend/app/routers/search.py": {
+      "lines": 62,
+      "classes": [],
+      "functions": [
+        "global_search"
+      ],
+      "parse_error": false
+    },
+    "backend/app/routers/summaries.py": {
+      "lines": 57,
+      "classes": [],
+      "functions": [
+        "format_summary_response",
+        "generate_summary",
+        "get_latest_summary",
+        "get_shared_summary"
+      ],
+      "parse_error": false
+    },
+    "backend/app/routers/timeline.py": {
+      "lines": 88,
+      "classes": [],
+      "functions": [
+        "format_timeline_response",
+        "get_timeline",
+        "get_timeline_event",
+        "create_timeline_event"
+      ],
+      "parse_error": false
+    },
+    "backend/app/routers/users.py": {
+      "lines": 56,
+      "classes": [],
+      "functions": [
+        "get_user_profile",
+        "update_user_profile"
+      ],
+      "parse_error": false
+    },
+    "backend/app/routers/__init__.py": {
+      "lines": 21,
+      "classes": [],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/schemas/chat.py": {
+      "lines": 39,
+      "classes": [
+        "CitationSchema",
+        "MessageCreate",
+        "MessageResponse",
+        "ConversationCreate",
+        "ConversationResponse"
+      ],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/schemas/patient.py": {
+      "lines": 105,
+      "classes": [
+        "EmergencyContactSchema",
+        "InsuranceProviderSchema",
+        "PatientBase",
+        "PatientUpdate",
+        "PatientResponse",
+        "DiseaseResponse",
+        "MedicationResponse",
+        "LabResultResponse"
+      ],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/schemas/report.py": {
+      "lines": 58,
+      "classes": [
+        "ExtractedEntitySchema",
+        "ReportBase",
+        "ReportCreate",
+        "ReportUpdate",
+        "ReportResponse"
+      ],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/schemas/search.py": {
+      "lines": 19,
+      "classes": [
+        "SearchResultItem",
+        "GlobalSearchResponse"
+      ],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/schemas/summary.py": {
+      "lines": 22,
+      "classes": [
+        "DoctorSummaryResponse"
+      ],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/schemas/timeline.py": {
+      "lines": 33,
+      "classes": [
+        "ConnectedEntitiesSchema",
+        "TimelineEventBase",
+        "TimelineEventCreate",
+        "TimelineEventResponse"
+      ],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/schemas/user.py": {
+      "lines": 66,
+      "classes": [
+        "UserPreferences",
+        "UserBase",
+        "UserCreate",
+        "UserLogin",
+        "UserUpdate",
+        "UserResponse",
+        "Token",
+        "TokenPayload"
+      ],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/schemas/__init__.py": {
+      "lines": 31,
+      "classes": [],
+      "functions": [],
+      "parse_error": false
+    },
+    "backend/app/services/auth_service.py": {
+      "lines": 90,
+      "classes": [],
+      "functions": [
+        "get_current_user",
+        "get_current_patient",
+        "authenticate_user",
+        "create_user"
+      ],
+      "parse_error": false
+    },
+    "backend/app/services/chat_service.py": {
+      "lines": 33,
+      "classes": [],
+      "functions": [
+        "process_clinical_chat_query"
+      ],
+      "parse_error": false
+    },
+    "backend/app/services/seed_data.py": {
+      "lines": 718,
+      "classes": [],
+      "functions": [
+        "seed_initial_data"
+      ],
+      "parse_error": false
+    },
+    "backend/app/services/storage_service.py": {
+      "lines": 50,
+      "classes": [
+        "StorageService"
+      ],
+      "functions": [
+        "__init__",
+        "get_file_path",
+        "delete_file"
+      ],
+      "parse_error": false
+    },
+    "backend/app/services/summary_service.py": {
+      "lines": 54,
+      "classes": [],
+      "functions": [
+        "generate_doctor_summary_for_patient"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/conftest.py": {
+      "lines": 53,
+      "classes": [],
+      "functions": [
+        "setup_test_db",
+        "db_session",
+        "client",
+        "override_get_db"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_allergy_and_provenance.py": {
+      "lines": 264,
+      "classes": [],
+      "functions": [
+        "test_db",
+        "test_allergy_model_crud_and_provenance",
+        "test_clinical_provenance_on_lab_results",
+        "test_clinical_provenance_on_medications",
+        "test_biomarker_terminology_resolution",
+        "test_drug_allergy_cross_reactivity_detection",
+        "test_structured_retriever_allergy_alert",
+        "test_allergy_safety_edge_cases_and_disclaimers"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_answer_sanitizer.py": {
+      "lines": 0,
+      "classes": [],
+      "functions": [],
+      "parse_error": "invalid non-printable character U+FEFF (<unknown>, line 1)"
+    },
+    "backend/tests/test_auth.py": {
+      "lines": 52,
+      "classes": [],
+      "functions": [
+        "test_login_success",
+        "test_login_invalid_password",
+        "test_signup_new_user",
+        "test_get_me"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_chat.py": {
+      "lines": 20,
+      "classes": [],
+      "functions": [
+        "test_get_conversations",
+        "test_send_message_with_cholesterol_query"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_chunker.py": {
+      "lines": 56,
+      "classes": [],
+      "functions": [
+        "test_chunker_validation",
+        "test_chunker_preserves_page_metadata_and_indices",
+        "test_chunker_deterministic_output"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_clinical_entity_extractor.py": {
+      "lines": 56,
+      "classes": [],
+      "functions": [
+        "test_rule_based_extractor",
+        "test_llm_extractor_fallback",
+        "test_extractor_preserves_page_provenance"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_clinical_validator.py": {
+      "lines": 69,
+      "classes": [],
+      "functions": [
+        "test_validator_valid_lab_value",
+        "test_validator_invalid_lab_value",
+        "test_validator_date_normalization",
+        "test_validator_medication",
+        "test_validator_disease"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_context_builder.py": {
+      "lines": 63,
+      "classes": [],
+      "functions": [
+        "test_context_builder_empty_results",
+        "test_context_builder_preserves_citations_and_metadata"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_documents_api.py": {
+      "lines": 38,
+      "classes": [],
+      "functions": [
+        "test_get_document_status_not_found",
+        "test_upload_document_endpoint"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_document_chunk_model.py": {
+      "lines": 22,
+      "classes": [],
+      "functions": [
+        "test_document_chunk_model_instantiation"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_document_ingestion.py": {
+      "lines": 33,
+      "classes": [],
+      "functions": [
+        "test_document_ingestion_pipeline"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_document_processor.py": {
+      "lines": 52,
+      "classes": [],
+      "functions": [
+        "test_clean_text_normalizes_whitespace_and_linebreaks",
+        "test_process_raw_text_single_page",
+        "test_process_pages_explicit_multi_page"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_embeddings.py": {
+      "lines": 93,
+      "classes": [],
+      "functions": [
+        "test_embedding_provider_interface",
+        "test_ollama_embedding_provider_factory",
+        "test_ollama_embedding_single_and_batch",
+        "test_ollama_embedding_fallback_on_invalid_url",
+        "test_embed_text_single_and_batch_local",
+        "test_embedding_similarity_consistency"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_hybrid_retriever.py": {
+      "lines": 39,
+      "classes": [],
+      "functions": [
+        "test_hybrid_retriever_multi_branch"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_ingestion_orchestrator.py": {
+      "lines": 87,
+      "classes": [],
+      "functions": [
+        "test_ingestion_orchestrator_success",
+        "test_ingestion_orchestrator_scanned_fallback"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_llm_providers.py": {
+      "lines": 58,
+      "classes": [],
+      "functions": [
+        "test_ollama_provider_graceful_offline_handling",
+        "test_gemini_provider_unconfigured_key_handling",
+        "test_gemini_provider_with_key_health",
+        "test_mock_deterministic_llm_provider",
+        "test_llm_provider_switching"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_new_report_retrieval.py": {
+      "lines": 231,
+      "classes": [],
+      "functions": [
+        "test_newly_uploaded_report_retrieved_as_top_priority",
+        "test_extremum_query_preserves_clinical_relevance_over_recency",
+        "test_patient_isolation_on_uploaded_reports"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_ocr_providers.py": {
+      "lines": 42,
+      "classes": [],
+      "functions": [
+        "test_mock_ocr_provider",
+        "test_mock_ocr_pdf_extraction",
+        "test_tesseract_ocr_graceful_availability",
+        "test_get_ocr_provider_factory"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_patient_memory.py": {
+      "lines": 81,
+      "classes": [],
+      "functions": [
+        "test_get_patient_diagnoses",
+        "test_get_patient_medications",
+        "test_get_patient_labs",
+        "test_patient_data_isolation"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_pdf_extractor.py": {
+      "lines": 59,
+      "classes": [],
+      "functions": [
+        "test_extract_plain_text",
+        "test_extract_empty_document",
+        "test_extract_malformed_pdf",
+        "test_scanned_page_detection"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_phase3_ingestion.py": {
+      "lines": 0,
+      "classes": [],
+      "functions": [],
+      "parse_error": "invalid non-printable character U+FEFF (<unknown>, line 1)"
+    },
+    "backend/tests/test_postgres_vector_store.py": {
+      "lines": 51,
+      "classes": [],
+      "functions": [
+        "test_postgres_vector_store_crud",
+        "test_get_vector_store_factory"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_query_classifier.py": {
+      "lines": 40,
+      "classes": [],
+      "functions": [
+        "test_classify_lab_intent",
+        "test_classify_medication_intent",
+        "test_classify_mri_report_intent",
+        "test_classify_timeline_intent",
+        "test_classify_mixed_clinical_intent"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_query_resolver.py": {
+      "lines": 460,
+      "classes": [
+        "TestOverviewQueries",
+        "TestStandaloneQueries",
+        "TestPronounFollowUp",
+        "TestComparisonFollowUp",
+        "TestImagingFollowUp",
+        "TestExplicitTopicContinuation",
+        "TestTopicSwitch",
+        "TestNoHistory",
+        "TestHistoryFormatting",
+        "TestKeywordExtraction",
+        "TestComparisonFollowUpPriority",
+        "TestFindPriorTopicPriority",
+        "TestMissingDataCitationSuppression"
+      ],
+      "functions": [
+        "resolver",
+        "_user",
+        "_ai",
+        "test_health_status_is_overview",
+        "test_how_am_i_is_overview",
+        "test_overall_health_is_overview",
+        "test_overview_with_history_retains_flag",
+        "test_overview_resolved_query_unchanged",
+        "test_latest_hba1c_no_history",
+        "test_highest_cholesterol_no_history",
+        "test_blood_pressure_medication",
+        "test_knee_mri_standalone",
+        "test_empty_query_returns_blank",
+        "test_has_it_improved_after_hba1c",
+        "test_is_it_normal_after_hba1c",
+        "test_that_pronoun_after_cholesterol",
+        "test_this_pronoun_after_hypertension",
+        "test_they_pronoun_after_medications",
+        "test_comparison_includes_trend_terms",
+        "test_stable_comparison_word",
+        "test_comparison_without_prior_topic_stays_standalone",
+        "test_scan_follow_up_after_knee_mri",
+        "test_imaging_follow_up_without_prior_topic_handles_gracefully",
+        "test_what_about_cholesterol",
+        "test_what_about_knee",
+        "test_explicit_topic_expansion_included",
+        "test_hba1c_then_cholesterol_switches_topic",
+        "test_cholesterol_then_hypertension",
+        "test_none_history_does_not_crash",
+        "test_empty_list_history_does_not_crash",
+        "test_formatted_history_is_empty_string",
+        "test_history_bounded_to_last_6_messages",
+        "test_ai_message_truncated_at_300_chars",
+        "test_history_formatted_with_patient_and_assistant_roles",
+        "test_diabetes_query_has_relevant_keywords",
+        "test_cholesterol_query_has_relevant_keywords",
+        "test_follow_up_retains_prior_topic_keywords",
+        "test_overview_has_overview_keywords",
+        "test_cholesterol_then_has_that_improved_resolves_to_cholesterol",
+        "test_diabetes_then_has_it_improved_resolves_to_diabetes",
+        "test_mri_then_cholesterol_then_has_that_improved_is_cholesterol",
+        "test_long_history_user_message_priority_wins",
+        "test_user_message_beats_ai_message_different_topic",
+        "test_user_message_beats_ai_with_earlier_taxonomy_keyword",
+        "test_empty_history_returns_none",
+        "test_message_without_sender_key_defaults_to_user",
+        "pipeline",
+        "test_do_not_contain_triggers",
+        "test_does_not_contain_triggers",
+        "test_records_do_not_include_triggers",
+        "test_not_documented_triggers",
+        "test_normal_answer_does_not_trigger",
+        "test_hba1c_answer_does_not_trigger",
+        "test_empty_answer_does_not_crash"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_rag_evaluation.py": {
+      "lines": 42,
+      "classes": [],
+      "functions": [
+        "test_rag_evaluation_single_case",
+        "test_rag_evaluation_benchmark_suite"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_rag_pipeline.py": {
+      "lines": 73,
+      "classes": [],
+      "functions": [
+        "test_rag_pipeline_end_to_end",
+        "test_rag_pipeline_empty_query",
+        "test_rag_pipeline_no_records_fallback"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_reports.py": {
+      "lines": 57,
+      "classes": [],
+      "functions": [
+        "test_get_reports_list",
+        "test_get_report_by_id",
+        "test_create_report_metadata",
+        "test_upload_document"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_reranker.py": {
+      "lines": 35,
+      "classes": [],
+      "functions": [
+        "test_clinical_reranker_intent_boost"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_result_fusion.py": {
+      "lines": 43,
+      "classes": [],
+      "functions": [
+        "test_result_fusion_combines_and_deduplicates"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_retrieval.py": {
+      "lines": 64,
+      "classes": [],
+      "functions": [
+        "test_vector_store_interface_and_crud"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_search.py": {
+      "lines": 14,
+      "classes": [],
+      "functions": [
+        "test_global_search_diabetes",
+        "test_global_search_cholesterol"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_structured_retriever.py": {
+      "lines": 39,
+      "classes": [],
+      "functions": [
+        "test_structured_retriever_labs",
+        "test_structured_retriever_medications",
+        "test_structured_retriever_diagnoses_and_timeline"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_summaries.py": {
+      "lines": 15,
+      "classes": [],
+      "functions": [
+        "test_get_latest_summary",
+        "test_generate_summary"
+      ],
+      "parse_error": false
+    },
+    "backend/tests/test_timeline.py": {
+      "lines": 25,
+      "classes": [],
+      "functions": [
+        "test_get_timeline_events",
+        "test_timeline_filter_by_year",
+        "test_timeline_event_by_id"
+      ],
+      "parse_error": false
+    }
+  },
+  "frontend": {
+    "src/App.tsx": {
+      "lines": 13
+    },
+    "src/main.tsx": {
+      "lines": 10
+    },
+    "src/app/providers.tsx": {
+      "lines": 33
+    },
+    "src/components/cards/ChatBubble.tsx": {
+      "lines": 77
+    },
+    "src/components/cards/MedicalCard.tsx": {
+      "lines": 88
+    },
+    "src/components/cards/ReportCard.tsx": {
+      "lines": 57
+    },
+    "src/components/cards/SummaryCard.tsx": {
+      "lines": 34
+    },
+    "src/components/cards/TimelineCard.tsx": {
+      "lines": 85
+    },
+    "src/components/charts/VitalsTrendChart.tsx": {
+      "lines": 81
+    },
+    "src/components/dialogs/GlobalSearchModal.tsx": {
+      "lines": 165
+    },
+    "src/components/dialogs/UploadModal.tsx": {
+      "lines": 275
+    },
+    "src/components/layout/AuthLayout.tsx": {
+      "lines": 93
+    },
+    "src/components/layout/Breadcrumb.tsx": {
+      "lines": 49
+    },
+    "src/components/layout/DashboardLayout.tsx": {
+      "lines": 51
+    },
+    "src/components/layout/LandingLayout.tsx": {
+      "lines": 115
+    },
+    "src/components/layout/Sidebar.tsx": {
+      "lines": 173
+    },
+    "src/components/layout/TopBar.tsx": {
+      "lines": 257
+    },
+    "src/components/ui/Accordion.tsx": {
+      "lines": 75
+    },
+    "src/components/ui/Avatar.tsx": {
+      "lines": 41
+    },
+    "src/components/ui/Badge.tsx": {
+      "lines": 33
+    },
+    "src/components/ui/Button.tsx": {
+      "lines": 61
+    },
+    "src/components/ui/Card.tsx": {
+      "lines": 57
+    },
+    "src/components/ui/EmptyState.tsx": {
+      "lines": 28
+    },
+    "src/components/ui/ErrorState.tsx": {
+      "lines": 33
+    },
+    "src/components/ui/Input.tsx": {
+      "lines": 68
+    },
+    "src/components/ui/Loading.tsx": {
+      "lines": 27
+    },
+    "src/components/ui/Modal.tsx": {
+      "lines": 86
+    },
+    "src/components/ui/Search.tsx": {
+      "lines": 40
+    },
+    "src/components/ui/Skeleton.tsx": {
+      "lines": 13
+    },
+    "src/components/ui/Table.tsx": {
+      "lines": 54
+    },
+    "src/components/ui/Tabs.tsx": {
+      "lines": 53
+    },
+    "src/components/ui/Toast.tsx": {
+      "lines": 48
+    },
+    "src/constants/mockData.ts": {
+      "lines": 654
+    },
+    "src/contexts/AuthContext.tsx": {
+      "lines": 73
+    },
+    "src/contexts/ThemeContext.tsx": {
+      "lines": 54
+    },
+    "src/contexts/UIContext.tsx": {
+      "lines": 71
+    },
+    "src/contexts/UserContext.tsx": {
+      "lines": 54
+    },
+    "src/pages/Auth/ForgotPasswordPage.tsx": {
+      "lines": 70
+    },
+    "src/pages/Auth/LoginPage.tsx": {
+      "lines": 130
+    },
+    "src/pages/Auth/OTPVerificationPage.tsx": {
+      "lines": 92
+    },
+    "src/pages/Auth/SignupPage.tsx": {
+      "lines": 144
+    },
+    "src/pages/Chat/AIChatPage.tsx": {
+      "lines": 436
+    },
+    "src/pages/Dashboard/DashboardPage.tsx": {
+      "lines": 414
+    },
+    "src/pages/DoctorSummary/DoctorSummaryPage.tsx": {
+      "lines": 339
+    },
+    "src/pages/Landing/LandingPage.tsx": {
+      "lines": 277
+    },
+    "src/pages/NotFound/NotFoundPage.tsx": {
+      "lines": 37
+    },
+    "src/pages/Profile/ProfilePage.tsx": {
+      "lines": 101
+    },
+    "src/pages/Reports/ReportsPage.tsx": {
+      "lines": 206
+    },
+    "src/pages/Settings/SettingsPage.tsx": {
+      "lines": 296
+    },
+    "src/pages/Timeline/TimelinePage.tsx": {
+      "lines": 288
+    },
+    "src/pages/Vault/VaultPage.tsx": {
+      "lines": 341
+    },
+    "src/routes/AppRoutes.tsx": {
+      "lines": 62
+    },
+    "src/routes/ProtectedRoute.tsx": {
+      "lines": 13
+    },
+    "src/services/auth.service.ts": {
+      "lines": 87
+    },
+    "src/services/axios.ts": {
+      "lines": 38
+    },
+    "src/services/chat.service.ts": {
+      "lines": 57
+    },
+    "src/services/index.ts": {
+      "lines": 8
+    },
+    "src/services/patient.service.ts": {
+      "lines": 81
+    },
+    "src/services/report.service.ts": {
+      "lines": 119
+    },
+    "src/services/search.service.ts": {
+      "lines": 77
+    },
+    "src/services/summary.service.ts": {
+      "lines": 39
+    },
+    "src/services/timeline.service.ts": {
+      "lines": 27
+    },
+    "src/types/chat.ts": {
+      "lines": 24
+    },
+    "src/types/disease.ts": {
+      "lines": 13
+    },
+    "src/types/index.ts": {
+      "lines": 10
+    },
+    "src/types/labResult.ts": {
+      "lines": 14
+    },
+    "src/types/medication.ts": {
+      "lines": 15
+    },
+    "src/types/notification.ts": {
+      "lines": 11
+    },
+    "src/types/patient.ts": {
+      "lines": 26
+    },
+    "src/types/report.ts": {
+      "lines": 31
+    },
+    "src/types/summary.ts": {
+      "lines": 21
+    },
+    "src/types/timeline.ts": {
+      "lines": 29
+    },
+    "src/types/user.ts": {
+      "lines": 29
+    },
+    "src/utils/cn.ts": {
+      "lines": 6
+    }
+  },
+  "tests": {
+    "tests/benchmarks/experiment_chroma_bge.py": {
+      "lines": 554,
+      "classes": [
+        "LocalBgeEmbeddingProvider",
+        "ChromaVectorStore"
+      ],
+      "functions": [
+        "run_comparative_experiment",
+        "evaluate_single",
+        "__init__",
+        "dimension",
+        "embed_text",
+        "embed_texts",
+        "__init__",
+        "_get_collection",
+        "add_documents",
+        "similarity_search",
+        "delete_document",
+        "health_check"
+      ],
+      "parse_error": false
+    },
+    "tests/benchmarks/retrieval_benchmark.py": {
+      "lines": 1066,
+      "classes": [
+        "RetrievalBenchmarkRunner"
+      ],
+      "functions": [
+        "build_synthetic_database",
+        "run_benchmark_and_save",
+        "__init__",
+        "run_all",
+        "eval_scenario_01_exact_numerical_and_units",
+        "eval_scenario_02_temporal_date_specific",
+        "eval_scenario_03_latest_vs_historical_biomarker",
+        "eval_scenario_04_medication_allergy_crossref",
+        "eval_scenario_05_multiturn_continuity",
+        "eval_scenario_06_contradictory_records",
+        "eval_scenario_07_unsupported_questions",
+        "eval_scenario_08_patient_isolation",
+        "eval_scenario_09_newly_uploaded_report",
+        "eval_scenario_10_synonyms_clinical_terminology",
+        "eval_scenario_11_multipage_truncation",
+        "eval_scenario_12_citation_relevance"
+      ],
+      "parse_error": false
+    },
+    "tests/benchmarks/test_migration_003_disposable.py": {
+      "lines": 217,
+      "classes": [],
+      "functions": [
+        "test_disposable_migration_lifecycle"
+      ],
+      "parse_error": false
+    }
+  },
+  "docs": {}
+}

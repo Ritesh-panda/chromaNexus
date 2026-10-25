@@ -1,0 +1,86 @@
+{
+  "stage_7": {
+    "sql_isolation_leak": false,
+    "dense_search_leak": false,
+    "dense_contained_bob_data": false,
+    "bm25_search_leak": false,
+    "bm25_contained_bob_data": false,
+    "hybrid_search_leak": false,
+    "hybrid_contained_bob_data": false,
+    "negative_cross_request_leak": false,
+    "total_leakage_events": 0,
+    "status": "PASS"
+  },
+  "stage_8": {
+    "document_pages": 2,
+    "chunks_indexed": 4,
+    "evidence_retrieval_rate": 1.0,
+    "query_evaluations": [
+      {
+        "query": "What is the patient left ventricular ejection fraction?",
+        "category": "exact_numerical",
+        "expected": "52%",
+        "evidence_retrieved": true,
+        "top_sources_count": 4
+      },
+      {
+        "query": "What was the historical blood pressure recorded on 2025-04-10?",
+        "category": "exact_date",
+        "expected": "152/94",
+        "evidence_retrieved": true,
+        "top_sources_count": 4
+      },
+      {
+        "query": "What is the current dosage of Lisinopril?",
+        "category": "medication",
+        "expected": "20mg",
+        "evidence_retrieved": true,
+        "top_sources_count": 6
+      },
+      {
+        "query": "Does the patient have any medication allergies?",
+        "category": "allergy",
+        "expected": "Sulfa",
+        "evidence_retrieved": true,
+        "top_sources_count": 6
+      },
+      {
+        "query": "What is the glycated hemoglobin level?",
+        "category": "synonym_hba1c",
+        "expected": "6.4%",
+        "evidence_retrieved": true,
+        "top_sources_count": 4
+      },
+      {
+        "query": "What was the fasting blood glucose?",
+        "category": "fasting_glucose",
+        "expected": "108",
+        "evidence_retrieved": true,
+        "top_sources_count": 4
+      },
+      {
+        "query": "What is the thyroid stimulating hormone TSH level?",
+        "category": "abstention",
+        "expected": "UNANSWERABLE",
+        "evidence_retrieved": true,
+        "top_sources_count": 4
+      },
+      {
+        "query": "What is the glucose for patient Bob?",
+        "category": "wrong_patient",
+        "expected": "WRONG_PATIENT",
+        "evidence_retrieved": true,
+        "top_sources_count": 4
+      }
+    ],
+    "restart_persistence": {
+      "count_pre_restart": 4,
+      "count_post_restart": 4,
+      "reboot_query_retrieved": true,
+      "status": "PASS"
+    },
+    "llm_answer_generation_status": "BLOCKED",
+    "llm_blocking_reason": "Ollama daemon offline at http://localhost:11434; mock generation avoided per audit protocol.",
+    "status": "PASS"
+  }
+}

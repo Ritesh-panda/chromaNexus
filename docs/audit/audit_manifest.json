@@ -1,0 +1,148 @@
+{
+  "audit_metadata": {
+    "project": "ChronaNexus",
+    "timestamp": "2026-10-18T21:26:00+05:30",
+    "auditor": "Antigravity AI Forensic Audit Agent",
+    "standard": "Deep Forensics & Zero-Fabrication Evidence Standard",
+    "audit_root": "C:/chromaNexus",
+    "verdict": "ACADEMIC PROTOTYPE ? NOT READY FOR PRODUCTION"
+  },
+  "verification_scorecard": {
+    "backend_tests_executed": 161,
+    "backend_tests_passed": 161,
+    "backend_test_duration_seconds": 133.56,
+    "backend_test_files_count": 34,
+    "retrieval_benchmark_scenarios": 12,
+    "retrieval_benchmark_passed": 9,
+    "retrieval_benchmark_pass_rate_percent": 75.0,
+    "persistent_db_revision": "002_add_document_chunks",
+    "persistent_db_migration_status": "UNMIGRATED (Missing 003 and 004)",
+    "tesseract_ocr_available": false,
+    "bm25_retrieval_status": "NOT IMPLEMENTED IN APP",
+    "chromadb_app_integration": "NOT INTEGRATED (Benchmark experiment only)"
+  },
+  "defects_summary": {
+    "P0_critical": 0,
+    "P1_high": 3,
+    "P2_medium": 4,
+    "P3_low": 3,
+    "total_cataloged": 10
+  },
+  "documents": [
+    {
+      "path": "00_MASTER_AUDIT_INDEX.md",
+      "size_bytes": 7397,
+      "sha256": "db01101e8e5cc0480f47f12bd6f00fa79e27614f7c01ebf69300d6fc0161028e"
+    },
+    {
+      "path": "01_EXECUTIVE_TRUTH_REPORT.md",
+      "size_bytes": 10014,
+      "sha256": "da38398da35010d8234c5e3c61986545d6ae783c03d3ceeeb774f96edd9077bd"
+    },
+    {
+      "path": "02_REPOSITORY_INVENTORY.md",
+      "size_bytes": 7899,
+      "sha256": "53b5cebeb1ef79ad54bd3982575659b59b1bb913ae982c7332fe94e87d08cd7f"
+    },
+    {
+      "path": "03_COMPLETE_SYSTEM_ARCHITECTURE.md",
+      "size_bytes": 9623,
+      "sha256": "cec2e6f4bc4f4ad8c9f88eb061b0cc924152b0b3effa286c353b27ffae32f624"
+    },
+    {
+      "path": "04_DATA_MODEL_AND_MIGRATIONS.md",
+      "size_bytes": 6842,
+      "sha256": "738018ade7c2a69cc2d8f4581338b3b186242ac175df1bc75552e5b3bfafba0a"
+    },
+    {
+      "path": "05_PHASE_BY_PHASE_HISTORY.md",
+      "size_bytes": 5368,
+      "sha256": "016ec36aedc04e2b04e757ddd5e2f16acd342f4ec7782bb668cdff6c393413d3"
+    },
+    {
+      "path": "06_TEST_AUDIT.md",
+      "size_bytes": 5051,
+      "sha256": "015b831901935034c63fe3b51594646487b365c6ac3d428704532d1badce492a"
+    },
+    {
+      "path": "07_RETRIEVAL_BENCHMARK_AUDIT.md",
+      "size_bytes": 6762,
+      "sha256": "711b1f73e3e8f484483647c423ce94bb384ddc515edb2ae9ae6289c094522e6a"
+    },
+    {
+      "path": "08_INGESTION_AND_PDF_AUDIT.md",
+      "size_bytes": 4358,
+      "sha256": "9b1019bb96ed9203e54b11a3dc3aa1339b786764c6a71ed219a5db1d8b4fa050"
+    },
+    {
+      "path": "09_SECURITY_PRIVACY_CLINICAL_RISKS.md",
+      "size_bytes": 2719,
+      "sha256": "7c844f0f3378734a2edbfe17c5312817ecfc4ab4a54e863f33209c59c8015748"
+    },
+    {
+      "path": "10_FRONTEND_AND_API_AUDIT.md",
+      "size_bytes": 3558,
+      "sha256": "df0f2fa2c074dbccd0d87458e886c556447c20809eaa98219f1c8bbab31b2a59"
+    },
+    {
+      "path": "11_PERFORMANCE_AND_REPRODUCIBILITY.md",
+      "size_bytes": 2978,
+      "sha256": "80047696780d54c317e4f433faec1ed4a02673cc112cac4940e80ec909785d62"
+    },
+    {
+      "path": "12_DEPENDENCY_AND_LICENSE_AUDIT.md",
+      "size_bytes": 3011,
+      "sha256": "5c33ad7d7659045fdac0af881344b83e579ce212a032de207b4c90c0a1c4fec1"
+    },
+    {
+      "path": "13_DEFECT_AND_RISK_REGISTER.md",
+      "size_bytes": 8292,
+      "sha256": "c44c815cefb6009103af1cfe5d6ff677a17f828c66883ea821c931a344e2a6f2"
+    },
+    {
+      "path": "14_REQUIREMENTS_TRACEABILITY.md",
+      "size_bytes": 3425,
+      "sha256": "0d9d2d8ac088c80a2ab7ad15d5608ffdbb1676e13bf871d4c48e7f09f60d706d"
+    },
+    {
+      "path": "15_NEXT_PHASE_READINESS.md",
+      "size_bytes": 2603,
+      "sha256": "7122fd21de485b39260292c70e4d05e89ee675281a88604c01f17529cfeba40d"
+    },
+    {
+      "path": "16_RAW_COMMAND_RESULTS.md",
+      "size_bytes": 4714,
+      "sha256": "3b853b0a32a5e51c4ce6afaeee4443f02d11fcc4b6872b6d9d327ac144d7041a"
+    },
+    {
+      "path": "17_EVIDENCE_RECONCILIATION_REPORT.md",
+      "size_bytes": 14923,
+      "sha256": "b97c8de50d123f67768e860c0d9d6852f2043d3a94bc7ae0f8a38d8be14eb706"
+    },
+    {
+      "path": "AUDIT_JOURNAL.md",
+      "size_bytes": 990,
+      "sha256": "0aeed7ca5adbde325e471c2665805ca5b86426cb7e462b2f324438d5d4c81690"
+    },
+    {
+      "path": "evidence/pytest_run_raw.log",
+      "size_bytes": 3626,
+      "sha256": "fbfc211238e5d488d3fe71c4177222575c793d32bec8b9129f2cd058bad503d0"
+    },
+    {
+      "path": "evidence/benchmark_run_raw.log",
+      "size_bytes": 5466,
+      "sha256": "ae93e700592852754c9f62bea5fbd34866f458b58bd15efd959f1cb0a6095032"
+    },
+    {
+      "path": "evidence/chronanexus_db_schema.json",
+      "size_bytes": 35168,
+      "sha256": "8fdb8aa05694b29099b7835673024fac1a019cee7656af24d2c6e49beb30f8d2"
+    },
+    {
+      "path": "evidence/inventory_raw.json",
+      "size_bytes": 39892,
+      "sha256": "51ab6261dbee325a025a5c966d1b93d3cfede0ab7d8d996ca1779fdf356b9878"
+    }
+  ]
+}

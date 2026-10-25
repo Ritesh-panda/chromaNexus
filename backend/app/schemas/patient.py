@@ -103,3 +103,19 @@ class LabResultResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+
+
+class AnalyteSummarySchema(BaseModel):
+    testName: str
+    canonicalName: str
+    loincCode: Optional[str] = None
+    count: int
+    latestDate: Optional[str] = None
+    latestValue: Optional[str] = None
+    unit: Optional[str] = None
+    referenceRange: Optional[str] = None
+    facilities: List[str] = Field(default_factory=list)
+
+
+class AnalyteListResponse(BaseModel):
+    analytes: List[AnalyteSummarySchema]

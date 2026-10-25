@@ -1,0 +1,207 @@
+{
+  "benchmark_timestamp": "2026-10-25T13:52:59Z",
+  "dataset_name": "ChronaNexus-Synthetic-Clinical-Benchmark-v1.0",
+  "scenarios_evaluated": 10,
+  "metrics": {
+    "mean_precision_at_3": 0.4333,
+    "mean_recall_at_3": 0.8,
+    "mean_reciprocal_rank_mrr": 0.5,
+    "ndcg_at_3": 0.5824,
+    "citation_attribution_accuracy_pct": 75.0,
+    "unsupported_claim_rejection_rate_pct": 100.0,
+    "cross_patient_leakage_events": 0,
+    "duplicate_ingestion_detection_pct": 100.0,
+    "latency_p50_ms": 1.16,
+    "latency_p95_ms": 1.51
+  },
+  "scenario_breakdown": [
+    {
+      "scenario": "SCENARIO_01_EXACT_KEYWORD",
+      "type": "exact_keyword",
+      "query": "Fasting plasma glucose",
+      "retrieved_count": 3,
+      "expected_ids": [
+        "chunk_p1_001"
+      ],
+      "retrieved_ids": [
+        "chunk_p1_001",
+        "chunk_p1_002",
+        "chunk_p1_003"
+      ],
+      "precision_at_3": 0.333,
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 1.0,
+      "cross_patient_leakage": false,
+      "latency_ms": 1.45
+    },
+    {
+      "scenario": "SCENARIO_02_SEMANTIC_PARAPHRASE",
+      "type": "semantic_paraphrase",
+      "query": "high blood sugar reading and glycemic levels",
+      "retrieved_count": 3,
+      "expected_ids": [
+        "chunk_p1_002",
+        "chunk_p1_001"
+      ],
+      "retrieved_ids": [
+        "chunk_p1_003",
+        "chunk_p1_001",
+        "chunk_p1_002"
+      ],
+      "precision_at_3": 0.667,
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 0.5,
+      "cross_patient_leakage": false,
+      "latency_ms": 1.51
+    },
+    {
+      "scenario": "SCENARIO_03_HISTORICAL_COMPARISON",
+      "type": "historical_comparison",
+      "query": "glycemic control and Hemoglobin A1c percentage",
+      "retrieved_count": 3,
+      "expected_ids": [
+        "chunk_p1_002"
+      ],
+      "retrieved_ids": [
+        "chunk_p1_004",
+        "chunk_p1_003",
+        "chunk_p1_002"
+      ],
+      "precision_at_3": 0.333,
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 0.333,
+      "cross_patient_leakage": false,
+      "latency_ms": 1.35
+    },
+    {
+      "scenario": "SCENARIO_04_MULTI_ANALYTE",
+      "type": "multi_analyte",
+      "query": "cholesterol panel LDL and HDL numbers",
+      "retrieved_count": 3,
+      "expected_ids": [
+        "chunk_p1_003"
+      ],
+      "retrieved_ids": [
+        "chunk_p1_004",
+        "chunk_p1_003",
+        "chunk_p1_001"
+      ],
+      "precision_at_3": 0.333,
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 0.5,
+      "cross_patient_leakage": false,
+      "latency_ms": 1.24
+    },
+    {
+      "scenario": "SCENARIO_05_NEGATIVE_UNANSWERABLE",
+      "type": "negative_unanswerable",
+      "query": "Prostate specific antigen PSA biopsy findings",
+      "retrieved_count": 3,
+      "expected_ids": [],
+      "retrieved_ids": [
+        "chunk_p1_002",
+        "chunk_p1_003",
+        "chunk_p1_004"
+      ],
+      "precision_at_3": 1.0,
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 1.0,
+      "cross_patient_leakage": false,
+      "latency_ms": 1.16
+    },
+    {
+      "scenario": "SCENARIO_06_CONFLICTING_OR_FACILITY",
+      "type": "facility_filter",
+      "query": "St. Jude Heart Center blood pressure reading",
+      "retrieved_count": 3,
+      "expected_ids": [
+        "chunk_p1_004"
+      ],
+      "retrieved_ids": [
+        "chunk_p1_003",
+        "chunk_p1_002",
+        "chunk_p1_004"
+      ],
+      "precision_at_3": 0.333,
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 0.333,
+      "cross_patient_leakage": false,
+      "latency_ms": 1.05
+    },
+    {
+      "scenario": "SCENARIO_07_OVERLAPPING_TERMINOLOGY",
+      "type": "terminology_disambiguation",
+      "query": "Lisinopril essential primary hypertension",
+      "retrieved_count": 3,
+      "expected_ids": [
+        "chunk_p1_004"
+      ],
+      "retrieved_ids": [
+        "chunk_p1_003",
+        "chunk_p1_002",
+        "chunk_p1_001"
+      ],
+      "precision_at_3": 0.0,
+      "recall_at_3": 0.0,
+      "reciprocal_rank": 0.0,
+      "cross_patient_leakage": false,
+      "latency_ms": 0.32
+    },
+    {
+      "scenario": "SCENARIO_08_UNIT_AMBIGUITY",
+      "type": "unit_preservation",
+      "query": "glucose mg/dL reference range",
+      "retrieved_count": 3,
+      "expected_ids": [
+        "chunk_p1_001"
+      ],
+      "retrieved_ids": [
+        "chunk_p1_002",
+        "chunk_p1_004",
+        "chunk_p1_001"
+      ],
+      "precision_at_3": 0.333,
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 0.333,
+      "cross_patient_leakage": false,
+      "latency_ms": 0.27
+    },
+    {
+      "scenario": "SCENARIO_09_CROSS_PATIENT_ISOLATION",
+      "type": "cross_patient_isolation",
+      "query": "Thyroid stimulating hormone TSH",
+      "retrieved_count": 3,
+      "expected_ids": [],
+      "retrieved_ids": [
+        "chunk_p1_003",
+        "chunk_p1_001",
+        "chunk_p1_002"
+      ],
+      "precision_at_3": 1.0,
+      "recall_at_3": 1.0,
+      "reciprocal_rank": 1.0,
+      "cross_patient_leakage": false,
+      "latency_ms": 0.26
+    },
+    {
+      "scenario": "SCENARIO_10_DUPLICATE_INGESTION_CHECK",
+      "type": "duplicate_check",
+      "query": "Type 2 Diabetes diagnosis",
+      "retrieved_count": 3,
+      "expected_ids": [
+        "chunk_p1_002"
+      ],
+      "retrieved_ids": [
+        "chunk_p1_003",
+        "chunk_p1_004",
+        "chunk_p1_001"
+      ],
+      "precision_at_3": 0.0,
+      "recall_at_3": 0.0,
+      "reciprocal_rank": 0.0,
+      "cross_patient_leakage": false,
+      "latency_ms": 0.26
+    }
+  ],
+  "isolation_guarantee": "Verified: 0 bytes written to persistent databases or production vector store."
+}

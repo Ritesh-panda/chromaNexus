@@ -1,0 +1,167 @@
+{
+  "timestamp": "2026-10-19T08:01:41.938730+00:00",
+  "total_scenarios": 12,
+  "passed_scenarios": 12,
+  "failed_scenarios": 0,
+  "pass_rate_percentage": 100.0,
+  "results": [
+    {
+      "scenario_id": "SCENARIO_01_EXACT_NUMERICAL_UNITS",
+      "name": "Exact numerical values and unit handling",
+      "query": "What was my serum potassium level and unit on September 10, 2024?",
+      "passed": true,
+      "earliest_failure_stage": "none",
+      "diagnostic_notes": "Structured found 1 items. Vector found 4 items. Verified Potassium 4.8 mEq/L with temporal context.",
+      "evidence": [
+        "QUEST DIAGNOSTICS - CLINICAL PATHOLOGY\nPatient: Alex Vance | Date: 2024-09-10\nSerum Potassium: 4.8 mEq/L (Normal, Ref: 3.5-5.1 mEq/L)\nSerum Creatinine: 1.28 mg/dL (Normal, Ref: 0.74-1.35 mg/dL)\nAlanine Aminotransferase (ALT): 38 U/L (Normal, Ref: 10-40 U/L)\nAspartate Aminotransferase (AST): 32 U/L (Normal, Ref: 10-35 U/L)\nTotal Bilirubin: 0.8 mg/dL (Normal, Ref: 0.2-1.2 mg/dL)\nImpression: Stable electrolyte and hepatic profile.",
+        "Test: Serum Potassium | Value: 4.8 mEq/L (Ref: 3.5 - 5.1) | Status: NORMAL | Date: 2024-09-10 | Facility: Quest Diagnostics"
+      ],
+      "duration_ms": 5112.65
+    },
+    {
+      "scenario_id": "SCENARIO_02_TEMPORAL_DATE_SPECIFIC",
+      "name": "Date-specific queries and temporal filtering",
+      "query": "What was my serum creatinine on 2023-04-15 versus 2024-09-10?",
+      "passed": true,
+      "earliest_failure_stage": "none",
+      "diagnostic_notes": "Found 2023 reading: True, Found 2024 reading: True",
+      "evidence": [
+        "Test: Serum Creatinine | Value: 1.28 mg/dL (Ref: 0.74 - 1.35) | Status: NORMAL | Date: 2024-09-10 | Facility: Quest Diagnostics",
+        "Test: Serum Creatinine | Value: 0.95 mg/dL (Ref: 0.74 - 1.35) | Status: NORMAL | Date: 2023-04-15 | Facility: Metro General Hospital",
+        "QUEST DIAGNOSTICS - CLINICAL PATHOLOGY\nPatient: Alex Vance | Date: 2024-09-10\nSerum Potassium: 4.8 mEq/L (Normal, Ref: 3.5-5.1 mEq/L)\nSerum Creatinine: 1.28 mg/dL (Normal, Ref: 0.74-1.35 mg/dL)\nAlanine Aminotransferase (ALT): 38 U/L (Normal, Ref: 10-40 U/L)\nAspartate Aminotransferase (AST): 32 U/L (Normal, Ref: 10-35 U/L)\nTotal Bilirubin: 0.8 mg/dL (Normal, Ref: 0.2-1.2 mg/dL)\nImpression: Stable electrolyte and hepatic profile."
+      ],
+      "duration_ms": 2682.51
+    },
+    {
+      "scenario_id": "SCENARIO_03_LATEST_VS_HISTORICAL",
+      "name": "Latest versus historical biomarker values",
+      "query": "What is my latest Fasting Blood Glucose level?",
+      "passed": true,
+      "earliest_failure_stage": "none",
+      "diagnostic_notes": "Top glucose element: METRO GENERAL HOSPITAL - PRIMARY CARE CLINIC\nPatient: Alex Vance | Date: 2025-01-20\nPhysician: Dr. Sarah Jenkins, MD\nVital Signs: BP 122/78 mmHg, HR 68 bpm, Weight 81.2 kg\nFasting Blood Glucose: 108 mg/dL (Mild Elevation, Ref: 70-99 mg/dL)\nAssessment: Significant improvement in fasting glucose (down to 108 from 142 in 2023).",
+      "evidence": [
+        "METRO GENERAL HOSPITAL - PRIMARY CARE CLINIC\nPatient: Alex Vance | Date: 2025-01-20\nPhysician: Dr. Sarah Jenkins, MD\nVital Signs: BP 122/78 mmHg, HR 68 bpm, Weight 81.2 kg\nFasting Blood Glucose: 108 mg/dL (Mild Elevation, Ref: 70-99 mg/dL)\nAssessment: Significant improvement in fasting glucose (down to 108 from 142 in 2023).",
+        "Test: Fasting Blood Glucose | Value: 108 mg/dL (Ref: 70 - 99) | Status: HIGH | Date: 2025-01-20 | Facility: Metro General Hospital"
+      ],
+      "duration_ms": 2507.91
+    },
+    {
+      "scenario_id": "SCENARIO_04_MEDICATION_ALLERGY_CROSSREF",
+      "name": "Medication and allergy cross-referencing",
+      "query": "Can I take Amoxicillin for my bacterial sinus infection?",
+      "passed": true,
+      "earliest_failure_stage": "none",
+      "diagnostic_notes": "Penicillin allergy record present: True, Structured safety alert generated: True",
+      "evidence": [
+        "CLINICAL SAFETY ALERT (POTENTIAL CROSS-REACTIVITY): Recorded patient profile indicates an allergy to 'Penicillin'. Candidate medication 'Amoxicillin'. CLINICAL SAFETY WARNING (CLASS CROSS-REACTIVITY): Candidate medication 'amoxicillin' belongs to Penicillin-Class Beta-Lactam Antibacterials. Recorded patient profile documents an allergy to 'Penicillin'. Potential immunological cross-reactivity detected. This decision-support advisory is based on recorded patient data and catalog rules; it is NOT clinically validated nor a definitive prescribing decision. Clinician or pharmacist review is required prior to prescription or administration.",
+        "Documented Allergy: Penicillin | Severity: SEVERE (Reaction: Anaphylaxis) [Class: Penicillins, Beta-lactam antibacterials] | Category: MEDICATION | Status: ACTIVE"
+      ],
+      "duration_ms": 2494.83
+    },
+    {
+      "scenario_id": "SCENARIO_05_MULTITURN_CONTINUITY",
+      "name": "Multi-turn follow-up and topic continuity",
+      "query": "What inhaler dose was prescribed for that condition?",
+      "passed": true,
+      "earliest_failure_stage": "none",
+      "diagnostic_notes": "Resolved query topic: 'asthma', resolved text: 'What inhaler dose was prescribed for that condition? asthma Moderate Persistent Asthma pulmonary respiratory Inhaler Fluticasone Advair'",
+      "evidence": [
+        "ST. JUDE PULMONARY CENTER\nPatient: Alex Vance | Date: 2023-06-01\nSpecialist: Dr. Emily Watson, MD\nDiagnosis: Moderate Persistent Asthma (ICD-10 J45.40)\nPrescription: Fluticasone/Salmeterol (Advair Diskus) 250/50 mcg, 1 inhalation BID\nAllergies Noted: Patient has verified anaphylactic Penicillin allergy.",
+        "Diagnosis: Moderate Persistent Asthma (ICD: J45.40) | Status: ACTIVE | Diagnosed: 2023-06-01 | Doctor: Dr. Emily Watson, MD"
+      ],
+      "duration_ms": 2615.0
+    },
+    {
+      "scenario_id": "SCENARIO_06_CONTRADICTORY_RECORDS",
+      "name": "Contradictory records from different facilities",
+      "query": "What was my HbA1c recorded in November 2024 across different facilities?",
+      "passed": true,
+      "earliest_failure_stage": "none",
+      "diagnostic_notes": "Found Metro (6.8%): True, Found St. Jude (7.4%): True",
+      "evidence": [
+        "METRO HEALTH LABS - ENDOCRINOLOGY\nPatient: Alex Vance | Date: 2024-11-02\nHemoglobin A1c (HbA1c): 6.8 % (High, Ref: 4.0-5.6 %)\nMethod: HPLC Certified Assay\nImpression: Improved glycemic trajectory under oral Metformin therapy.",
+        "ST. JUDE OUTPATIENT CLINIC - LABORATORY SERVICES\nPatient: Alex Vance | Date: 2024-11-09\nHemoglobin A1c (HbA1c): 7.4 % (High, Ref: 4.0-5.6 %)\nPoint of Care Immunoassay\nImpression: Suboptimal glycemic control, elevated relative to prior laboratory benchmarks.",
+        "METRO GENERAL HOSPITAL - PRIMARY CARE CLINIC\nPatient: Alex Vance | Date: 2025-01-20\nPhysician: Dr. Sarah Jenkins, MD\nVital Signs: BP 122/78 mmHg, HR 68 bpm, Weight 81.2 kg\nFasting Blood Glucose: 108 mg/dL (Mild Elevation, Ref: 70-99 mg/dL)\nAssessment: Significant improvement in fasting glucose (down to 108 from 142 in 2023)."
+      ],
+      "duration_ms": 2501.32
+    },
+    {
+      "scenario_id": "SCENARIO_07_UNSUPPORTED_QUESTIONS",
+      "name": "Unsupported questions (Hallucination & Refusal check)",
+      "query": "What were the findings of my colonoscopy procedure and biopsy?",
+      "passed": true,
+      "earliest_failure_stage": "none",
+      "diagnostic_notes": "Citations count: 0, Answer: Based on your verified medical records, no records or documentation were found regarding a colonoscopy or brain CT scan....",
+      "evidence": [],
+      "duration_ms": 2521.59
+    },
+    {
+      "scenario_id": "SCENARIO_08_PATIENT_ISOLATION",
+      "name": "Patient isolation and zero cross-patient retrieval",
+      "query": "What were the findings of my knee MRI?",
+      "passed": true,
+      "earliest_failure_stage": "none",
+      "diagnostic_notes": "Vector leaked Beta data: False, Hybrid leaked Beta data: False",
+      "evidence": [
+        "ST. JUDE OUTPATIENT CLINIC - LABORATORY SERVICES\nPatient: Alex Vance | Date: 2024-11-09\nHemoglobin A",
+        "inistrative text and normal baselines.\n\n--- PAGE 3: SPECIALIZED ENDOCRINE & THYROID PANEL ---\nDate o"
+      ],
+      "duration_ms": 5093.23
+    },
+    {
+      "scenario_id": "SCENARIO_09_NEWLY_UPLOADED_REPORT",
+      "name": "Newly uploaded relevant reports",
+      "query": "When was I treated for acute bronchitis and what antibiotic was prescribed?",
+      "passed": true,
+      "earliest_failure_stage": "none",
+      "diagnostic_notes": "Found newly uploaded bronchitis report: True",
+      "evidence": [
+        "Test: Fasting Blood Glucose | Value: 108 mg/dL (Ref: 70 - 99) | Status: HIGH | Date: 2025-01-20 | Facility: Metro General Hospital",
+        "METRO GENERAL HOSPITAL - CARDIOLOGY\nPatient: Alex Vance | Date: 2024-01-15\nDiagnosis: Essential (Primary) Hypertension (ICD-10 I10)\nActive Prescription: Lisinopril 10mg QD oral tablet for blood pressure control.\nClinical Note: Elevated arterial blood pressure effectively stabilized."
+      ],
+      "duration_ms": 5109.96
+    },
+    {
+      "scenario_id": "SCENARIO_10_SYNONYMS_AND_TERMINOLOGY",
+      "name": "Synonyms and alternate clinical terminology",
+      "query": "Do my records show elevated arterial pressure or high cardiac readings?",
+      "passed": true,
+      "earliest_failure_stage": "none",
+      "diagnostic_notes": "Vector found synonym: True, Hybrid found synonym: True. (SHA-256 hash embeddings cannot bridge semantic synonyms).",
+      "evidence": [
+        "Test: Fasting Blood Glucose | Value: 108 mg/dL (Ref: 70 - 99) | Status: HIGH | Date: 2025-01-20 | Facility: Metro General Hospital",
+        "Test: Hemoglobin A1c (HbA1c) | Value: 7.4 % (Ref: 4.0 - 5.6) | Status: HIGH | Date: 2024-11-09 | Facility: St. Jude Outpatient Clinic"
+      ],
+      "duration_ms": 5060.2
+    },
+    {
+      "scenario_id": "SCENARIO_11_MULTIPAGE_TRUNCATION",
+      "name": "Multi-page reports & deep table results (>3000 chars)",
+      "query": "What were my TSH and Free T4 thyroid results?",
+      "passed": true,
+      "earliest_failure_stage": "none",
+      "diagnostic_notes": "Found TSH: True, Found Free T4: True. Note: In live ingestion, llm_extractor truncates to 3000 chars, dropping Page 3.",
+      "evidence": [
+        "Test: Thyroid Stimulating Hormone (TSH) | Value: 5.8 mIU/L (Ref: 0.45 - 4.50) | Status: HIGH | Date: 2024-05-10 | Facility: Metro General Hospital",
+        "inistrative text and normal baselines.\n\n--- PAGE 3: SPECIALIZED ENDOCRINE & THYROID PANEL ---\nDate of Assay: 2024-05-10 | Specimen: Venous Blood Serum\nThyroid Stimulating Hormone (TSH): 5.8 mIU/L (High, Ref: 0.45 - 4.50 mIU/L)\nFree Thyroxine (Free T4): 0.8 ng/dL (Low-Normal, Ref: 0.82 - 1.77 ng/dL)\nDiagnostic Interpretation: Subclinical hypothyroidism evidenced by elevated TSH and borderline Free T4."
+      ],
+      "duration_ms": 2608.38
+    },
+    {
+      "scenario_id": "SCENARIO_12_CITATION_RELEVANCE",
+      "name": "Citation relevance and claim verification",
+      "query": "What were my liver enzyme levels (ALT and AST)?",
+      "passed": true,
+      "earliest_failure_stage": "none",
+      "diagnostic_notes": "Cited reports: ['synth_rep_alpha_005', 'synth_rep_alpha_004', 'synth_rep_alpha_003', 'synth_rep_alpha_002', 'synth_rep_alpha_001']. Has correct: True, Has irrelevant: False",
+      "evidence": [
+        "synth_rep_alpha_005: Lab: Fasting Blood Glucose",
+        "synth_rep_alpha_004: Lab: Hemoglobin A1c (HbA1c)",
+        "synth_rep_alpha_003: Lab: Hemoglobin A1c (HbA1c)",
+        "synth_rep_alpha_002: Lab: Serum Creatinine",
+        "synth_rep_alpha_001: Excerpt: Comprehensive Metabolic Panel & Glucose (p.1)"
+      ],
+      "duration_ms": 2456.36
+    }
+  ]
+}

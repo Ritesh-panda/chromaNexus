@@ -121,6 +121,28 @@ def test_extremum_query_preserves_clinical_relevance_over_recency(db_session):
     patient = db_session.query(Patient).first()
     assert patient is not None
 
+    # Ensure baseline 2021 lab exists for Alex Vance so we test multi-encounter trajectory
+    baseline_2021 = db_session.query(LabResult).filter(
+        LabResult.patient_id == patient.id,
+        LabResult.source_report_id == "rep_002"
+    ).first()
+    if not baseline_2021:
+        baseline_2021 = LabResult(
+            id="lab_baseline_2021_chol",
+            patient_id=patient.id,
+            test_name="Total Cholesterol",
+            category="lipid_panel",
+            value="242",
+            unit="mg/dL",
+            reference_range="<200",
+            status="high",
+            test_date="2021-06-12",
+            source_report_id="rep_002",
+            hospital_name="Quest Diagnostics"
+        )
+        db_session.add(baseline_2021)
+        db_session.commit()
+
     vector_store = PostgresVectorStore(db_session=db_session)
     hybrid_retriever = HybridRetriever(vector_store=vector_store, db_session=db_session)
     pipeline = RAGPipeline(

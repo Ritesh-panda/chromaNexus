@@ -1,0 +1,73 @@
+{
+  "stage": "1_and_2",
+  "timestamp": "2026-10-18T23:48:00+05:30",
+  "stage_1": {
+    "VECTOR_STORE_BACKEND": "chroma",
+    "CHROMA_PERSIST_DIRECTORY": "C:/chromaNexus/data/chroma_db",
+    "CHROMA_COLLECTION_NAME": "chronanexus_clinical_chunks",
+    "EMBEDDING_PROVIDER_SETTING": "ollama",
+    "configured_dimension": 384,
+    "v_store_init_ms": 25938.93,
+    "v_store_class": "ChromaDBVectorStore",
+    "bge_load_ms": 15352.28,
+    "emb_provider_class": "BGEEmbeddingProvider",
+    "dimension": 384,
+    "fallback_tests": {
+      "bge_offline_load": {
+        "status": "PASS",
+        "dim": 384,
+        "norm": 1.0
+      },
+      "ollama_unreachable_fallback": {
+        "status": "PASS",
+        "fallback_class": "BGEEmbeddingProvider",
+        "dim": 384
+      },
+      "invalid_model_fallback": {
+        "status": "FAIL",
+        "error": "'BGEEmbeddingProvider' object has no attribute '_fallback_provider'"
+      }
+    }
+  },
+  "stage_2": {
+    "numerical_checks": {
+      "total_inputs": 100,
+      "dimension_exact_384": true,
+      "finite_no_nan_inf": true,
+      "empty_handled_safely": true,
+      "l2_norms_approx_1": true,
+      "batch_equals_single": true,
+      "batch_vs_single_max_diff": 1.1920928955078125e-07,
+      "median_latency_ms": 14.32,
+      "p95_latency_ms": 16.56,
+      "mean_l2_norm": 1.0
+    },
+    "dataset_stats": {
+      "total_pairs": 100,
+      "positive_pairs": 30,
+      "hard_negative_pairs": 30,
+      "exact_numeric_pairs": 20,
+      "terminology_pairs": 20
+    },
+    "bge_evaluation": {
+      "mean_positive_sim": 0.7813,
+      "median_positive_sim": 0.7675,
+      "mean_negative_sim": 0.7485,
+      "median_negative_sim": 0.7323,
+      "separation": 0.0328,
+      "pairwise_accuracy_percent": 46.67,
+      "median_latency_ms": 26.97,
+      "p95_latency_ms": 31.3
+    },
+    "hash_baseline_evaluation": {
+      "mean_positive_sim": 0.1236,
+      "median_positive_sim": 0.0583,
+      "mean_negative_sim": 0.1248,
+      "median_negative_sim": 0.0862,
+      "separation": -0.0012,
+      "pairwise_accuracy_percent": 30.0,
+      "median_latency_ms": 0.09,
+      "p95_latency_ms": 0.12
+    }
+  }
+}

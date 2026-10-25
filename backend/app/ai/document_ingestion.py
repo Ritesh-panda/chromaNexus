@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from backend.app.ai.document_processor import DocumentProcessor, ProcessedDocument
 from backend.app.ai.chunker import DocumentChunker, DocumentChunk
 from backend.app.ai.embeddings import EmbeddingProvider, get_embedding_provider
-from backend.app.ai.retrieval import VectorStore, PostgresVectorStore, InMemoryVectorStore
+from backend.app.ai.retrieval import VectorStore, PostgresVectorStore, InMemoryVectorStore, get_vector_store
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +34,7 @@ class DocumentIngestionPipeline:
         self.processor = processor or DocumentProcessor()
         self.chunker = chunker or DocumentChunker(chunk_size=500, chunk_overlap=100)
         self.embedding_provider = embedding_provider or get_embedding_provider()
-        self.vector_store = vector_store or InMemoryVectorStore(embedding_provider=self.embedding_provider)
+        self.vector_store = vector_store or get_vector_store(embedding_provider=self.embedding_provider)
 
     def ingest_document(
         self,

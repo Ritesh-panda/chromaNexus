@@ -3,6 +3,7 @@ import type { ChatMessage } from '@/types';
 import { Avatar } from '@/components/ui/Avatar';
 import { Badge } from '@/components/ui/Badge';
 import { FileText, ShieldCheck } from 'lucide-react';
+import { ClinicalTrendCard } from '@/components/cards/ClinicalTrendCard';
 import { motion } from 'framer-motion';
 
 export interface ChatBubbleProps {
@@ -50,6 +51,10 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onCitationClick
         >
           <div className="whitespace-pre-wrap">{message.text}</div>
 
+          {isAi && message.structuredTrend && (
+            <ClinicalTrendCard trend={message.structuredTrend} onCitationClick={onCitationClick} />
+          )}
+
           {isAi && message.citations && message.citations.length > 0 && (
             <div className="mt-3.5 pt-3 border-t border-[#E5E7EB]/80 dark:border-[#2F3540] space-y-2">
               <span className="text-[10px] font-semibold tracking-wider uppercase text-[#6B7280] dark:text-[#9CA3AF] flex items-center gap-1.5">
@@ -65,6 +70,9 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({ message, onCitationClick
                     <span className="opacity-70">📄</span>
                     <span className="font-medium truncate max-w-[200px]">{citation.reportTitle}</span>
                     <span className="text-[#6B7280] dark:text-[#9CA3AF] text-[10px] tabular-nums">({citation.date})</span>
+                    {citation.facility && (
+                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-medium truncate max-w-[120px]">• {citation.facility}</span>
+                    )}
                   </button>
                 ))}
               </div>

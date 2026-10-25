@@ -1,0 +1,366 @@
+{
+  "summary": {
+    "dense_bge": {
+      "query_count": 10,
+      "recall@1": {
+        "score": 1.0,
+        "numerator": 10,
+        "denominator": 10
+      },
+      "recall@3": {
+        "score": 1.0,
+        "numerator": 10,
+        "denominator": 10
+      },
+      "recall@5": {
+        "score": 1.0,
+        "numerator": 10,
+        "denominator": 10
+      },
+      "mrr": {
+        "score": 1.0,
+        "sum": 10.0,
+        "denominator": 10
+      },
+      "ndcg@5": {
+        "score": 1.0,
+        "sum": 10.0,
+        "denominator": 10
+      },
+      "hard_neg_discrimination": {
+        "score": 1.0,
+        "numerator": 10,
+        "denominator": 10
+      }
+    },
+    "bm25": {
+      "query_count": 10,
+      "recall@1": {
+        "score": 1.0,
+        "numerator": 10,
+        "denominator": 10
+      },
+      "recall@3": {
+        "score": 1.0,
+        "numerator": 10,
+        "denominator": 10
+      },
+      "recall@5": {
+        "score": 1.0,
+        "numerator": 10,
+        "denominator": 10
+      },
+      "mrr": {
+        "score": 1.0,
+        "sum": 10.0,
+        "denominator": 10
+      },
+      "ndcg@5": {
+        "score": 1.0,
+        "sum": 10.0,
+        "denominator": 10
+      },
+      "hard_neg_discrimination": {
+        "score": 1.0,
+        "numerator": 10,
+        "denominator": 10
+      }
+    },
+    "hybrid_rrf": {
+      "query_count": 10,
+      "recall@1": {
+        "score": 1.0,
+        "numerator": 10,
+        "denominator": 10
+      },
+      "recall@3": {
+        "score": 1.0,
+        "numerator": 10,
+        "denominator": 10
+      },
+      "recall@5": {
+        "score": 1.0,
+        "numerator": 10,
+        "denominator": 10
+      },
+      "mrr": {
+        "score": 1.0,
+        "sum": 10.0,
+        "denominator": 10
+      },
+      "ndcg@5": {
+        "score": 1.0,
+        "sum": 10.0,
+        "denominator": 10
+      },
+      "hard_neg_discrimination": {
+        "score": 1.0,
+        "numerator": 10,
+        "denominator": 10
+      }
+    }
+  },
+  "per_query_details": [
+    {
+      "query_id": "Q01",
+      "query": "Severe anaphylactic penicillin allergy and angioedema",
+      "target": "doc_01",
+      "hard_neg": "doc_02",
+      "dense_ranks": [
+        "doc_01",
+        "doc_02",
+        "doc_17",
+        "doc_20",
+        "doc_12"
+      ],
+      "bm25_ranks": [
+        "doc_01",
+        "doc_17",
+        "doc_07",
+        "doc_02",
+        "doc_10"
+      ],
+      "rrf_ranks": [
+        "doc_01",
+        "doc_17",
+        "doc_02",
+        "doc_07",
+        "doc_20"
+      ]
+    },
+    {
+      "query_id": "Q02",
+      "query": "Elevated serum potassium 5.8 hyperkalemia on October 12",
+      "target": "doc_03",
+      "hard_neg": "doc_04",
+      "dense_ranks": [
+        "doc_03",
+        "doc_04",
+        "doc_06",
+        "doc_14",
+        "doc_13"
+      ],
+      "bm25_ranks": [
+        "doc_03",
+        "doc_04",
+        "doc_14",
+        "doc_07",
+        "doc_12"
+      ],
+      "rrf_ranks": [
+        "doc_03",
+        "doc_04",
+        "doc_14",
+        "doc_06",
+        "doc_07"
+      ]
+    },
+    {
+      "query_id": "Q03",
+      "query": "Uncontrolled type 2 diabetes elevated HbA1c 9.4 percent",
+      "target": "doc_05",
+      "hard_neg": "doc_06",
+      "dense_ranks": [
+        "doc_05",
+        "doc_06",
+        "doc_04",
+        "doc_07",
+        "doc_20"
+      ],
+      "bm25_ranks": [
+        "doc_05",
+        "doc_07",
+        "doc_06",
+        "doc_15"
+      ],
+      "rrf_ranks": [
+        "doc_05",
+        "doc_06",
+        "doc_07",
+        "doc_04",
+        "doc_15"
+      ]
+    },
+    {
+      "query_id": "Q04",
+      "query": "Reduced ejection fraction systolic heart failure LVEF 32%",
+      "target": "doc_07",
+      "hard_neg": "doc_08",
+      "dense_ranks": [
+        "doc_07",
+        "doc_08",
+        "doc_13",
+        "doc_14",
+        "doc_18"
+      ],
+      "bm25_ranks": [
+        "doc_07",
+        "doc_08"
+      ],
+      "rrf_ranks": [
+        "doc_07",
+        "doc_08",
+        "doc_13",
+        "doc_14",
+        "doc_18"
+      ]
+    },
+    {
+      "query_id": "Q05",
+      "query": "CT angiography acute pulmonary embolism bilateral segmental with RV strain",
+      "target": "doc_10",
+      "hard_neg": "doc_09",
+      "dense_ranks": [
+        "doc_10",
+        "doc_09",
+        "doc_19",
+        "doc_07",
+        "doc_20"
+      ],
+      "bm25_ranks": [
+        "doc_10",
+        "doc_09",
+        "doc_19",
+        "doc_17",
+        "doc_18"
+      ],
+      "rrf_ranks": [
+        "doc_10",
+        "doc_09",
+        "doc_19",
+        "doc_07",
+        "doc_17"
+      ]
+    },
+    {
+      "query_id": "Q06",
+      "query": "Warfarin anticoagulation mechanical mitral valve target INR 2.5 to 3.5",
+      "target": "doc_11",
+      "hard_neg": "doc_12",
+      "dense_ranks": [
+        "doc_11",
+        "doc_12",
+        "doc_13",
+        "doc_03",
+        "doc_07"
+      ],
+      "bm25_ranks": [
+        "doc_11",
+        "doc_04",
+        "doc_02",
+        "doc_01",
+        "doc_13"
+      ],
+      "rrf_ranks": [
+        "doc_11",
+        "doc_13",
+        "doc_12",
+        "doc_04",
+        "doc_02"
+      ]
+    },
+    {
+      "query_id": "Q07",
+      "query": "Chronic kidney disease stage 4 low eGFR 28 creatinine 2.4",
+      "target": "doc_13",
+      "hard_neg": "doc_14",
+      "dense_ranks": [
+        "doc_13",
+        "doc_14",
+        "doc_03",
+        "doc_04",
+        "doc_08"
+      ],
+      "bm25_ranks": [
+        "doc_13",
+        "doc_17",
+        "doc_14",
+        "doc_12"
+      ],
+      "rrf_ranks": [
+        "doc_13",
+        "doc_14",
+        "doc_17",
+        "doc_03",
+        "doc_04"
+      ]
+    },
+    {
+      "query_id": "Q08",
+      "query": "Invasive ductal carcinoma ER positive PR positive HER2 negative breast cancer",
+      "target": "doc_15",
+      "hard_neg": "doc_16",
+      "dense_ranks": [
+        "doc_15",
+        "doc_16",
+        "doc_09",
+        "doc_07",
+        "doc_20"
+      ],
+      "bm25_ranks": [
+        "doc_15",
+        "doc_16",
+        "doc_09",
+        "doc_20"
+      ],
+      "rrf_ranks": [
+        "doc_15",
+        "doc_16",
+        "doc_09",
+        "doc_20",
+        "doc_07"
+      ]
+    },
+    {
+      "query_id": "Q09",
+      "query": "Acute COPD exacerbation methylprednisolone nebulized ipratropium",
+      "target": "doc_17",
+      "hard_neg": "doc_18",
+      "dense_ranks": [
+        "doc_17",
+        "doc_07",
+        "doc_01",
+        "doc_10",
+        "doc_18"
+      ],
+      "bm25_ranks": [
+        "doc_17",
+        "doc_19",
+        "doc_10"
+      ],
+      "rrf_ranks": [
+        "doc_17",
+        "doc_10",
+        "doc_07",
+        "doc_19",
+        "doc_01"
+      ]
+    },
+    {
+      "query_id": "Q10",
+      "query": "Acute anterior wall STEMI myocardial infarction proximal LAD occlusion stent",
+      "target": "doc_19",
+      "hard_neg": "doc_20",
+      "dense_ranks": [
+        "doc_19",
+        "doc_10",
+        "doc_12",
+        "doc_20",
+        "doc_11"
+      ],
+      "bm25_ranks": [
+        "doc_19",
+        "doc_08",
+        "doc_17",
+        "doc_10"
+      ],
+      "rrf_ranks": [
+        "doc_19",
+        "doc_10",
+        "doc_08",
+        "doc_12",
+        "doc_17"
+      ]
+    }
+  ]
+}

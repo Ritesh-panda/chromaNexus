@@ -1,0 +1,65 @@
+{
+  "stage_3_": {
+    "3.1_persistence": {
+      "status": "PASS",
+      "count_before": 10,
+      "count_after": 10,
+      "top_id_match": true,
+      "metadata_preserved": true
+    },
+    "3.2_schema_metadata": {
+      "status": "PASS",
+      "chroma_count": 57,
+      "sql_count": 39,
+      "dimensions": [
+        384
+      ],
+      "has_duplicates": false,
+      "missing_patient_id": 0,
+      "missing_document_id": 0,
+      "sql_chunks_missing_in_chroma": 0,
+      "chroma_chunks_unmapped_in_sql": 18
+    },
+    "3.3_failure_modes": {
+      "status": "PASS",
+      "details": {
+        "empty_query": {
+          "handled_safely": true,
+          "results": 0
+        },
+        "wrong_dim": {
+          "handled_safely": true,
+          "error_type": "InvalidArgumentError",
+          "message": "Collection expecting embedding with dimension of 384, got 128"
+        },
+        "duplicate_id": {
+          "handled_safely": false
+        }
+      }
+    }
+  },
+  "stage_4": {
+    "4.1_sync_partial_bug": {
+      "sql_total_chunks": 5,
+      "partial_before": 2,
+      "builtin_sync_return": 2,
+      "count_after_builtin": 2,
+      "detected_existing_bug_partial_bypassed": true,
+      "final_reconciled_count": 5,
+      "status": "FAIL_DECTEDED_BUG"
+    },
+    "4.2_incremental_indexing": {
+      "sql_persisted": true,
+      "dense_found": true,
+      "bm25_found": true,
+      "hybrid_found": true,
+      "status": "PASS"
+    },
+    "4.3_idempotency": {
+      "count_before": 6,
+      "count_after": 6,
+      "duplicated_prevented": true,
+      "status": "PASS"
+    }
+  }
+}

@@ -20,7 +20,8 @@ logger = logging.getLogger(__name__)
 class DocumentIngestionOrchestrator:
     """
     End-to-end asynchronous document processing orchestrator.
-    Handles extraction ➔ OCR fallback ➔ entity extraction ➔ validation ➔ persistence ➔ vector indexing.
+    Handles extraction -> OCR fallback -> entity extraction -> validation -> persistence -> vector indexing.
+    Preserves complete text without arbitrary truncation, maintains page provenance, and tracks checksums.
     """
 
     def __init__(
@@ -50,7 +51,7 @@ class DocumentIngestionOrchestrator:
         hospital_name: Optional[str] = None
     ) -> bool:
         """
-        Executes full multi-stage ingestion workflow.
+        Executes full multi-stage ingestion workflow without arbitrary truncation.
         """
         should_close_db = False
         if db is None:
@@ -85,11 +86,15 @@ class DocumentIngestionOrchestrator:
                 ocr_result = self.ocr_provider.extract_text_from_pdf_bytes(file_bytes)
                 if ocr_result.success and ocr_result.full_text:
                     full_text = ocr_result.full_text
+                else:
+                    logger.warning(f"OCR was required for {file_name} but unsuccessful: {ocr_result.error_message}")
+                    if not full_text.strip():
+                        full_text = f"[OCR_FAILED: Scanned document requires OCR. {ocr_result.error_message or 'No extractable text.'}]"
 
             if not full_text.strip():
                 full_text = f"Document: {file_name} uploaded for clinical archiving."
 
-            # Stage 3: Clinical Entity Extraction
+            # Stage 3: Clinical Entity Extraction (with page provenance)
             ingestion_registry.set_status(
                 document_id=document_id,
                 stage=IngestionStage.EXTRACTING,
@@ -111,7 +116,7 @@ class DocumentIngestionOrchestrator:
             hosp_str = hospital_name or "Medical Health Center"
 
             for ent in entities:
-                # 4a. Persist ExtractedEntity linked to report
+                # 4a. Persist ExtractedEntity linked to report with page provenance
                 db_entity = ExtractedEntity(
                     report_id=document_id,
                     category=ent.category,
@@ -119,7 +124,8 @@ class DocumentIngestionOrchestrator:
                     confidence=ent.confidence,
                     value=ent.value,
                     unit=ent.unit,
-                    notes=ent.excerpt
+                    notes=ent.excerpt,
+                    source_page_number=ent.page_number
                 )
                 db.add(db_entity)
 
@@ -137,7 +143,9 @@ class DocumentIngestionOrchestrator:
                         status=status,
                         test_date=date_str,
                         source_report_id=document_id,
-                        hospital_name=hosp_str
+                        hospital_name=hosp_str,
+                        source_page_number=ent.page_number,
+                        extraction_confidence=ent.confidence
                     )
                     db.add(lab)
 
@@ -151,7 +159,9 @@ class DocumentIngestionOrchestrator:
                         route="oral",
                         start_date=date_str,
                         status="active",
-                        source_report_id=document_id
+                        source_report_id=document_id,
+                        source_page_number=ent.page_number,
+                        extraction_confidence=ent.confidence
                     )
                     db.add(med)
 
@@ -163,14 +173,16 @@ class DocumentIngestionOrchestrator:
                         icd_code=ent.value,
                         status="active",
                         diagnosed_date=date_str,
-                        source_report_id=document_id
+                        source_report_id=document_id,
+                        source_page_number=ent.page_number,
+                        extraction_confidence=ent.confidence
                     )
                     db.add(dis)
 
                 elif ent.category == "procedure":
                     counts["procedures"] += 1
 
-            # Stage 5: Document Chunking & Embedding Generation
+            # Stage 5: Document Chunking & Embedding Generation (page-aware)
             ingestion_registry.set_status(
                 document_id=document_id,
                 stage=IngestionStage.INDEXING,
@@ -179,11 +191,19 @@ class DocumentIngestionOrchestrator:
                 extracted_counts=counts
             )
 
-            # Process & chunk document
+            # Process & chunk document preserving page numbers
             from backend.app.ai.document_processor import DocumentProcessor
             proc = DocumentProcessor()
-            proc_doc = proc.process_text(
-                raw_text=full_text,
+            pages_input = [
+                {"page_number": p.page_number, "text": p.text}
+                for p in extracted_doc.pages
+                if p.text.strip()
+            ]
+            if not pages_input:
+                pages_input = [{"page_number": 1, "text": full_text}]
+
+            proc_doc = proc.process_pages(
+                pages_input=pages_input,
                 document_id=document_id,
                 metadata={
                     "patient_id": patient_id,
@@ -194,20 +214,44 @@ class DocumentIngestionOrchestrator:
             )
             chunks = self.chunker.chunk_document(proc_doc)
 
-            # Store into VectorStore
-            v_store = self.vector_store or get_vector_store("postgres", db_session=db)
+            # Store into VectorStore (ChromaDB persistent store by default)
+            v_store = self.vector_store or get_vector_store(db_session=db)
             if chunks:
                 texts = [c.text for c in chunks]
                 embeddings = self.embedding_provider.embed_texts(texts)
                 v_store.add_documents(chunks=chunks, embeddings=embeddings)
 
-            # Stage 6: Update MedicalReport status in DB
+                # Also save to relational document_chunks table for SQL provenance & BM25 hydration
+                if db:
+                    from backend.app.models.document_chunk import DocumentChunkModel
+                    for i, chunk in enumerate(chunks):
+                        raw_emb = embeddings[i] if embeddings and i < len(embeddings) else None
+                        emb_val = list(raw_emb) if raw_emb is not None else None
+                        c_id = chunk.chunk_id or f"chk_{chunk.document_id}_{chunk.chunk_index}"
+                        existing_chk = db.query(DocumentChunkModel).filter(DocumentChunkModel.chunk_id == c_id).first()
+                        if not existing_chk:
+                            db_chk = DocumentChunkModel(
+                                document_id=chunk.document_id,
+                                patient_id=patient_id,
+                                chunk_id=c_id,
+                                chunk_index=chunk.chunk_index or 0,
+                                page_number=chunk.page_number or 1,
+                                content=chunk.text,
+                                embedding=emb_val,
+                                chunk_metadata=chunk.metadata or {}
+                            )
+                            db.add(db_chk)
+
+            # Stage 6: Update MedicalReport status in DB (COMPLETE, UNTRUNCATED)
             report = db.query(MedicalReport).filter(MedicalReport.id == document_id).first()
             if report:
                 report.status = "completed"
-                report.raw_text = full_text[:4000]
-                report.summary = f"Processed {file_name}. Extracted {len(entities)} clinical entities."
-            
+                report.raw_text = full_text  # Complete document text, no arbitrary truncation
+                report.checksum = extracted_doc.checksum
+                report.content_checksum = extracted_doc.content_checksum
+                report.page_count = extracted_doc.total_pages
+                report.summary = f"Processed {file_name} ({extracted_doc.total_pages} pages). Extracted {len(entities)} clinical entities."
+
             db.commit()
 
             # Stage 7: Mark Completed

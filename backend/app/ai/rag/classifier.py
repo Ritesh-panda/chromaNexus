@@ -32,6 +32,7 @@ class QueryClassifier:
 
     LAB_KEYWORDS: Set[str] = {
         "cholesterol", "lipid", "hba1c", "a1c", "glucose", "blood sugar", "creatinine",
+        "potassium", "sodium", "calcium", "chloride", "bicarbonate", "magnesium", "bun",
         "egfr", "hemoglobin", "platelet", "platelets", "wbc", "rbc", "triglyceride",
         "triglycerides", "ldl", "hdl", "vitamin d", "thyroid", "tsh", "alt", "ast",
         "lab", "labs", "test", "tests", "panel", "blood test", "blood report", "value",
@@ -41,9 +42,11 @@ class QueryClassifier:
     MEDICATION_KEYWORDS: Set[str] = {
         "medication", "medications", "medicine", "medicines", "drug", "drugs", "prescription",
         "prescriptions", "rx", "dose", "dosage", "frequency", "metformin", "lisinopril",
-        "atorvastatin", "cholecalciferol", "insulin", "antibiotic", "statin", "taking",
-        "prescribed", "mg", "bid", "qd", "daily", "pill", "pills"
+        "atorvastatin", "cholecalciferol", "insulin", "antibiotic", "antibiotics", "statin", "taking",
+        "prescribed", "mg", "bid", "qd", "daily", "pill", "pills", "allergy", "allergies", "allergic",
+        "amoxicillin", "penicillin", "augmentin", "bactrim", "contraindication", "contraindicated"
     }
+
 
     DIAGNOSIS_KEYWORDS: Set[str] = {
         "diagnosis", "diagnoses", "diagnosed", "disease", "diseases", "condition", "conditions",

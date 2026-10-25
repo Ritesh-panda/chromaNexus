@@ -7,6 +7,9 @@ from backend.app.routers.timeline import router as timeline_router
 from backend.app.routers.chat import router as chat_router
 from backend.app.routers.summaries import router as summaries_router
 from backend.app.routers.search import router as search_router
+from backend.app.routers.audit import router as audit_router
+from backend.app.routers.fhir import router as fhir_router
+from backend.app.routers.purge import router as purge_router
 
 __all__ = [
     "auth_router",
@@ -17,5 +20,8 @@ __all__ = [
     "timeline_router",
     "chat_router",
     "summaries_router",
-    "search_router"
+    "search_router",
+    "audit_router",
+    "fhir_router",
+    "purge_router",
 ]

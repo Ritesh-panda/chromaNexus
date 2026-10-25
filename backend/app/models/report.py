@@ -26,5 +26,10 @@ class MedicalReport(Base):
     file_url = Column(String(500), nullable=True)
     storage_path = Column(String(500), nullable=True)
 
+    # Checksums and page metadata (Phase 3)
+    checksum = Column(String(64), nullable=True, index=True)
+    content_checksum = Column(String(64), nullable=True)
+    page_count = Column(Integer, default=1, nullable=True)
+
     patient = relationship("Patient", back_populates="reports")
     extracted_entities = relationship("ExtractedEntity", back_populates="report", cascade="all, delete-orphan")

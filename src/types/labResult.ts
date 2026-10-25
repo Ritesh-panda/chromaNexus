@@ -12,3 +12,15 @@ export interface LabResult {
   sourceReportId?: string;
   hospitalName?: string;
 }
+
+export interface AnalyteSummary {
+  testName: string;
+  canonicalName: string;
+  loincCode?: string;
+  count: number;
+  latestDate?: string;
+  latestValue?: string;
+  unit?: string;
+  referenceRange?: string;
+  facilities: string[];
+}

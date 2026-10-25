@@ -30,6 +30,25 @@ class ConversationQueryResolver:
     """
 
     TAXONOMY: Dict[str, Dict[str, Any]] = {
+        "asthma": {
+            "keywords": {
+                "asthma", "pulmonary", "respiratory", "inhaler", "albuterol", "fluticasone",
+                "advair", "bronchial", "wheezing", "j45.909"
+            },
+            "expansion": "asthma Moderate Persistent Asthma pulmonary respiratory Inhaler Fluticasone Advair",
+            "intent": QueryIntent.MIXED_CLINICAL,
+            "test_keywords": ["peak flow", "spirometry"],
+            "med_keywords": ["fluticasone", "advair", "albuterol", "inhaler"]
+        },
+        "bronchitis": {
+            "keywords": {
+                "bronchitis", "acute bronchitis", "bronchial", "azithromycin", "z-pak", "cough"
+            },
+            "expansion": "acute bronchitis asthmatic bronchitis Azithromycin Z-Pak urgent care",
+            "intent": QueryIntent.REPORT_CONTENT,
+            "test_keywords": [],
+            "med_keywords": ["azithromycin", "antibiotic"]
+        },
         "diabetes": {
             "keywords": {
                 "diabetes", "diabetic", "blood sugar", "glucose", "a1c", "hba1c",

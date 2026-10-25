@@ -1,11 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Tabs } from '@/components/ui/Tabs';
 import { Badge } from '@/components/ui/Badge';
+import { Modal } from '@/components/ui/Modal';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useUI } from '@/contexts/UIContext';
+import { governanceService, type PurgePreviewResponse, type AuditLogItem } from '@/services/governance.service';
 import {
   Settings,
   Sun,
@@ -13,7 +15,6 @@ import {
   Shield,
   Bell,
   Lock,
-  Globe,
   Trash2,
   Download,
   ShieldCheck,
@@ -21,7 +22,12 @@ import {
   Smartphone,
   Laptop,
   KeyRound,
-  CheckCircle2
+  CheckCircle2,
+  FileCode,
+  RefreshCw,
+  Loader2,
+  AlertCircle,
+  Activity,
 } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
@@ -31,6 +37,21 @@ export const SettingsPage: React.FC = () => {
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(true);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
+
+  // FHIR Export state
+  const [isExportingFhir, setIsExportingFhir] = useState(false);
+
+  // Audit Logs state
+  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
+  const [loadingAuditLogs, setLoadingAuditLogs] = useState(false);
+
+  // Purge Modal state
+  const [isPurgeModalOpen, setIsPurgeModalOpen] = useState(false);
+  const [isRequestingPurge, setIsRequestingPurge] = useState(false);
+  const [purgePreview, setPurgePreview] = useState<PurgePreviewResponse | null>(null);
+  const [confirmationPhrase, setConfirmationPhrase] = useState('');
+  const [isExecutingPurge, setIsExecutingPurge] = useState(false);
+  const [purgeResult, setPurgeResult] = useState<string | null>(null);
 
   const [notifications, setNotifications] = useState({
     email: true,
@@ -43,9 +64,106 @@ export const SettingsPage: React.FC = () => {
     { id: 'appearance', label: 'Theme & Appearance', icon: <Sun className="w-4 h-4" /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell className="w-4 h-4" /> },
     { id: 'security', label: 'Security & 2FA', icon: <Lock className="w-4 h-4" /> },
-    { id: 'privacy', label: 'Privacy & Governance', icon: <Shield className="w-4 h-4" /> },
-    { id: 'danger', label: 'Account Data', icon: <AlertTriangle className="w-4 h-4 text-[#B91C1C]" /> },
+    { id: 'privacy', label: 'Privacy & FHIR R4', icon: <Shield className="w-4 h-4" /> },
+    { id: 'danger', label: 'Account Data & Purge', icon: <AlertTriangle className="w-4 h-4 text-[#B91C1C]" /> },
   ];
+
+  // Fetch audit logs when privacy tab is opened
+  useEffect(() => {
+    if (activeTab === 'privacy') {
+      fetchAuditLogs();
+    }
+  }, [activeTab]);
+
+  const fetchAuditLogs = async () => {
+    setLoadingAuditLogs(true);
+    try {
+      const logs = await governanceService.getAuditLogs(30);
+      setAuditLogs(logs);
+    } catch {
+      // Non-blocking in demo/offline mode
+    } finally {
+      setLoadingAuditLogs(false);
+    }
+  };
+
+  const handleExportFhir = async () => {
+    setIsExportingFhir(true);
+    try {
+      await governanceService.exportFhirBundle();
+      addToast({
+        type: 'success',
+        title: 'FHIR R4 Bundle Exported',
+        message: 'Clinical record collection bundle downloaded successfully.',
+      });
+      // Refresh audit logs
+      fetchAuditLogs();
+    } catch {
+      addToast({
+        type: 'error',
+        title: 'Export Failed',
+        message: 'Could not generate FHIR R4 bundle. Please verify your connection.',
+      });
+    } finally {
+      setIsExportingFhir(false);
+    }
+  };
+
+  const handleRequestPurgePreview = async () => {
+    setIsRequestingPurge(true);
+    setPurgeResult(null);
+    setConfirmationPhrase('');
+    try {
+      const preview = await governanceService.requestPurgePreview();
+      setPurgePreview(preview);
+      setIsPurgeModalOpen(true);
+    } catch {
+      addToast({
+        type: 'error',
+        title: 'Purge Request Failed',
+        message: 'Unable to prepare purge scope. Please re-authenticate and try again.',
+      });
+    } finally {
+      setIsRequestingPurge(false);
+    }
+  };
+
+  const handleConfirmPurge = async () => {
+    if (!purgePreview) return;
+    if (confirmationPhrase.trim() !== purgePreview.confirmation_phrase_required) {
+      addToast({
+        type: 'error',
+        title: 'Confirmation Phrase Mismatch',
+        message: `You must type exactly: "${purgePreview.confirmation_phrase_required}"`,
+      });
+      return;
+    }
+
+    setIsExecutingPurge(true);
+    try {
+      const result = await governanceService.confirmPurge(
+        purgePreview.confirmation_token,
+        confirmationPhrase.trim()
+      );
+      setPurgeResult(`Purge complete. ${result.summary.reports_deleted} reports, ${result.summary.chroma_vectors_deleted} semantic vectors, and ${result.summary.files_deleted} files erased.`);
+      addToast({
+        type: 'success',
+        title: 'Patient Data Purged',
+        message: 'All confirmed medical records have been permanently erased.',
+      });
+      // Reset form
+      setPurgePreview(null);
+      setConfirmationPhrase('');
+    } catch {
+      addToast({
+        type: 'error',
+        title: 'Purge Execution Failed',
+        message: 'Purge operation failed or confirmation token expired.',
+      });
+    } finally {
+      setIsExecutingPurge(false);
+    }
+  };
 
   return (
     <div className="space-y-6 pb-12">
@@ -54,36 +172,31 @@ export const SettingsPage: React.FC = () => {
           <Settings className="w-5 h-5 text-[#10B981]" /> Settings & Data Governance
         </h1>
         <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">
-          Manage system theme, zero-trust security parameters, and data isolation preferences.
+          Manage system theme, zero-trust security parameters, FHIR export, and data lifecycle.
         </p>
       </div>
 
-      <Tabs tabs={tabs} activeTab={activeTab} onChange={(id) => setActiveTab(id)} />
+      <Tabs tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
 
-      {/* Tab Content Panels */}
       {activeTab === 'appearance' && (
         <Card className="p-6 space-y-6 border-[#E5E7EB] dark:border-[#2F3540] bg-white dark:bg-[#1B1E23]">
           <div>
             <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6]">Interface Theme</h3>
-            <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">Select how ChronaNexus appears on this device.</p>
+            <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">Select your preferred viewing mode.</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {[
-              { id: 'light', label: 'Warm Light Mode', icon: <Sun className="w-5 h-5 text-[#B45309]" /> },
-              { id: 'dark', label: 'Dark Mode', icon: <Moon className="w-5 h-5 text-[#2563EB]" /> },
-              { id: 'system', label: 'System Default', icon: <Globe className="w-5 h-5 text-[#6B7280]" /> },
+              { id: 'light', label: 'Light Mode', icon: <Sun className="w-5 h-5 text-[#B45309]" /> },
+              { id: 'dark', label: 'Dark Mode', icon: <Moon className="w-5 h-5 text-[#10B981]" /> },
             ].map((item) => (
               <button
                 key={item.id}
-                onClick={() => {
-                  setTheme(item.id as 'light' | 'dark' | 'system');
-                  addToast({ type: 'success', title: `Theme switched to ${item.label}` });
-                }}
-                className={`p-5 rounded-2xl border text-center space-y-2 flex flex-col items-center justify-center transition-all ${
+                onClick={() => setTheme(item.id as 'light' | 'dark')}
+                className={`p-4 rounded-xl border text-left flex items-center gap-3 transition-colors ${
                   theme === item.id
-                    ? 'border-[#10B981] bg-[#ECFDF5]/50 dark:bg-emerald-950/20 text-[#1F2937] dark:text-[#F3F4F6] shadow-sm font-semibold'
-                    : 'border-[#E5E7EB] dark:border-[#2F3540] text-[#6B7280] dark:text-[#9CA3AF] hover:bg-[#FAF8F5] dark:hover:bg-[#23272E]'
+                    ? 'border-[#10B981] bg-[#10B981]/10 text-[#15803D] dark:text-[#34D399]'
+                    : 'border-[#E5E7EB] dark:border-[#2F3540] hover:bg-[#FAF8F5] dark:hover:bg-[#23272E]/50 text-[#1F2937] dark:text-[#F3F4F6]'
                 }`}
               >
                 {item.icon}
@@ -234,63 +347,312 @@ export const SettingsPage: React.FC = () => {
       )}
 
       {activeTab === 'privacy' && (
-        <Card className="p-6 space-y-5 border-[#E5E7EB] dark:border-[#2F3540] bg-white dark:bg-[#1B1E23]">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-[#E5E7EB]/80 dark:border-[#2F3540] gap-2">
-            <div>
-              <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-[#10B981]" /> Patient Memory Isolation Proof
-              </h3>
-              <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">Your medical data is encrypted and isolated per patient ID.</p>
+        <div className="space-y-6">
+          {/* Patient Memory Isolation Card */}
+          <Card className="p-6 space-y-5 border-[#E5E7EB] dark:border-[#2F3540] bg-white dark:bg-[#1B1E23]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-[#E5E7EB]/80 dark:border-[#2F3540] gap-2">
+              <div>
+                <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-[#10B981]" /> Patient Memory Isolation Proof
+                </h3>
+                <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">Your medical data is encrypted and strictly isolated per patient ID.</p>
+              </div>
+              <Badge variant="success">Strict Isolation Active</Badge>
             </div>
-            <Badge variant="success">Strict Isolation Active</Badge>
-          </div>
 
-          <div className="p-4 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540] text-xs space-y-1.5">
-            <p className="font-semibold text-[#1F2937] dark:text-[#F3F4F6]">Zero Third-Party Model Training</p>
-            <p className="text-[#6B7280] dark:text-[#9CA3AF] leading-relaxed">
-              ChronaNexus never transmits unencrypted patient data to public LLMs. Retrieval-augmented reasoning is processed strictly in your local isolated session context.
-            </p>
-          </div>
-        </Card>
+            <div className="p-4 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540] text-xs space-y-1.5">
+              <p className="font-semibold text-[#1F2937] dark:text-[#F3F4F6]">Zero Third-Party Model Training</p>
+              <p className="text-[#6B7280] dark:text-[#9CA3AF] leading-relaxed">
+                ChronaNexus never transmits unencrypted patient data to public LLMs. Retrieval-augmented reasoning is processed strictly in your local isolated session context.
+              </p>
+            </div>
+          </Card>
+
+          {/* FHIR R4 Export Section */}
+          <Card className="p-6 space-y-4 border-[#E5E7EB] dark:border-[#2F3540] bg-white dark:bg-[#1B1E23]">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E5E7EB]/80 dark:border-[#2F3540]">
+              <div>
+                <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
+                  <FileCode className="w-4 h-4 text-[#2563EB]" /> HL7® FHIR® R4 Standards Export
+                </h3>
+                <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">
+                  Export your complete clinical record as an interoperable, standards-compliant FHIR R4 JSON collection bundle.
+                </p>
+              </div>
+              <Button
+                variant="primary"
+                size="sm"
+                leftIcon={isExportingFhir ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                onClick={handleExportFhir}
+                disabled={isExportingFhir}
+              >
+                {isExportingFhir ? 'Generating Bundle...' : 'Export FHIR R4 Bundle'}
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div className="p-3 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540]">
+                <p className="font-semibold text-[#1F2937] dark:text-[#F3F4F6] mb-1">Standard Resource Types</p>
+                <p className="text-[#6B7280] dark:text-[#9CA3AF] text-[11px] leading-relaxed">
+                  Patient, DocumentReference, Observation (labs), Condition, AllergyIntolerance, MedicationStatement, DiagnosticReport.
+                </p>
+              </div>
+              <div className="p-3 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540]">
+                <p className="font-semibold text-[#1F2937] dark:text-[#F3F4F6] mb-1">Preserved Clinical Codes</p>
+                <p className="text-[#6B7280] dark:text-[#9CA3AF] text-[11px] leading-relaxed">
+                  Preserves verified LOINC laboratory codes, RxNorm medications, and ICD-10 diagnoses without inventing terminology.
+                </p>
+              </div>
+              <div className="p-3 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540]">
+                <p className="font-semibold text-[#1F2937] dark:text-[#F3F4F6] mb-1">Strict Patient Scoping</p>
+                <p className="text-[#6B7280] dark:text-[#9CA3AF] text-[11px] leading-relaxed">
+                  Export is server-authorized and strictly constrained to your authenticated patient records. Recorded in security audit logs.
+                </p>
+              </div>
+            </div>
+          </Card>
+
+          {/* Append-Only Audit Log Viewer */}
+          <Card className="p-6 space-y-4 border-[#E5E7EB] dark:border-[#2F3540] bg-white dark:bg-[#1B1E23]">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB]/80 dark:border-[#2F3540]">
+              <div>
+                <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-[#10B981]" /> Security & Access Audit Trail
+                </h3>
+                <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">
+                  Append-only immutable record of document downloads, FHIR exports, and authorization checks.
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${loadingAuditLogs ? 'animate-spin' : ''}`} />}
+                onClick={fetchAuditLogs}
+                disabled={loadingAuditLogs}
+              >
+                Refresh
+              </Button>
+            </div>
+
+            {loadingAuditLogs ? (
+              <div className="py-8 flex justify-center text-[#6B7280] text-xs">
+                <Loader2 className="w-5 h-5 animate-spin mr-2" /> Loading audit events...
+              </div>
+            ) : auditLogs.length === 0 ? (
+              <div className="py-6 text-center text-xs text-[#6B7280] dark:text-[#9CA3AF]">
+                No recent security audit events recorded for this session.
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                {auditLogs.map((log) => (
+                  <div
+                    key={log.id}
+                    className="p-3 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540] flex items-center justify-between text-xs"
+                  >
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-[#1F2937] dark:text-[#F3F4F6] font-mono text-[11px]">
+                          {log.action}
+                        </span>
+                        <Badge
+                          variant={log.outcome === 'SUCCESS' ? 'success' : 'danger'}
+                          className="text-[10px]"
+                        >
+                          {log.outcome}
+                        </Badge>
+                      </div>
+                      <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">
+                        {log.resource_type ? `${log.resource_type}: ${log.resource_id || 'all'}` : 'System scope'}
+                      </p>
+                    </div>
+                    <span className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF] font-mono">
+                      {new Date(log.timestamp).toLocaleString()}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </div>
       )}
 
       {activeTab === 'danger' && (
         <Card className="p-6 space-y-5 border-[#E5E7EB] dark:border-[#2F3540] bg-white dark:bg-[#1B1E23]">
           <div>
             <h3 className="text-sm font-semibold text-[#B91C1C] flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-[#B91C1C]" /> Account & Data Retention
+              <AlertTriangle className="w-4 h-4 text-[#B91C1C]" /> Safe Patient-Data Purge & Retention
             </h3>
-            <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">Export or permanently remove your patient memory archive.</p>
+            <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">
+              Permanently remove your clinical memory archive, extracted entities, and vector embeddings.
+            </p>
           </div>
+
+          {purgeResult && (
+            <div className="p-4 rounded-xl bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 text-xs text-emerald-800 dark:text-emerald-300">
+              {purgeResult}
+            </div>
+          )}
 
           <div className="space-y-3 pt-1">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540] gap-3">
               <div>
-                <h4 className="text-xs font-semibold text-[#1F2937] dark:text-[#F3F4F6]">Export Complete Patient Memory</h4>
-                <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">Download all structured JSON extractions and raw reports.</p>
+                <h4 className="text-xs font-semibold text-[#1F2937] dark:text-[#F3F4F6]">Export FHIR R4 Clinical Archive</h4>
+                <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">Download all clinical extractions before initiating an irreversible purge.</p>
               </div>
-              <Button variant="secondary" size="sm" leftIcon={<Download className="w-4 h-4" />}>
-                Export Archive
+              <Button
+                variant="secondary"
+                size="sm"
+                leftIcon={<Download className="w-4 h-4" />}
+                onClick={handleExportFhir}
+                disabled={isExportingFhir}
+              >
+                Export Bundle
               </Button>
             </div>
 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl bg-[#FEF2F2]/40 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 gap-3">
               <div>
-                <h4 className="text-xs font-semibold text-[#B91C1C]">Delete Entire Medical Account</h4>
-                <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">Permanently erase all documents, memory graphs, and timelines.</p>
+                <h4 className="text-xs font-semibold text-[#B91C1C]">Irreversible Data Purge</h4>
+                <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">
+                  Requires two-step verification with explicit server token confirmation. Erases relational records, files, and vector embeddings.
+                </p>
               </div>
               <Button
                 variant="danger"
                 size="sm"
-                leftIcon={<Trash2 className="w-4 h-4" />}
-                onClick={() => addToast({ type: 'error', title: 'Account Deletion Requested', message: 'Action canceled for demo safety.' })}
+                leftIcon={isRequestingPurge ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                onClick={handleRequestPurgePreview}
+                disabled={isRequestingPurge}
               >
-                Delete Memory
+                {isRequestingPurge ? 'Inspecting Scope...' : 'Request Data Purge'}
               </Button>
             </div>
           </div>
         </Card>
       )}
+
+      {/* Two-Step Safe Purge Confirmation Modal */}
+      <Modal
+        isOpen={isPurgeModalOpen}
+        onClose={() => {
+          if (!isExecutingPurge) {
+            setIsPurgeModalOpen(false);
+            setPurgePreview(null);
+            setConfirmationPhrase('');
+          }
+        }}
+        title="Confirm Irreversible Data Purge"
+        description="Review the itemized data scope before confirming deletion. This action cannot be undone."
+        maxWidth="xl"
+      >
+        {purgePreview && (
+          <div className="space-y-4 text-xs">
+            {/* Warning banner */}
+            <div className="p-3.5 rounded-xl bg-[#FEF2F2] dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/60 text-[#B91C1C] dark:text-rose-300 flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-semibold text-[11px] uppercase tracking-wider">Destructive Operation</p>
+                <p className="leading-relaxed text-[11px]">{purgePreview.warning}</p>
+              </div>
+            </div>
+
+            {/* Itemized Scope Grid */}
+            <div className="space-y-2">
+              <h4 className="text-[11px] font-semibold uppercase tracking-wider text-[#6B7280] dark:text-[#9CA3AF]">
+                Scope of Records to be Erased (Patient: {purgePreview.patient_id})
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-center">
+                <div className="p-2.5 rounded-lg bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540]">
+                  <p className="text-lg font-bold text-[#1F2937] dark:text-[#F3F4F6]">{purgePreview.scope.reports_count}</p>
+                  <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF]">Reports</p>
+                </div>
+                <div className="p-2.5 rounded-lg bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540]">
+                  <p className="text-lg font-bold text-[#1F2937] dark:text-[#F3F4F6]">{purgePreview.scope.files_to_delete_count}</p>
+                  <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF]">Disk Files</p>
+                </div>
+                <div className="p-2.5 rounded-lg bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540]">
+                  <p className="text-lg font-bold text-[#1F2937] dark:text-[#F3F4F6]">{purgePreview.scope.lab_results_count}</p>
+                  <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF]">Lab Results</p>
+                </div>
+                <div className="p-2.5 rounded-lg bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540]">
+                  <p className="text-lg font-bold text-[#1F2937] dark:text-[#F3F4F6]">{purgePreview.scope.medications_count}</p>
+                  <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF]">Medications</p>
+                </div>
+                <div className="p-2.5 rounded-lg bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540]">
+                  <p className="text-lg font-bold text-[#1F2937] dark:text-[#F3F4F6]">{purgePreview.scope.conditions_count}</p>
+                  <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF]">Conditions</p>
+                </div>
+                <div className="p-2.5 rounded-lg bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540]">
+                  <p className="text-lg font-bold text-[#1F2937] dark:text-[#F3F4F6]">{purgePreview.scope.allergies_count}</p>
+                  <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF]">Allergies</p>
+                </div>
+                <div className="p-2.5 rounded-lg bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540]">
+                  <p className="text-lg font-bold text-[#1F2937] dark:text-[#F3F4F6]">{purgePreview.scope.timeline_events_count}</p>
+                  <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF]">Timeline Events</p>
+                </div>
+                <div className="p-2.5 rounded-lg bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540]">
+                  <p className="text-lg font-bold text-[#2563EB]">{purgePreview.scope.chroma_vectors_count}</p>
+                  <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF]">Vector Chunks</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Exclusions Notice */}
+            <div className="p-3 rounded-lg bg-[#F3F1ED] dark:bg-[#23272E] text-[11px] text-[#6B7280] dark:text-[#9CA3AF] space-y-1">
+              <p className="font-semibold text-[#1F2937] dark:text-[#F3F4F6]">Compliance Exclusions:</p>
+              <ul className="list-disc list-inside space-y-0.5">
+                {purgePreview.exclusions.map((item, idx) => (
+                  <li key={idx}>{item}</li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Token expiry info */}
+            <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF] font-mono">
+              Token valid until: {new Date(purgePreview.expires_at).toLocaleTimeString()}
+            </p>
+
+            {/* Mandatory Confirmation Phrase Input */}
+            <div className="space-y-1.5 pt-2 border-t border-[#E5E7EB] dark:border-[#2F3540]">
+              <label className="text-xs font-semibold text-[#1F2937] dark:text-[#F3F4F6]">
+                Type <span className="font-mono text-[#B91C1C] select-all font-bold">"{purgePreview.confirmation_phrase_required}"</span> to confirm:
+              </label>
+              <Input
+                placeholder="Type the confirmation phrase exactly..."
+                value={confirmationPhrase}
+                onChange={(e) => setConfirmationPhrase(e.target.value)}
+                disabled={isExecutingPurge}
+              />
+            </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center justify-end gap-2 pt-2">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setIsPurgeModalOpen(false)}
+                disabled={isExecutingPurge}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="danger"
+                size="sm"
+                leftIcon={isExecutingPurge ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                onClick={handleConfirmPurge}
+                disabled={
+                  isExecutingPurge ||
+                  confirmationPhrase.trim() !== purgePreview.confirmation_phrase_required
+                }
+              >
+                {isExecutingPurge ? 'Purging Records...' : 'Permanently Delete Data'}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
+
+export default SettingsPage;

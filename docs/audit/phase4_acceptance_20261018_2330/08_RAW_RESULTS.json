@@ -1,0 +1,124 @@
+{
+  "audit_run_id": "phase4_acceptance_20261018_2330",
+  "timestamp": "2026-10-19T00:25:00+05:30",
+  "environment": {
+    "os": "Windows 11",
+    "python": "3.13.7 (AMD64)",
+    "cpu": "Intel64 Family 6 Model 186 Stepping 2",
+    "ram_total_gb": 15.65,
+    "free_disk_gb": 163.4,
+    "packages": {
+      "chromadb": "1.5.9",
+      "sentence_transformers": "6.1.0",
+      "torch": "2.14.0+cpu",
+      "rank_bm25": "0.2.2",
+      "fastapi": "0.141.1",
+      "sqlalchemy": "2.0.54",
+      "pydantic": "2.13.3"
+    }
+  },
+  "database_integrity": {
+    "authoritative_db": {
+      "path": "C:/chromaNexus/chronanexus.db",
+      "size": 462848,
+      "sha256": "be882c255ee738d489d5eb59e97ce6b472d236dfe183513d1b704796ffa5f932",
+      "revision": "002_add_document_chunks",
+      "drift": false
+    },
+    "secondary_db": {
+      "path": "C:/chromaNexus/backend/chronanexus.db",
+      "size": 188416,
+      "sha256": "e2ca7579a1080f7e9f2d99a1f3888f529ea414c42e09229184ce293a97cf288b",
+      "drift": false
+    }
+  },
+  "stages": {
+    "stage_0": {
+      "status": "PASS",
+      "baseline_tests": "171/171",
+      "benchmark_score": "12/12"
+    },
+    "stage_1": {
+      "status": "PASS",
+      "runtime_model": "BAAI/bge-small-en-v1.5",
+      "dimension": 384,
+      "vector_store": "ChromaDBVectorStore"
+    },
+    "stage_2": {
+      "status": "PASS",
+      "dimension_check": "100/100 384-dim finite",
+      "bge_positive_neg_separation": 0.0328,
+      "hash_separation": -0.0012
+    },
+    "stage_3": {
+      "status": "PASS",
+      "persistence": "PASS",
+      "collection": "chronanexus_clinical_chunks",
+      "records": 57,
+      "sql_chunks_mapped": 39
+    },
+    "stage_4": {
+      "status": "CONDITIONAL",
+      "incremental_indexing": "PASS",
+      "idempotency": "PASS",
+      "partial_sync": "DETECTED_DEFECT_DEF_PHASE4_02"
+    },
+    "stage_5": {
+      "status": "PASS",
+      "bm25_recall_at_5": 1.0,
+      "bm25_mrr": 1.0,
+      "patient_isolation_failures": 0,
+      "median_latency_ms": 0.0228
+    },
+    "stage_6": {
+      "status": "PASS",
+      "rrf_mathematics": "PASS",
+      "rrf_k": 60,
+      "hybrid_recall_at_5": 1.0
+    },
+    "stage_7": {
+      "status": "PASS",
+      "cross_patient_leakage_events": 0,
+      "isolation_rate": 1.0
+    },
+    "stage_8": {
+      "status": "PASS_RETRIEVAL_BLOCKED_LLM",
+      "evidence_retrieval_rate": 1.0,
+      "restart_persistence": "PASS",
+      "llm_generation": "BLOCKED_OFFLINE_OLLAMA"
+    },
+    "stage_9": {
+      "status": "PASS",
+      "benchmark_scenarios": "12/12 (100.0%)"
+    },
+    "stage_10": {
+      "status": "PASS",
+      "provenance_elements": [
+        "reportId",
+        "reportTitle",
+        "pageNumber",
+        "chunkId",
+        "textExcerpt",
+        "date"
+      ]
+    },
+    "stage_11": {
+      "status": "PASS",
+      "embedding_latency_median_ms": 14.32,
+      "bm25_latency_median_ms": 0.023,
+      "chroma_search_median_ms": 2.1
+    },
+    "stage_12": {
+      "status": "DOCUMENTED_LIMITATIONS",
+      "tesseract_installed": false,
+      "born_digital_pdf": "SUPPORTED",
+      "scanned_pdf": "BLOCKED_NO_OCR"
+    },
+    "stage_13": {
+      "status": "PASS",
+      "full_test_suite": "171 passed in 635.02s",
+      "database_hashes_verified": true
+    }
+  },
+  "verdict": "CONDITIONAL"
+}

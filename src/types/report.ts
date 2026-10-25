@@ -9,6 +9,7 @@ export interface ExtractedEntity {
   value?: string;
   unit?: string;
   notes?: string;
+  sourcePageNumber?: number;
 }
 
 export interface MedicalReport {
@@ -28,4 +29,13 @@ export interface MedicalReport {
   summary?: string;
   extractedEntities: ExtractedEntity[];
   fileUrl?: string;
+  pageCount?: number;
+  checksum?: string;
+  contentChecksum?: string;
+  linkedEntities?: {
+    labResults?: any[];
+    medications?: any[];
+    diseases?: any[];
+    allergies?: any[];
+  };
 }

@@ -7,6 +7,7 @@ export type TimelineEventType =
   | 'surgery'
   | 'vaccination'
   | 'hospital_visit'
+  | 'medical_report'
   | 'symptom';
 
 export interface TimelineEvent {
@@ -25,5 +26,20 @@ export interface TimelineEvent {
     diseases?: string[];
     medications?: string[];
     labResults?: string[];
+  };
+  uploadDate?: string;
+  isUnknownDate?: boolean;
+  hasConflict?: boolean;
+  conflictDetails?: string;
+}
+
+export interface TimelineSummary {
+  totalEvents: number;
+  eventTypes: string[];
+  facilities: string[];
+  years: number[];
+  dateRange: {
+    earliest: string | null;
+    latest: string | null;
   };
 }

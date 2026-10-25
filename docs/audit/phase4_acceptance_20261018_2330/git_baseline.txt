@@ -1,0 +1,77 @@
+=== GIT BRANCH ===
+* main 19a46b3 front end changes
+
+=== GIT STATUS --SHORT ===
+ M .gitignore
+ M backend/alembic/env.py
+ M backend/app/ai/chunker.py
+ M backend/app/ai/clinical_extractor/llm_extractor.py
+ M backend/app/ai/document_ingestion.py
+ M backend/app/ai/embeddings.py
+ M backend/app/ai/extractors/pdf_extractor.py
+ M backend/app/ai/ingestion/orchestrator.py
+ M backend/app/ai/rag/classifier.py
+ M backend/app/ai/rag/fusion.py
+ M backend/app/ai/rag/hybrid_retriever.py
+ M backend/app/ai/rag/query_resolver.py
+ M backend/app/ai/rag/structured_retriever.py
+ M backend/app/ai/retrieval.py
+ M backend/app/core/config.py
+ M backend/app/main.py
+ M backend/app/models/__init__.py
+ M backend/app/models/clinical_entity.py
+ M backend/app/models/patient.py
+ M backend/app/models/report.py
+ M backend/app/routers/documents.py
+ M backend/app/routers/reports.py
+ M backend/app/schemas/report.py
+ M backend/app/services/chat_service.py
+ M backend/app/services/seed_data.py
+ M backend/requirements.txt
+ M chronanexus.db
+ M docs/DEVELOPMENT_MEMORY.md
+?? ChronaNexus_Open_Source_Application_Alignment.docx
+?? backend/alembic/versions/003_add_provenance_and_allergies.py
+?? backend/alembic/versions/004_add_checksum_and_page_metadata.py
+?? backend/app/ai/rag/bm25_retriever.py
+?? backend/app/clinical/
+?? backend/app/models/allergy.py
+?? backend/tests/test_allergy_and_provenance.py
+?? backend/tests/test_chromadb_integration.py
+?? backend/tests/test_phase3_ingestion.py
+?? backend/tests/test_phase4_hybrid_retrieval.py
+?? data/
+?? docs/audit/
+?? docs/open-source-analysis/
+?? tests/
+
+=== GIT DIFF STAT ===
+ .gitignore                                         |   3 +
+ backend/alembic/env.py                             |   3 +-
+ backend/app/ai/chunker.py                          | 157 +++++--
+ backend/app/ai/clinical_extractor/llm_extractor.py | 245 +++++++----
+ backend/app/ai/document_ingestion.py               |   4 +-
+ backend/app/ai/embeddings.py                       |  79 +++-
+ backend/app/ai/extractors/pdf_extractor.py         | 468 ++++++++++++++++-----
+ backend/app/ai/ingestion/orchestrator.py           |  78 +++-
+ backend/app/ai/rag/classifier.py                   |   7 +-
+ backend/app/ai/rag/fusion.py                       |  83 +++-
+ backend/app/ai/rag/hybrid_retriever.py             |  82 +++-
+ backend/app/ai/rag/query_resolver.py               |  19 +
+ backend/app/ai/rag/structured_retriever.py         | 219 ++++++++--
+ backend/app/ai/retrieval.py                        | 260 +++++++++++-
+ backend/app/core/config.py                         |  37 +-
+ backend/app/main.py                                |  10 +
+ backend/app/models/__init__.py                     |   3 +
+ backend/app/models/clinical_entity.py              |  25 +-
+ backend/app/models/patient.py                      |   2 +
+ backend/app/models/report.py                       |   5 +
+ backend/app/routers/documents.py                   |  34 +-
+ backend/app/routers/reports.py                     |   3 +
+ backend/app/schemas/report.py                      |   3 +
+ backend/app/services/chat_service.py               |   4 +-
+ backend/app/services/seed_data.py                  |  37 ++
+ backend/requirements.txt                           |   5 +
+ chronanexus.db                                     | Bin 319488 -> 462848 bytes
+ docs/DEVELOPMENT_MEMORY.md                         | 240 +++++++++++
+ 28 files changed, 1804 insertions(+), 311 deletions(-)

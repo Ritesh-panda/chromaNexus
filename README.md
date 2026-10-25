@@ -6,6 +6,16 @@
 
 ---
 
+### 📖 Complete User Manual & Testing Suite
+For independent testing on a clean computer, consult the comprehensive user documentation:
+- 🚀 **Fresh-System Setup Guide**: [docs/user-guide/FRESH_SYSTEM_SETUP.md](docs/user-guide/FRESH_SYSTEM_SETUP.md)
+- 📘 **Complete User Manual**: [docs/user-guide/USER_MANUAL.md](docs/user-guide/USER_MANUAL.md)
+- 🧪 **End-to-End Test Plan**: [docs/user-guide/END_TO_END_TEST_PLAN.md](docs/user-guide/END_TO_END_TEST_PLAN.md)
+- 🔧 **Troubleshooting Guide**: [docs/user-guide/TROUBLESHOOTING.md](docs/user-guide/TROUBLESHOOTING.md)
+- 📑 **User Guide Index**: [docs/user-guide/README.md](docs/user-guide/README.md)
+
+---
+
 ## Overview
 
 **ChronaNexus** is an AI-powered longitudinal medical intelligence platform designed to bridge the gap between disconnected medical documents and holistic clinical understanding. Instead of functioning as a passive file repository or document storage application, ChronaNexus extracts clinical entities, connects health events chronologically, and maintains a continuously updating **Patient Memory Graph**.
@@ -175,64 +185,74 @@ backend/
 
 ## Current Progress & Milestones
 
-### Implementation Status:
-* ✅ **Phase 1: Frontend Foundation**: 100% Implemented & Verified (Clean TypeScript Build, Zero Lint Errors).
-* ✅ **Phase 2: Full-Stack Persistence Layer**: 100% Implemented & Verified (FastAPI, SQLite/PostgreSQL Models, 9 Routers, Storage Abstraction, 17 Pytest Tests PASS, Axios Integration).
-* ⏳ **Phase 3: OCR Ingestion & Clinical NLP**: Automated Tesseract/Cloud Vision OCR pipeline and LLM extraction worker.
-* ⏳ **Phase 4: Privacy-First Local RAG Engine**: Vector database embeddings & local LLM reasoning.
+### Implementation Status: **Release Candidate 1 (`v1.0.0-rc1`)**
+* ✅ **Phases 1–7: Full Core Architecture**: Complete React 19 frontend, FastAPI persistence, relational schema, hybrid BM25 + Chroma retrieval, and deterministic clinical query engine.
+* ✅ **Phase 8: Medical Vault & Doctor-Ready Summaries**: Full-featured vault, multi-tab inspection, clinical briefing synthesis, and interactive appointment question builder.
+* ✅ **Phase 9: Security, Audit Logging, FHIR R4 & Safe Purge**: IDOR protection, path traversal mitigation, HL7 FHIR R4 bundling, sanitized audit trails, and two-phase cryptographic patient purge.
+* ✅ **Phase 10 & RC1: End-to-End Validation & Release Gates**: 33 automated tests passing (100% pass rate), zero cross-patient data leakage, live Ollama inference verified, and defensive missing-OCR guards.
 
 ---
 
 ## Getting Started
 
+For a comprehensive fresh-system walkthrough, see [docs/user-guide/FRESH_SYSTEM_SETUP.md](docs/user-guide/FRESH_SYSTEM_SETUP.md).
+
 ### 1. Prerequisites
-* **Node.js**: `v18.0.0` or higher
+* **Node.js**: `v18.0.0` or higher (v20+ recommended)
 * **npm**: `v9.0.0` or higher
-* **Python**: `3.10` or higher
+* **Python**: `3.11` to `3.13` (Python 3.13 verified)
+* **Ollama**: Recommended for local inference (`ollama pull llama3.2:3b` and `ollama pull all-minilm`)
 
-### 2. Frontend Setup
-
-```bash
-# Navigate into the project directory
-cd chromaNexus
-
-# Install frontend dependencies
-npm install
-
-# Start Vite dev server (runs on http://localhost:5173)
-npm run dev
-```
-
-### 3. Backend Setup
+### 2. Backend Setup
 
 ```bash
-# Navigate into the backend directory
+# 1. Navigate to the backend directory
 cd backend
 
-# Create and activate virtual environment (optional)
+# 2. Create and activate virtual environment
 python -m venv venv
-# Windows:
+# Windows PowerShell:
 .\venv\Scripts\activate
 # Linux/macOS:
 source venv/bin/activate
 
-# Install backend dependencies
-pip install -r requirements.txt
+# 3. Install dependencies
+pip install --upgrade pip
+pip install -r requirements.txt pymupdf
 
-# Start FastAPI server (runs on http://localhost:8000)
+# 4. Copy environment template
+cp .env.example .env    # On Windows: Copy-Item .env.example .env
+
+# 5. Start FastAPI development server (runs on http://localhost:8000)
 uvicorn app.main:app --reload --port 8000
 ```
 
-### 4. Interactive API Documentation
-FastAPI automatically generates interactive Swagger and ReDoc documentation:
-* Swagger UI: [http://localhost:8000/docs](http://localhost:8000/docs)
-* ReDoc UI: [http://localhost:8000/redoc](http://localhost:8000/redoc)
-
-### 5. Running Automated Tests & Quality Checks
+### 3. Frontend Setup (In a separate terminal at project root)
 
 ```bash
-# Run backend pytest suite (17 comprehensive tests)
-python -m pytest backend/tests -v
+# 1. Install frontend dependencies
+npm install
+
+# 2. Start Vite dev server (runs on http://localhost:5173)
+npm run dev
+```
+
+### 4. Default Demonstration Account
+When the backend boots, it automatically creates the database schema and seeds a demo profile:
+* **URL**: [http://localhost:5173/login](http://localhost:5173/login)
+* **Email**: `alex.vance@example.com`
+* **Password**: `Password123!`
+
+### 5. Interactive Health Probes & API Documentation
+* **Liveness Probe**: [http://localhost:8000/health](http://localhost:8000/health)
+* **Readiness Probe**: [http://localhost:8000/ready](http://localhost:8000/ready)
+* **Swagger API UI**: [http://localhost:8000/docs](http://localhost:8000/docs)
+
+### 6. Running Automated Tests & Quality Verification
+
+```bash
+# Run complete automated regression & release gates test suite (33 tests)
+python -m pytest backend/tests/test_rc1_release_gates.py backend/tests/test_phase10_end_to_end_validation.py backend/tests/test_phase10_benchmark.py backend/tests/test_phase10_health_and_readiness.py backend/tests/test_phase9_security_audit_fhir_purge.py backend/tests/test_phase8_vault_and_summary.py -v
 
 # Run frontend TypeScript type checking & production build
 npm run build

@@ -353,16 +353,347 @@ class PostgresVectorStore(VectorStore):
                 db.close()
 
 
+class ChromaDBVectorStore(VectorStore):
+    """
+    Embedded, persistent ChromaDB vector store for ChronaNexus.
+    Runs completely in-process using SQLite and HNSW cosine indexing.
+    Operates with offline BGE embeddings and supports metadata filtering (patient_id, document_id)
+    for strict cross-patient isolation.
+    """
+
+    def __init__(
+        self,
+        persist_directory: Optional[str] = None,
+        collection_name: str = "chronanexus_clinical_chunks",
+        embedding_provider: Optional[EmbeddingProvider] = None
+    ):
+        import chromadb
+        self.collection_name = collection_name
+        self.embedding_provider = embedding_provider or get_embedding_provider()
+        self.persist_directory = persist_directory
+
+        if persist_directory:
+            self.client = chromadb.PersistentClient(path=persist_directory)
+        else:
+            self.client = chromadb.EphemeralClient()
+
+        self.collection = self.client.get_or_create_collection(
+            name=collection_name,
+            metadata={"hnsw:space": "cosine"}
+        )
+
+    def add_documents(
+        self,
+        chunks: List[DocumentChunk],
+        embeddings: Optional[List[List[float]]] = None
+    ) -> None:
+        if not chunks:
+            return
+
+        import os
+        is_test_env = bool(
+            os.environ.get("PYTEST_CURRENT_TEST") or
+            os.environ.get("CHRONANEXUS_TEST_ENV")
+        )
+        if is_test_env and self.persist_directory:
+            abs_persist = os.path.abspath(self.persist_directory).lower()
+            if "data\\chroma_db" in abs_persist or "data/chroma_db" in abs_persist:
+                raise RuntimeError(
+                    f"CRITICAL TEST ISOLATION FAILURE: Attempted mutation of protected persistent ChromaDB "
+                    f"at '{abs_persist}' during test execution! Tests MUST use an isolated temporary directory."
+                )
+
+        if embeddings is None:
+            texts = [c.text for c in chunks]
+            embeddings = self.embedding_provider.embed_texts(texts)
+
+        ids = []
+        docs = []
+        metadatas = []
+        clean_embs = []
+
+        for i, chunk in enumerate(chunks):
+            c_id = chunk.chunk_id or f"chk_{chunk.document_id}_{chunk.chunk_index}"
+            ids.append(c_id)
+            docs.append(chunk.text)
+            clean_embs.append(embeddings[i])
+
+            meta = {
+                "chunk_id": c_id,
+                "document_id": str(chunk.document_id or ""),
+                "page_number": int(chunk.page_number or 1),
+                "chunk_index": int(chunk.chunk_index or 0)
+            }
+            if chunk.metadata:
+                for k, v in chunk.metadata.items():
+                    if isinstance(v, (str, int, float, bool)):
+                        meta[k] = v
+                    else:
+                        meta[k] = str(v)
+            metadatas.append(meta)
+
+        self.collection.upsert(
+            ids=ids,
+            documents=docs,
+            embeddings=clean_embs,
+            metadatas=metadatas
+        )
+
+    def similarity_search(
+        self,
+        query: str,
+        top_k: int = 4,
+        filter_metadata: Optional[Dict[str, Any]] = None
+    ) -> List[SearchResult]:
+        if not query or not query.strip():
+            return []
+
+        query_emb = self.embedding_provider.embed_text(query)
+
+        where_clause = None
+        if filter_metadata:
+            conds = []
+            for k, v in filter_metadata.items():
+                if v is not None:
+                    conds.append({k: {"$eq": v}})
+            if len(conds) == 1:
+                where_clause = conds[0]
+            elif len(conds) > 1:
+                where_clause = {"$and": conds}
+
+        res = self.collection.query(
+            query_embeddings=[query_emb],
+            n_results=top_k,
+            where=where_clause
+        )
+
+        results: List[SearchResult] = []
+        if not res or not res.get("ids") or not res["ids"][0]:
+            return []
+
+        for i, chunk_id in enumerate(res["ids"][0]):
+            doc_text = res["documents"][0][i]
+            meta = res["metadatas"][0][i] if res.get("metadatas") else {}
+            dist = res["distances"][0][i] if res.get("distances") else 0.0
+
+            sim = 1.0 - float(dist)
+            norm_score = max(0.0, min(1.0, (sim + 1.0) / 2.0 if sim < 0 else sim))
+
+            chunk = DocumentChunk(
+                chunk_id=chunk_id,
+                document_id=meta.get("document_id", ""),
+                page_number=meta.get("page_number", 1),
+                chunk_index=meta.get("chunk_index", 0),
+                text=doc_text,
+                metadata=meta,
+                character_count=len(doc_text)
+            )
+            results.append(SearchResult(chunk=chunk, score=norm_score))
+
+        return results
+
+    def delete_document(self, document_id: str) -> int:
+        import os
+        is_test_env = bool(
+            os.environ.get("PYTEST_CURRENT_TEST") or
+            os.environ.get("CHRONANEXUS_TEST_ENV")
+        )
+        if is_test_env and self.persist_directory:
+            abs_persist = os.path.abspath(self.persist_directory).lower()
+            if "data\\chroma_db" in abs_persist or "data/chroma_db" in abs_persist:
+                raise RuntimeError(
+                    f"CRITICAL TEST ISOLATION FAILURE: Attempted deletion from protected persistent ChromaDB "
+                    f"at '{abs_persist}' during test execution! Tests MUST use an isolated temporary directory."
+                )
+        try:
+            self.collection.delete(where={"document_id": document_id})
+            return 1
+        except Exception as e:
+            logger.warning(f"ChromaDB delete error: {e}")
+            return 0
+
+    def dimension(self) -> int:
+        return self.embedding_provider.dimension()
+
+    def get_patient_chunks(self, patient_id: str) -> List[DocumentChunk]:
+        """Fetch all indexed DocumentChunks for a specific patient."""
+        try:
+            res = self.collection.get(where={"patient_id": patient_id})
+            if not res or not res.get("ids"):
+                return []
+            chunks = []
+            for i, chunk_id in enumerate(res["ids"]):
+                doc_text = res["documents"][i] if res.get("documents") else ""
+                meta = res["metadatas"][i] if res.get("metadatas") else {}
+                chunks.append(DocumentChunk(
+                    chunk_id=chunk_id,
+                    document_id=meta.get("document_id"),
+                    text=doc_text,
+                    page_number=int(meta.get("page_number", 1)),
+                    chunk_index=int(meta.get("chunk_index", 0)),
+                    metadata=meta
+                ))
+            return chunks
+        except Exception as e:
+            logger.warning(f"Error fetching patient chunks from ChromaDB: {e}")
+            return []
+
+    def sync_from_db(self, db: Session) -> int:
+        """
+        Synchronizes document chunks from the relational database into ChromaDB.
+        Performs set-difference reconciliation: only chunks present in SQL but
+        missing from ChromaDB are indexed. Existing valid vectors and metadata
+        are strictly preserved without deletion or recreation.
+
+        Limitation: Reconciles presence by chunk_id. Stale metadata or incompatible
+        embeddings on existing vectors are preserved to avoid unsafe overwrites;
+        any full vector re-indexing must be handled via an explicit maintenance process.
+
+        Reuses valid precomputed embeddings (384-dimensional) or generates them if missing.
+        Idempotent: safe to run repeatedly without creating duplicates.
+        Handles empty SQL databases, empty Chroma collections, and partially
+        populated Chroma collections.
+        """
+        try:
+            from backend.app.models.document_chunk import DocumentChunkModel
+            import json
+
+            # 1. Read existing ChromaDB IDs
+            existing_data = self.collection.get(include=[])
+            existing_ids = set(existing_data.get("ids", [])) if existing_data else set()
+
+            # 2. Read authoritative SQL chunks
+            db_chunks = db.query(DocumentChunkModel).all()
+            if not db_chunks:
+                logger.info(f"ChromaDB sync: SQL database has no chunks. Current ChromaDB count: {self.collection.count()}")
+                return self.collection.count()
+
+            # 3. Identify missing chunks using set difference
+            missing_chunks = [c for c in db_chunks if c.chunk_id and c.chunk_id not in existing_ids]
+            if not missing_chunks:
+                logger.info(f"ChromaDB sync: All {len(db_chunks)} SQL chunks already present in ChromaDB. No action needed.")
+                return self.collection.count()
+
+            logger.info(
+                f"ChromaDB sync reconciliation: Found {len(db_chunks)} authoritative SQL chunks, "
+                f"{len(existing_ids)} existing in ChromaDB. Indexing {len(missing_chunks)} missing chunks."
+            )
+
+            # 4. Prepare missing chunks and metadata
+            chunks_to_add = []
+            embeddings_to_add = []
+            partial_errors = 0
+
+            for c in missing_chunks:
+                try:
+                    emb = None
+                    if c.embedding:
+                        try:
+                            emb = json.loads(c.embedding) if isinstance(c.embedding, str) else c.embedding
+                            if not (isinstance(emb, list) and len(emb) == self.dimension()):
+                                logger.warning(
+                                    f"Chunk {c.chunk_id} has invalid/incompatible embedding (expected {self.dimension()} dimensions). Will re-embed."
+                                )
+                                emb = None
+                        except Exception as parse_err:
+                            logger.warning(f"Could not parse precomputed embedding for chunk {c.chunk_id}: {parse_err}")
+                            emb = None
+
+                    meta = dict(c.chunk_metadata or {})
+                    meta["patient_id"] = str(c.patient_id or "")
+                    meta["document_id"] = str(c.document_id or "")
+                    meta["page_number"] = int(c.page_number or 1)
+                    meta["chunk_index"] = int(c.chunk_index or 0)
+
+                    chunk = DocumentChunk(
+                        chunk_id=c.chunk_id,
+                        document_id=c.document_id,
+                        text=c.content or "",
+                        page_number=c.page_number or 1,
+                        chunk_index=c.chunk_index or 0,
+                        metadata=meta
+                    )
+                    chunks_to_add.append(chunk)
+                    embeddings_to_add.append(emb)
+                except Exception as prep_err:
+                    partial_errors += 1
+                    logger.error(f"Error preparing chunk {getattr(c, 'chunk_id', 'unknown')} for ChromaDB sync: {prep_err}")
+
+            if not chunks_to_add:
+                if partial_errors > 0:
+                    logger.warning(f"ChromaDB sync: Encountered {partial_errors} preparation errors; no valid chunks to index.")
+                return self.collection.count()
+
+            # 5. Index missing chunks (generating embeddings for any missing/invalid ones)
+            if all(e is not None and len(e) == self.dimension() for e in embeddings_to_add):
+                self.add_documents(chunks_to_add, embeddings=embeddings_to_add)
+            else:
+                for idx, (chunk, emb) in enumerate(zip(chunks_to_add, embeddings_to_add)):
+                    if emb is None:
+                        try:
+                            embeddings_to_add[idx] = self.embedding_provider.embed_text(chunk.text)
+                        except Exception as emb_err:
+                            logger.error(f"Failed to generate embedding for chunk {chunk.chunk_id}: {emb_err}")
+                            partial_errors += 1
+
+                valid_pairs = [(c, e) for c, e in zip(chunks_to_add, embeddings_to_add) if e is not None and len(e) == self.dimension()]
+                if valid_pairs:
+                    valid_chunks = [p[0] for p in valid_pairs]
+                    valid_embeddings = [p[1] for p in valid_pairs]
+                    self.add_documents(valid_chunks, embeddings=valid_embeddings)
+
+            final_count = self.collection.count()
+            logger.info(f"ChromaDB sync complete. Total collection count is now {final_count} (errors encountered: {partial_errors}).")
+            return final_count
+        except Exception as e:
+            logger.error(f"Error during ChromaDB sync_from_db: {e}", exc_info=True)
+            return self.collection.count()
+
+    def health_check(self) -> bool:
+        try:
+            self.collection.count()
+            return True
+        except Exception:
+            return False
+
+
 def get_vector_store(
     backend: Optional[str] = None,
-    db_session: Optional[Session] = None
+    db_session: Optional[Session] = None,
+    persist_directory: Optional[str] = None,
+    collection_name: Optional[str] = None,
+    embedding_provider: Optional[EmbeddingProvider] = None
 ) -> VectorStore:
     """
     Factory to retrieve vector store.
-    If 'postgres' or 'pgvector' requested, returns PostgresVectorStore.
-    Defaults to InMemoryVectorStore for lightweight local tests unless database configured.
+    Defaults to configured VECTOR_STORE_BACKEND (e.g., 'chroma').
     """
-    b = (backend or "in_memory").lower()
+    if not backend:
+        try:
+            from backend.app.core.config import settings
+            backend = getattr(settings, "VECTOR_STORE_BACKEND", "chroma")
+        except Exception:
+            backend = "chroma"
+
+    b = (backend or "chroma").lower()
+    if b in ["chroma", "chromadb"]:
+        if not persist_directory:
+            try:
+                from backend.app.core.config import settings
+                persist_directory = getattr(settings, "CHROMA_PERSIST_DIRECTORY", None)
+            except Exception:
+                pass
+        if not collection_name:
+            try:
+                from backend.app.core.config import settings
+                collection_name = getattr(settings, "CHROMA_COLLECTION_NAME", "chronanexus_clinical_chunks")
+            except Exception:
+                collection_name = "chronanexus_clinical_chunks"
+        return ChromaDBVectorStore(
+            persist_directory=persist_directory,
+            collection_name=collection_name,
+            embedding_provider=embedding_provider
+        )
     if b in ["postgres", "postgresql", "pgvector"]:
-        return PostgresVectorStore(db_session=db_session)
-    return InMemoryVectorStore()
+        return PostgresVectorStore(db_session=db_session, embedding_provider=embedding_provider)
+    return InMemoryVectorStore(embedding_provider=embedding_provider)

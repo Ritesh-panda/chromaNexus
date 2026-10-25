@@ -1,4 +1,5 @@
 import os
+import hashlib
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, BackgroundTasks
 from fastapi.responses import FileResponse
@@ -17,6 +18,8 @@ from backend.app.ai.ingestion import (
     IngestionStatus,
     IngestionStage
 )
+from backend.app.core.config import settings
+from backend.app.services.audit_service import log_audit_event
 
 router = APIRouter(prefix="/documents", tags=["Document Vault"])
 
@@ -50,6 +53,7 @@ async def upload_document(
     hospital_name: str = Form("General Hospital"),
     doctor_name: str = Form(None),
     report_date: str = Form(None),
+    on_duplicate: str = Form("reject"),  # 'reject' (409 Conflict) or 'return_existing'
     current_patient: Patient = Depends(get_current_patient),
     db: Session = Depends(get_db)
 ):
@@ -60,7 +64,7 @@ async def upload_document(
     if ext not in ALLOWED_EXTENSIONS:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid file format '{ext}'. Only PDF documents are supported."
+            detail=f"Invalid file format '{ext}'. Only PDF and TXT documents are supported."
         )
 
     file_bytes = await file.read()
@@ -70,13 +74,56 @@ async def upload_document(
             detail="Uploaded file is empty."
         )
 
+    # Compute SHA-256 binary checksum
+    file_checksum = hashlib.sha256(file_bytes).hexdigest()
+
+    # Document Checksum Deduplication Check
+    existing_report = db.query(MedicalReport).filter(
+        MedicalReport.patient_id == current_patient.id,
+        MedicalReport.checksum == file_checksum
+    ).first()
+
+    if existing_report:
+        if on_duplicate == "return_existing":
+            log_audit_event(
+                db=db,
+                action="DOCUMENT_DUPLICATE_RETURNED",
+                outcome="SUCCESS",
+                patient_id=current_patient.id,
+                resource_type="medical_report",
+                resource_id=existing_report.id,
+                details={"checksum": file_checksum, "title": existing_report.title}
+            )
+            return format_report_response(existing_report)
+        else:
+            log_audit_event(
+                db=db,
+                action="DOCUMENT_DUPLICATE_REJECTED",
+                outcome="DENIED",
+                patient_id=current_patient.id,
+                resource_type="medical_report",
+                resource_id=existing_report.id,
+                details={"checksum": file_checksum, "title": existing_report.title}
+            )
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "message": "Duplicate document detected. This exact file has already been uploaded for this patient.",
+                    "code": "DUPLICATE_DOCUMENT",
+                    "existing_report_id": existing_report.id,
+                    "checksum": file_checksum,
+                    "upload_date": existing_report.upload_date.isoformat() if existing_report.upload_date else None,
+                    "title": existing_report.title
+                }
+            )
+
     await file.seek(0)
 
     # Save to storage service
     file_id, storage_path, file_size = await storage_service.save_file(file)
     date_str = report_date or datetime.now().strftime("%Y-%m-%d")
 
-    # Create Report record in Vault
+    # Create Report record in Vault with checksum
     report = MedicalReport(
         patient_id=current_patient.id,
         title=os.path.splitext(file.filename)[0].replace("_", " ").title(),
@@ -90,12 +137,24 @@ async def upload_document(
         confidence_score=0.98,
         storage_path=storage_path,
         status="processing",
+        checksum=file_checksum,
         summary=f"Processing {file.filename} through Document Intelligence Pipeline...",
         raw_text=""
     )
     db.add(report)
     db.commit()
     db.refresh(report)
+
+    # Audit log entry for document upload
+    log_audit_event(
+        db=db,
+        action="DOCUMENT_UPLOAD",
+        outcome="SUCCESS",
+        patient_id=current_patient.id,
+        resource_type="medical_report",
+        resource_id=report.id,
+        details={"filename": file.filename, "file_size": file_size, "category": category}
+    )
 
     # Initialize Ingestion Status Tracker
     ingestion_registry.set_status(
@@ -158,10 +217,49 @@ def download_document(
         MedicalReport.patient_id == current_patient.id
     ).first()
     if not report:
+        log_audit_event(
+            db=db,
+            action="DOCUMENT_DOWNLOAD_FAILED",
+            outcome="DENIED",
+            patient_id=current_patient.id,
+            resource_type="medical_report",
+            resource_id=document_id,
+            details={"reason": "Document not found or unauthorized IDOR attempt"}
+        )
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document not found")
 
-    if not report.storage_path or not os.path.exists(report.storage_path):
+    if not report.storage_path:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Document has no storage path")
+
+    # Anti-path traversal guard
+    trusted_dir = os.path.abspath(settings.UPLOAD_DIR)
+    abs_path = os.path.abspath(report.storage_path)
+    try:
+        if os.path.commonpath([abs_path, trusted_dir]) != trusted_dir:
+            log_audit_event(
+                db=db,
+                action="PATH_TRAVERSAL_BLOCKED",
+                outcome="DENIED",
+                patient_id=current_patient.id,
+                resource_type="medical_report",
+                resource_id=document_id
+            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to storage path outside upload directory")
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid storage path")
+
+    if not os.path.exists(report.storage_path):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="File content not found on server storage")
+
+    log_audit_event(
+        db=db,
+        action="DOCUMENT_DOWNLOAD",
+        outcome="SUCCESS",
+        patient_id=current_patient.id,
+        resource_type="medical_report",
+        resource_id=document_id,
+        details={"filename": report.file_name, "file_size": report.file_size}
+    )
 
     return FileResponse(
         path=report.storage_path,
@@ -186,6 +284,18 @@ def delete_document(
     if report.storage_path:
         storage_service.delete_file(report.storage_path)
 
+    filename = report.file_name
     db.delete(report)
     db.commit()
+
+    log_audit_event(
+        db=db,
+        action="DOCUMENT_DELETE",
+        outcome="SUCCESS",
+        patient_id=current_patient.id,
+        resource_type="medical_report",
+        resource_id=document_id,
+        details={"filename": filename}
+    )
+
     return {"message": "Document removed from vault", "id": document_id}
