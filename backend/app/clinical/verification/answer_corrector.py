@@ -118,23 +118,33 @@ class AnswerCorrector:
 
             # 6. Unsupported Medication Instruction
             if claim.claim_type == ClaimType.MEDICATION_INSTRUCTION:
-                reconstructed_sentences.append(
-                    "No clinical documentation supporting the specified medication modification was found in the provided records."
-                )
+                has_supported_med = any(c.status == ClaimVerificationStatus.SUPPORTED and c.claim_type == ClaimType.MEDICATION_INSTRUCTION for c in claims)
+                if not has_supported_med:
+                    reconstructed_sentences.append(
+                        "No clinical documentation supporting the specified medication modification was found in the provided records."
+                    )
                 continue
 
             # 7. Narrative finding or general unsupported claim: Safe Qualification
-            claim_words = [w for w in re.findall(r"[a-zA-Z]{3,}", claim.text.lower()) if w not in self.GENERIC_STOPWORDS]
-            target_str = " ".join(claim_words) if claim_words else (claim.analyte or "the specified clinical findings")
-            reconstructed_sentences.append(
-                f"No clinical documentation of {target_str} was found in the provided records."
-            )
+            # Do not mangle general conversational transitions into awkward "No clinical documentation of..." statements
+            if claim.claim_type == ClaimType.NARRATIVE_FINDING and any(w in claim.text.lower() for w in ["tear", "effusion", "fracture", "lesion", "mass", "stenosis", "ischemia"]):
+                claim_words = [w for w in re.findall(r"[a-zA-Z]{3,}", claim.text.lower()) if w not in self.GENERIC_STOPWORDS]
+                target_str = " ".join(claim_words[:4]) if claim_words else (claim.analyte or "the specified clinical findings")
+                reconstructed_sentences.append(
+                    f"No clinical documentation of {target_str} was found in the provided records."
+                )
+            continue
 
         final_text = " ".join(reconstructed_sentences).strip()
         all_supported = (len(unsupported_claims) == 0 and len(conflicting_claims) == 0)
 
-        # Defense-in-depth: if citations are absent and text contains affirmative clinical assertions, abstain
-        if not has_citations and not any(w in final_text.lower() for w in ["no clinical documentation", "not found", "no records"]):
+        # Defense-in-depth: if citations are absent and text contains affirmative specific clinical assertions, abstain.
+        # However, do NOT wipe out general lifestyle advice, exercise recommendations, or supportive conversational dialogue.
+        has_specific_clinical_claims = any(
+            c.claim_type in [ClaimType.NUMERICAL_LAB, ClaimType.TEMPORAL_MEASUREMENT, ClaimType.DIAGNOSIS, ClaimType.MEDICATION_INSTRUCTION]
+            for c in claims
+        )
+        if not has_citations and has_specific_clinical_claims and not any(w in final_text.lower() for w in ["no clinical documentation", "not found", "no records"]):
             final_text = "No verified clinical records were found to corroborate this statement."
             all_supported = False
 

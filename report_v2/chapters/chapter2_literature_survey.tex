@@ -1,0 +1,162 @@
+\chapter{Literature Survey}
+\label{chap:literature_survey}
+
+\section{Clinical NLP and Information Extraction}
+\label{sec:lit_clinical_nlp}
+
+The computational extraction of structured medical intelligence from unstructured clinical documentation represents a foundational challenge in biomedical informatics. Early extraction pipelines relied extensively on symbolic, rule-based regular expressions and ontological lexicons. Chapman et al.~\cite{chapman2001negex} introduced the seminal \textsc{NegEx} algorithm, employing trigger phrases to identify clinical negation (e.g., differentiating "patient denies chest pain" from confirmed symptoms). Harkema et al.~\cite{harkema2009context} expanded this paradigm into \textsc{ConText}, incorporating regular expressions to disambiguate experiencer status (patient versus family history) and temporal parameters (historical versus acute presentation). While computationally fast, these heuristics exhibited brittleness when confronted with non-standard clinical abbreviations, transcription errors, and syntactic variations prevalent in hospital notes.
+
+The emergence of transformer architectures fundamentally advanced clinical Natural Language Processing (NLP). Huang et al.~\cite{huang2019clinicalbert} developed \textsc{ClinicalBERT}, pretraining bidirectional representations on the MIMIC-III intensive care corpus. Their findings demonstrated that domain-specific contextual representations substantially outperformed general-domain BERT in predicting 30-day readmissions and mortality risk. Rasmy et al.~\cite{rasmy2021medbert} introduced \textsc{Med-BERT}, adapting contextual embeddings to structured electronic health record data formatted under the OMOP Common Data Model, proving that clinical transformers could model disease trajectories.
+
+With parameter scaling, Yang et al.~\cite{yang2022gatortron} released \textsc{GatorTron}, an enterprise-scale clinical language model trained on over 90 billion words of clinical text. GatorTron achieved state-of-the-art benchmarks in clinical named entity recognition (NER), relation extraction, and medical question answering. Similarly, Singhal et al.~\cite{singhal2023nature} presented \textsc{Med-PaLM 2}, demonstrating expert-level accuracy across US Medical Licensing Examination (USMLE) benchmarks.
+
+However, despite these linguistic capabilities, Wornow et al.~\cite{wornow2023shaky} critically established that foundation models in clinical medicine exhibit "shaky foundations": scaling parameters fails to eliminate stochastic hallucinations, struggles with multi-year temporal arithmetic, and introduces black-box opacity that violates safety-critical requirements in clinical decision support. These vulnerabilities underscore the necessity of pairing neural representations with deterministic verification layers.
+
+
+\section{Retrieval-Augmented Generation in Healthcare}
+\label{sec:lit_rag_healthcare}
+
+To counteract generative hallucinations and bridge static model parameters with dynamic patient context, Retrieval-Augmented Generation (RAG) has emerged as the dominant architecture in clinical question answering~\cite{lewis2020rag}. Conventional RAG operates via a two-stage paradigm: a retriever extracts candidate text passages from an external corpus based on query similarity, and a generator (an LLM) conditions its textual continuation upon the retrieved passages.
+
+In biomedical information retrieval, early RAG architectures relied predominantly on dense semantic embedding retrieval. Dense Passage Retrieval (DPR)~\cite{karpukhin2020dpr} and Sentence-BERT~\cite{reimers2019sentencebert} map queries and documents into continuous dense vector spaces, computing relevance via cosine similarity. Xiao et al.~\cite{xiao2023bge} developed the \textsc{BAAI/bge-small-en-v1.5} embedding model, optimizing contrastive dense representations across extensive multi-domain retrieval benchmarks and achieving high recall within a compact $384$-dimensional embedding space.
+
+Nevertheless, pure dense retrieval exhibits severe systematic failure modes in clinical applications:
+\begin{enumerate}
+    \item \textbf{Loss of Exact Token Matching}: Dense vectors compress passage semantics into continuous vectors, often confusing distinct pharmaceutical dosages (e.g., $5\text{ mg}$ vs. $50\text{ mg}$) or misidentifying specific chemical nomenclature that shares high contextual similarity.
+    \item \textbf{Temporal Inversion}: Semantic embeddings capture conceptual topicality rather than chronological ordering, frequently returning a laboratory reading from 2021 as top-1 relevance when the clinician explicitly queried for the latest 2026 result~\cite{gao2023rag_survey}.
+    \item \textbf{Lexical Term-Matching Deficits}: Classical exact-matching algorithms, specifically BM25 Okapi~\cite{robertson2009bm25}, remain unmatched in exact lexical lookup for unique patient identifiers, ICD-10 diagnostic codes, and specific drug brand names.
+\end{enumerate}
+
+To overcome these complementary deficiencies, Lin et al.~\cite{lin2023hybrid} and Cormack et al.~\cite{cormack2009rrf} advocated for hybrid multi-stage retrieval. Cormack et al. formulated \textbf{Reciprocal Rank Fusion (RRF)}, an unsupervised rank aggregation method defined as:
+\begin{equation}
+    RRF(d \in D) = \sum_{m \in M} \frac{1}{k + r_m(d)}
+\end{equation}
+where $M$ denotes the set of retrieval systems (dense semantic and lexical BM25), $r_m(d)$ represents the rank of document $d$ within retriever $m$, and $k$ is a smoothing constant typically set to $60$. Gao et al.~\cite{gao2023rag_survey} demonstrated that RRF balances semantic breadth with lexical precision, preventing catastrophic omission of critical clinical terms while maintaining contextual relevance.
+
+
+\section{Clinical Fact Verification and Hallucination Auditing}
+\label{sec:lit_verification}
+
+The clinical deployment of generative artificial intelligence requires auditable, mathematical guarantees that every emitted medical assertion is strictly entailed by source patient records~\cite{ji2023hallucination}. Fact verification has evolved through several benchmark paradigms:
+\begin{itemize}
+    \item \textbf{FEVER (Fact Extraction and VERification)}: Thorne et al.~\cite{thorne2018fever} formalized automated fact verification as a three-class classification task: \texttt{SUPPORTS}, \texttt{REFUTES}, or \texttt{NOT ENOUGH INFO}. While FEVER catalyzed general-domain natural language inference, its Wikipedia-derived claims lacked biomedical complexity.
+    \item \textbf{SciFact}: Wadden et al.~\cite{wadden2020scifact} extended verification to scientific research claims, requiring systems to identify rationales (evidence sentences) alongside entailment labels.
+    \item \textbf{Med-HALT}: Umapathi et al.~\cite{umapathi2023medhalt} developed a specialized clinical evaluation benchmark focusing on hallucination types, including fake clinical citations, erroneous medical assertions, and false counterfactual reasoning.
+    \item \textbf{FActScore \& AlignScore}: Min et al.~\cite{min2023factscore} proposed atomic fact decomposition to evaluate precision, while Zha et al.~\cite{zha2023alignscore} unified diverse information alignment tasks into a metric measuring the factual consistency between generated summaries and premise context.
+\end{itemize}
+
+Despite these advances, existing clinical verification frameworks suffer from two acute vulnerabilities:
+\begin{enumerate}
+    \item \textbf{Computational Latency}: Full neural NLI cross-encoders require hundreds of milliseconds per atomic claim, rendering real-time conversational streaming clinically impractical.
+    \item \textbf{Benchmark Leakage}: As demonstrated in this project's empirical evaluation, popular synthetic claim verification benchmarks frequently contain unintended lexical cues that permit naive regular expressions to score $100\%$ accuracy without consulting the premise, falsely inflating model evaluations.
+\end{enumerate}
+
+
+\section{Multilingual Speech Synthesis in Low-Resource Indic Vernaculars}
+\label{sec:lit_indic_speech}
+
+In multilingual nations such as India, healthcare communication is severely constrained by linguistic diversity. Over $80\%$ of patients in tier-2 and tier-3 regions communicate primarily in regional vernaculars (e.g., Odia, Telugu, Bengali, Tamil, Hindi) rather than English~\cite{kumar2023linguistic}. While automated speech recognition (ASR) and text-to-speech (TTS) engines have advanced rapidly for major languages, low-resource Eastern Indo-Aryan languages (such as Odia) remain underserved.
+
+Contemporary cloud speech systems, including Microsoft Edge Neural TTS~\cite{microsoft2024edgetts}, provide high-fidelity acoustic models for regional languages such as Bengali (\texttt{bn\allowbreak-IN\allowbreak-Bashkar\allowbreak Neural}) and Hindi (\texttt{hi\allowbreak-IN\allowbreak-Madhur\allowbreak Neural}). However, native voice models for low-resource languages such as Odia often suffer from robotic prosody, vocabulary gaps, or prohibitive synthesis latency. Historically, cross-lingual voice transfer required expensive model fine-tuning or end-to-end phonetic transcription pipelines. However, linguistic research demonstrates that Odia and Bengali share a common root in Eastern Magadhan Indo-Aryan phonetics, exhibiting nearly identical consonant-vowel phonetic inventories and isomorphic Unicode codepoint arrangements. This structural isomorphism offers an unexplored avenue for deterministic Unicode-based phonetic transliteration to deliver natural voice synthesis without training overhead.
+
+
+\section{Comparative Evaluation of Clinical Platforms}
+\label{sec:lit_comparative_matrix}
+
+To provide rigorous architectural context, Table~\ref{tab:2_1_comparative_systems} presents a structured, portrait-mode comparison between existing commercial clinical platforms, academic systems, and ChronaNexus across primary engineering dimensions.
+
+\small
+\begin{longtable}{@{}p{0.21\linewidth} p{0.35\linewidth} p{0.37\linewidth}@{}}
+\caption{Systematic comparison of clinical intelligence platforms}\label{tab:2_1_comparative_systems} \\
+\toprule
+\textbf{Platform} & \textbf{Architecture \& Deployment Model} & \textbf{Verification, Grounding \& Indic Voice} \\
+\midrule
+\endfirsthead
+\toprule
+\multicolumn{3}{c}{\small\textit{Systematic comparison of clinical platforms (Continued)}} \\[4pt]
+\midrule
+\textbf{Platform} & \textbf{Architecture \& Deployment Model} & \textbf{Verification, Grounding \& Indic Voice} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\footnotesize\textit{Continued on next page...}} \\
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+\textbf{Epic Cosmos} & Proprietary cloud-only infrastructure; aggregates multi-facility hospital records; enterprise EHR integration. & Rule-based clinical alerts; lacks neural NLI claim verification; coarse document references only; English voice only. \\
+\midrule
+\textbf{Glass Health AI} & Cloud-hosted SaaS utilizing commercial GPT-4 API; single-encounter clinical summaries; no local execution. & Relies on prompt conditioning without formal verification; external guideline URLs only; text-only, no voice support. \\
+\midrule
+\textbf{Ambience Healthcare} & Cloud enterprise with HIPAA compliance; real-time conversational ambient scribe for clinical consultations. & Relies on human clinician-in-the-loop review; internal EHR linking; English and Spanish dictation only; no Indic speech. \\
+\midrule
+\textbf{Open-Source Clinical RAG} & Flat document chunk retrieval using vector databases (ChromaDB/FAISS); lacks longitudinal timeline synthesis. & Raw LLM generation without verification guardrails; emits unverified chunk IDs; no multilingual speech support. \\
+\midrule
+\textbf{Med-HALT Verifier}~\cite{umapathi2023medhalt} & Offline academic research benchmark; evaluates hallucination categories on static medical Q\&A datasets. & Neural NLI classification with token-level hallucination masks; offline evaluation suite; no real-time conversational or voice tier. \\
+\midrule
+\textbf{ChronaNexus (Proposed)} & \textbf{Local-First SLM} (Ollama) with Cloud fallback; deterministic multi-year longitudinal timeline (2019--2026); relational SQL delta trend engine. & \textbf{Asymmetric Hybrid}: Tier 1 Regex ($<5\text{ ms}$) + Tier 2 Neural NLI; 100\% citation attribution precision; \textbf{6 Languages} with Odia Unicode phonetic bridge. \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+
+\section{Literature Survey Matrix and Identified Research Gaps}
+\label{sec:lit_gaps_matrix}
+
+Table~\ref{tab:2_2_literature_matrix} synthesizes foundational research literature, detailing methodologies, documented limitations, and ChronaNexus solutions.
+
+\small
+\begin{longtable}{@{}p{0.24\linewidth} p{0.35\linewidth} p{0.34\linewidth}@{}}
+\caption{Literature survey matrix mapping existing research, limitations, and ChronaNexus solutions}\label{tab:2_2_literature_matrix} \\
+\toprule
+\textbf{Study \& Author} & \textbf{Methodology \& Identified Limitations} & \textbf{ChronaNexus Architectural Solution} \\
+\midrule
+\endfirsthead
+\toprule
+\multicolumn{3}{c}{\small\textit{Literature survey matrix (Continued)}} \\[4pt]
+\midrule
+\textbf{Study \& Author} & \textbf{Methodology \& Identified Limitations} & \textbf{ChronaNexus Architectural Solution} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\footnotesize\textit{Continued on next page...}} \\
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+\textbf{ClinicalBERT}\newline Huang et al. (2019)~\cite{huang2019clinicalbert} & Pretrained BERT on MIMIC-III ICU notes; limited to acute care notes; lacks multi-year patient timeline tracking across encounters. & Ingests multi-year outpatient records (2019--2026) and structures clinical encounters into an ACID relational schema. \\
+\midrule
+\textbf{GatorTron}\newline Yang et al. (2022)~\cite{yang2022gatortron} & 8.9B parameter clinical language model; heavy memory footprint ($>16\text{ GB}$ VRAM); impossible to run on local clinic workstations. & Operates on lightweight local SLMs via Ollama CPU inference ($<4\text{ GB}$ RAM) with cloud API fallback. \\
+\midrule
+\textbf{Shaky Foundations}\newline Wornow et al. (2023)~\cite{wornow2023shaky} & Critical review proving unreliability, stochastic hallucination, and lack of verifiable clinical grounding in healthcare foundation models. & Implements fail-closed asymmetric hybrid verification ensuring every emitted clinical assertion is audited. \\
+\midrule
+\textbf{Healthcare RAG}\newline Lewis et al. (2020)~\cite{lewis2020rag} & Dense vector retrieval with generative seq2seq; misses exact pharmaceutical names, diagnostic codes, and critical laboratory bounds. & Combines dense BGE vectors with BM25 Okapi lexical matching via Reciprocal Rank Fusion ($k=60$). \\
+\midrule
+\textbf{Reciprocal Rank Fusion}\newline Cormack et al. (2009)~\cite{cormack2009rrf} & RRF rank aggregation evaluated on TREC web search; not previously applied to clinical longitudinal records with unit constraints. & Adapts RRF across dense ChromaDB and lexical BM25 medical records, balancing semantic and exact lexical recall. \\
+\midrule
+\textbf{FEVER Benchmark}\newline Thorne et al. (2018)~\cite{thorne2018fever} & Three-way natural language fact verification on Wikipedia sentences; fails on numerical laboratory delta comparisons and clinical units. & Implements Tier 1 symbolic rule checking for laboratory values, canonical reference ranges, and dosages. \\
+\midrule
+\textbf{Med-HALT}\newline Umapathi et al. (2023)~\cite{umapathi2023medhalt} & Evaluation suite for clinical hallucinations; offline benchmark that provides no real-time inference guardrail during clinical chat. & Deploys runtime fail-closed evidence verifier with automated citation attribution scoring and audit logging. \\
+\midrule
+\textbf{FActScore}\newline Min et al. (2023)~\cite{min2023factscore} & Atomic fact decomposition using recursive LLM prompting; high latency and cost prohibitive for real-time patient consultations. & Uses lightweight deterministic regex parser ($<5\text{ ms}$) for atomic claim extraction and audit before neural escalation. \\
+\midrule
+\textbf{Indic Healthcare}\newline Kumar et al. (2023)~\cite{kumar2023linguistic} & Survey of language barriers in Indian rural healthcare; highlights lack of conversational medical tools for non-English speakers. & Supports 6 languages with dedicated Unicode phonetic bridge for native Eastern Indo-Aryan speech synthesis. \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+
+\section{Summary of Identified Research Gaps}
+\label{sec:lit_summary_gaps}
+
+Synthesizing the surveyed literature reveals four fundamental research and engineering gaps:
+\begin{enumerate}
+    \item \textbf{Absence of Longitudinal Clinical Synthesis in Conversational RAG}: Standard clinical RAG implementations treat medical records as flat, isolated document collections. They lack native chronological awareness and fail to compute exact numerical deltas across time (e.g., historical trajectory of HbA1c over five years).
+    \item \textbf{Single-Channel Retrieval Deficits}: Relying solely on dense semantic vector embeddings leads to critical retrieval failures on exact medication names, specific dosages, and diagnostic codes. A dual-channel framework uniting dense vectors with exact lexical BM25 indexing is required.
+    \item \textbf{Benchmark Leakage and Latency in Claim Verification}: Pure neural NLI verifiers introduce unacceptable computational latency into real-time consultations, while popular verification benchmarks suffer from synthetic leakage. An asymmetric two-tier cascade combining symbolic speed with neural depth is needed.
+    \item \textbf{Linguistic Inequity in Medical Voice Systems}: Existing clinical voice assistants cater predominantly to English speakers. Low-resource Indic vernaculars lack high-quality acoustic models, requiring zero-training phonetic bridges.
+\end{enumerate}
+
+ChronaNexus directly addresses each of these four gaps through the architectural design detailed in subsequent chapters.
+
+\newpage

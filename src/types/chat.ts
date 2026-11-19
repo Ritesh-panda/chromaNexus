@@ -68,6 +68,9 @@ export interface ChatMessage {
   reasoningType?: 'fact' | 'inference';
   structuredTrend?: StructuredTrendData;
   isTyping?: boolean;
+  isEmergency?: boolean;
+  emergencyType?: string;
+  followUpSuggestions?: string[];
 }
 
 export interface ConversationThread {

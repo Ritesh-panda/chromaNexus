@@ -27,14 +27,11 @@ def get_current_user(
             if user:
                 return user
 
-    # Fallback to demo user (Alex Vance)
-    demo_user = db.query(User).filter(User.email == "alex.vance@example.com").first()
-    if demo_user:
-        return demo_user
-
-    # If database not yet seeded, create/seed
-    from backend.app.services.seed_data import seed_initial_data
-    return seed_initial_data(db)
+    raise HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail='Authentication required. Please log in.',
+        headers={'WWW-Authenticate': 'Bearer'},
+    )
 
 
 def get_current_patient(
@@ -51,23 +48,23 @@ def get_current_patient(
 
 
 def authenticate_user(db: Session, email: str, password: str) -> Optional[User]:
-    user = db.query(User).filter(User.email == email).first()
+    from sqlalchemy import func
+    clean_email = email.lower().strip()
+    user = db.query(User).filter(func.lower(User.email) == clean_email).first()
     if not user:
         return None
     if not verify_password(password, user.hashed_password):
-        # Also allow demo password "Password123!" or "Demo123!" for convenience
-        if password in ["Password123!", "Demo123!"]:
-            return user
         return None
     return user
 
 
 def create_user(db: Session, user_in: UserCreate) -> User:
-    existing = db.query(User).filter(User.email == user_in.email).first()
+    from sqlalchemy import func
+    existing = db.query(User).filter(func.lower(User.email) == user_in.email.lower().strip()).first()
     if existing:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="A user with this email address already exists."
+            detail="An account with this email already exists. Please sign in instead."
         )
 
     user = User(
@@ -83,7 +80,15 @@ def create_user(db: Session, user_in: UserCreate) -> User:
     # Initialize associated patient record
     patient = Patient(
         user_id=user.id,
-        primary_care_physician="Dr. Sarah Jenkins, MD" if user.role == "patient" else "Attending Physician"
+        gender="unspecified",
+        primary_care_physician=None,
+        date_of_birth=None,
+        blood_group=None,
+        height_cm=None,
+        weight_kg=None,
+        emergency_contact={},
+        insurance={},
+        known_allergies=[]
     )
     db.add(patient)
     db.commit()

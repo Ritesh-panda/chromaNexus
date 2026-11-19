@@ -32,6 +32,16 @@ export const ClinicalTrendCard: React.FC<ClinicalTrendCardProps> = ({
   const [viewMode, setViewMode] = useState<'chart' | 'table'>('chart');
   const [inspectedPoint, setInspectedPoint] = useState<MeasurementPoint | null>(null);
 
+  const formatDisplayValue = (val: string | number, u?: string) => {
+    const s = String(val ?? '').trim();
+    if (!u) return s;
+    const cleanUnit = u.trim();
+    if (s.toLowerCase().endsWith(cleanUnit.toLowerCase())) {
+      return s.slice(0, -cleanUnit.length).trim();
+    }
+    return s;
+  };
+
   const {
     canonical_name,
     loinc_code,
@@ -201,7 +211,7 @@ export const ClinicalTrendCard: React.FC<ClinicalTrendCardProps> = ({
             <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Latest Result</div>
             <div className="flex items-baseline space-x-1.5">
               <span className="text-xl font-bold font-mono text-slate-900 dark:text-white">
-                {latest_measurement.value}
+                {formatDisplayValue(latest_measurement.value, latest_measurement.unit)}
               </span>
               <span className="text-xs font-medium text-slate-500">{latest_measurement.unit}</span>
             </div>
@@ -217,7 +227,7 @@ export const ClinicalTrendCard: React.FC<ClinicalTrendCardProps> = ({
               <div className="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">Previous Result</div>
               <div className="flex items-baseline space-x-1.5">
                 <span className="text-xl font-bold font-mono text-slate-700 dark:text-slate-300">
-                  {previous_measurement.value}
+                  {formatDisplayValue(previous_measurement.value, previous_measurement.unit)}
                 </span>
                 <span className="text-xs font-medium text-slate-500">{previous_measurement.unit}</span>
               </div>

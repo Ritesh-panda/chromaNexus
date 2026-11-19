@@ -3,9 +3,9 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { useUI } from '@/contexts/UIContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { useUser } from '@/contexts/UserContext';
 import { summaryService } from '@/services/summary.service';
-import { MOCK_DOCTOR_SUMMARY } from '@/constants/mockData';
 import type { DoctorSummary } from '@/types';
 import {
   Stethoscope,
@@ -19,66 +19,87 @@ import {
   Calendar,
   Lock,
   Copy,
-  History,
-  FileQuestion,
   Plus,
   Trash2,
-  AlertCircle,
-  HelpCircle
+  Save,
+  CheckSquare,
+  Square,
+  Microscope,
+  RotateCw,
+  FileText,
+  User,
+  Info
 } from 'lucide-react';
 
+const DISALLOWED_DISEASES = ['unknown', 'none', 'n/a', 'na', 'unspecified', 'nil', 'no', 'not applicable'];
+const DISALLOWED_ALLERGENS = ['unknown', 'none', 'n/a', 'na', 'nil', 'no', 'not applicable', 'nkda', 'no known drug allergies', 'no known allergies'];
+
 export const DoctorSummaryPage: React.FC = () => {
+  const { user } = useAuth();
   const { patient } = useUser();
-  const [summary, setSummary] = useState<DoctorSummary>(MOCK_DOCTOR_SUMMARY);
-  const [loading, setLoading] = useState(true);
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [shareLink, setShareLink] = useState('');
-  const [activeSection, setActiveSection] = useState('briefing');
-  const [newQuestionText, setNewQuestionText] = useState('');
-  const [doctorQuestions, setDoctorQuestions] = useState<string[]>([]);
-  const [isSavingQuestions, setIsSavingQuestions] = useState(false);
   const { addToast } = useUI();
 
-  useEffect(() => {
-    let isMounted = true;
-    const fetchSummary = async () => {
-      setLoading(true);
-      try {
-        const data = await summaryService.getDoctorSummary();
-        if (isMounted && data && data.summaryOverview) {
-          setSummary(data);
-          if (data.doctorQuestions) {
-            setDoctorQuestions(data.doctorQuestions);
-          }
+  const [summary, setSummary] = useState<DoctorSummary | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<'overview' | 'diagnostics' | 'checklist'>('overview');
+
+  // Modal and Questions
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareLink, setShareLink] = useState('');
+  const [newQuestionText, setNewQuestionText] = useState('');
+  const [doctorQuestions, setDoctorQuestions] = useState<string[]>([]);
+  const [completedQuestions, setCompletedQuestions] = useState<Record<number, boolean>>({});
+  const [isSavingQuestions, setIsSavingQuestions] = useState(false);
+
+  const fetchSummary = async (forceGenerate = false) => {
+    try {
+      const data = forceGenerate
+        ? await summaryService.generateDoctorSummary()
+        : await summaryService.getDoctorSummary();
+      if (data) {
+        setSummary(data);
+        if (data.doctorQuestions && data.doctorQuestions.length > 0) {
+          setDoctorQuestions(data.doctorQuestions);
         }
-      } catch {
-        if (isMounted) {
-          setSummary(MOCK_DOCTOR_SUMMARY);
-          setDoctorQuestions([
-            'Review dosage and potential side effects of active medications.',
-            'Discuss target reference ranges for any abnormal laboratory biomarkers.',
-            'Evaluate necessity and timing of follow-up diagnostic imaging or procedures.'
-          ]);
-        }
-      } finally {
-        if (isMounted) setLoading(false);
       }
-    };
+    } catch {
+      // Keep state
+    } finally {
+      setLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
     fetchSummary();
-    return () => {
-      isMounted = false;
-    };
   }, []);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchSummary(true);
+    addToast({
+      type: 'success',
+      title: 'Summary Refreshed',
+      message: 'Longitudinal clinical summary recompiled from your latest records.'
+    });
+  };
 
   const handlePrintPdf = () => {
     window.print();
   };
 
   const handleGenerateShare = () => {
-    const token =
-      summary.shareLink ||
-      `https://chronanexus.app/physician-view/share_${Math.random().toString(36).substring(7)}`;
-    setShareLink(token);
+    const origin = window.location.origin;
+    let token = '';
+    if (summary?.shareLink) {
+      token = summary.shareLink.split('/').filter(Boolean).pop() || '';
+    }
+    if (!token || !token.startsWith('share_token_')) {
+      token = `share_token_${Math.random().toString(36).substring(2, 10)}`;
+    }
+    const fullLink = `${origin}/physician-view/${token}`;
+    setShareLink(fullLink);
     setIsShareModalOpen(true);
   };
 
@@ -89,46 +110,75 @@ export const DoctorSummaryPage: React.FC = () => {
     setNewQuestionText('');
   };
 
+  const handleAddSuggestedQuestion = (text: string) => {
+    if (doctorQuestions.includes(text)) return;
+    setDoctorQuestions([...doctorQuestions, text]);
+  };
+
   const handleRemoveQuestion = (idx: number) => {
     const updated = doctorQuestions.filter((_, i) => i !== idx);
     setDoctorQuestions(updated);
+    const updatedCompleted = { ...completedQuestions };
+    delete updatedCompleted[idx];
+    setCompletedQuestions(updatedCompleted);
+  };
+
+  const toggleQuestionComplete = (idx: number) => {
+    setCompletedQuestions((prev) => ({ ...prev, [idx]: !prev[idx] }));
   };
 
   const handleSaveQuestions = async () => {
     setIsSavingQuestions(true);
     try {
       await summaryService.updateDoctorQuestions(doctorQuestions);
-      addToast({ type: 'success', title: 'Appointment Notes Saved', message: 'Your questions for the doctor have been recorded.' });
+      addToast({
+        type: 'success',
+        title: 'Checklist Saved',
+        message: 'Your questions for the doctor appointment have been updated.'
+      });
     } catch {
-      addToast({ type: 'info', title: 'Notes Saved Locally', message: 'Notes are saved in your current clinical session.' });
+      addToast({
+        type: 'info',
+        title: 'Checklist Saved Locally',
+        message: 'Your checklist notes are saved for this session.'
+      });
     } finally {
       setIsSavingQuestions(false);
     }
   };
 
-  const sections = [
-    { id: 'briefing', label: 'Briefing' },
-    { id: 'diagnoses', label: 'Conditions & Diagnoses' },
-    { id: 'allergies', label: 'Allergies & Reactions' },
-    { id: 'medications', label: 'Medications' },
-    { id: 'labs', label: 'Laboratory Results' },
-    { id: 'procedures', label: 'Procedures & Imaging' },
-    { id: 'timeline', label: 'Recent Timeline' },
-    { id: 'conflicts', label: 'Conflicting Information' },
-    { id: 'questions', label: 'Questions for Doctor' },
-  ];
+  if (loading || !summary) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-3">
+        <div className="w-8 h-8 border-2 border-[#10B981] border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF]">Compiling verified physician summary...</p>
+      </div>
+    );
+  }
 
-  const scrollToSection = (id: string) => {
-    setActiveSection(id);
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  };
+  // Filter out unknown conditions and disallowed allergens
+  const filteredDiseases = (summary.currentDiseases || []).filter(
+    (d: any) => !DISALLOWED_DISEASES.includes((d.name || '').trim().toLowerCase())
+  );
+
+  const filteredAllergies = (summary.knownAllergies || []).filter((a: any) => {
+    const allergenStr = typeof a === 'string' ? a : a.allergen || '';
+    return !DISALLOWED_ALLERGENS.includes(allergenStr.trim().toLowerCase());
+  });
+
+  const activeMedications = summary.activeMedications || [];
+  const abnormalLabs = summary.abnormalLabs || [];
+  const procedures = summary.proceduresAndImaging || [];
+  const timelineHighlights = summary.timelineHighlights || [];
+
+  const displayName = user?.name || summary.patientName || 'Patient';
+  const ageDisplay = summary.age ? `${summary.age} yrs` : (patient?.dateOfBirth ? 'Recorded' : 'Not recorded');
+  const bloodDisplay = patient?.bloodGroup || summary.bloodGroup || 'Not recorded';
+  const physicianDisplay = patient?.primaryCarePhysician || summary.primaryCarePhysician || 'Not assigned';
 
   return (
     <div className="space-y-6 pb-12 print:p-0 print:space-y-4">
-      {/* Header Bar (hidden in print) */}
+      {/* Top Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
         <div>
           <h1 className="text-xl sm:text-2xl font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
@@ -139,548 +189,515 @@ export const DoctorSummaryPage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center space-x-2.5">
+        <div className="flex items-center gap-2">
           <Button
-            variant="secondary"
-            size="md"
+            variant="outline"
+            size="sm"
+            onClick={handleRefresh}
+            isLoading={isRefreshing}
+            leftIcon={<RotateCw className="w-3.5 h-3.5" />}
+          >
+            Refresh
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleGenerateShare}
-            leftIcon={<Share2 className="w-4 h-4" />}
+            leftIcon={<Share2 className="w-3.5 h-3.5" />}
           >
             Share Link
           </Button>
           <Button
             variant="primary"
-            size="md"
+            size="sm"
             onClick={handlePrintPdf}
-            leftIcon={<Printer className="w-4 h-4" />}
+            leftIcon={<Printer className="w-3.5 h-3.5" />}
           >
             Print / Export PDF
           </Button>
         </div>
       </div>
 
-      {/* Sticky Section Navigation Anchor Bar (hidden in print) */}
-      <div className="sticky top-14 z-20 bg-white/95 dark:bg-[#1B1E23]/95 backdrop-blur-md p-2 rounded-2xl border border-[#E5E7EB] dark:border-[#2F3540] flex items-center space-x-1.5 overflow-x-auto shadow-[0_1px_3px_0_rgba(0,0,0,0.03)] print:hidden">
-        {sections.map((sec) => (
-          <button
-            key={sec.id}
-            onClick={() => scrollToSection(sec.id)}
-            className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-colors ${
-              activeSection === sec.id
-                ? 'bg-[#1F2937] text-white dark:bg-[#10B981] dark:text-white shadow-sm'
-                : 'text-[#6B7280] dark:text-[#9CA3AF] hover:bg-[#FAF8F5] dark:hover:bg-[#23272E]'
-            }`}
-          >
-            {sec.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Structured Clinical Report Paper */}
-      <div className="bg-white dark:bg-[#1B1E23] p-6 sm:p-8 rounded-2xl border border-[#E5E7EB] dark:border-[#2F3540] space-y-8 shadow-[0_1px_3px_0_rgba(0,0,0,0.02)] print:border-none print:shadow-none print:p-0">
-        {loading && (
-          <div className="p-2.5 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E] border border-[#E5E7EB] dark:border-[#2F3540] text-xs text-[#10B981] font-medium flex items-center gap-2 print:hidden">
-            <span className="w-2 h-2 rounded-full bg-[#10B981] animate-ping" />
-            Assembling fresh clinical provenance from indexed medical records...
-          </div>
-        )}
-        
-        {/* Physician Report Header */}
-        <div className="flex flex-col sm:flex-row justify-between pb-6 border-b border-[#E5E7EB] dark:border-[#2F3540] gap-4">
-          <div className="space-y-1.5">
-            <div className="flex items-center gap-2">
-              <span className="text-base font-semibold tracking-tight text-[#1F2937] dark:text-[#F3F4F6]">
-                Chrona<span className="text-[#10B981]">Nexus</span> Clinical Digest
+      {/* Patient Header Identification Card */}
+      <div className="bg-white dark:bg-[#1B1E23] p-5 sm:p-6 rounded-2xl border border-[#E5E7EB] dark:border-[#2F3540] shadow-sm space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-[#E5E7EB]/80 dark:border-[#2F3540]">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-semibold uppercase tracking-wider text-[#10B981]">
+                ChronaNexus Clinical Digest
               </span>
-              <Badge variant="success">Verified Structured Records</Badge>
-              {patient?.id && (
-                <Badge variant="secondary" className="font-mono text-[10px]">ID: {patient.id.slice(0, 8)}</Badge>
-              )}
+              <span className="text-xs text-[#9CA3AF]">•</span>
+              <Badge variant="success" className="gap-1 text-[11px]">
+                <CheckCircle2 className="w-3 h-3" /> Verified Structured Records
+              </Badge>
             </div>
-            <h2 className="text-lg sm:text-2xl font-semibold text-[#1F2937] dark:text-[#F3F4F6] tracking-tight">
-              Longitudinal Medical Summary — {summary.patientName}
+            <h2 className="text-lg sm:text-xl font-bold text-[#1F2937] dark:text-[#F3F4F6]">
+              Longitudinal Medical Summary — {displayName.toUpperCase()}
             </h2>
-            <div className="flex flex-wrap items-center gap-2 text-xs text-[#6B7280] dark:text-[#9CA3AF] font-mono">
-              <span>Age: {summary.age ? `${summary.age} yrs` : 'Unrecorded'}</span>
+            <div className="flex flex-wrap items-center gap-3 text-xs text-[#6B7280] dark:text-[#9CA3AF] pt-0.5">
+              <span>Age: <strong className="text-[#1F2937] dark:text-[#F3F4F6]">{ageDisplay}</strong></span>
               <span>•</span>
-              <span>Gender: {summary.gender || 'Not recorded'}</span>
+              <span>Blood Group: <strong className="text-[#1F2937] dark:text-[#F3F4F6]">{bloodDisplay}</strong></span>
               <span>•</span>
-              <span>Blood Group: {summary.bloodGroup || 'Not recorded'}</span>
-              <span>•</span>
-              <span>Generated: {summary.generatedAt ? new Date(summary.generatedAt).toLocaleDateString() : new Date().toLocaleDateString()}</span>
+              <span>Physician: <strong className="text-[#1F2937] dark:text-[#F3F4F6]">{physicianDisplay}</strong></span>
             </div>
           </div>
 
-          <div className="sm:text-right space-y-0.5 text-xs text-[#6B7280] dark:text-[#9CA3AF]">
-            <p className="font-medium text-[#1F2937] dark:text-[#F3F4F6]">Primary Care Physician</p>
-            <p className="font-semibold text-[#1F2937] dark:text-[#F3F4F6]">
-              {summary.primaryCarePhysician || patient?.primaryCarePhysician || 'Not assigned'}
-            </p>
-            <p className="text-[#15803D] font-medium text-[11px] flex items-center sm:justify-end gap-1">
-              <ShieldCheck className="w-3.5 h-3.5" /> {(summary.recentReports || []).length} Indexed Documents Grounded
-            </p>
+          <div className="text-left md:text-right shrink-0">
+            <span className="text-[11px] font-mono text-[#9CA3AF] block">
+              Generated: {new Date(summary.generatedAt).toLocaleDateString()}
+            </span>
+            <span className="text-[11px] text-[#10B981] font-medium block mt-0.5">
+              Grounding: Active Patient Memory Graph
+            </span>
           </div>
         </div>
 
-        {/* Clinician Review Notice Banner */}
-        <div className="p-3.5 rounded-xl bg-[#EFF6FF] dark:bg-blue-950/20 border border-blue-200/60 dark:border-blue-900/40 text-xs text-[#1E40AF] dark:text-blue-300 flex items-start gap-2.5">
-          <AlertCircle className="w-4 h-4 text-[#2563EB] shrink-0 mt-0.5" />
+        {/* Notice to Clinicians */}
+        <div className="p-3 rounded-xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-200/80 dark:border-blue-900/30 text-xs text-blue-800 dark:text-blue-300 flex items-start gap-2.5">
+          <Info className="w-4 h-4 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
           <p className="leading-relaxed">
             {summary.clinicianNotice ||
               'NOTICE TO CLINICIANS: This clinical digest was deterministically compiled from indexed medical documents on ChronaNexus. It provides longitudinal reference data and does not constitute an automated diagnosis, treatment recommendation, or prescribing directive. All findings must be clinically verified with original primary sources.'}
           </p>
         </div>
+      </div>
 
-        {/* Section 1: Executive Briefing */}
-        <div id="briefing" className="scroll-mt-32 space-y-2">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-[#10B981] flex items-center gap-1.5">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#10B981]" /> 1. Executive Clinical Briefing
-          </span>
-          <div className="p-4 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540]">
-            <p className="text-xs sm:text-sm text-[#374151] dark:text-[#D1D5DB] leading-relaxed">
+      {/* Modern 3-Tab Navigation (Hidden in print) */}
+      <div className="flex items-center gap-2 border-b border-[#E5E7EB] dark:border-[#2F3540] pb-1 print:hidden">
+        <button
+          onClick={() => setActiveTab('overview')}
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
+            activeTab === 'overview'
+              ? 'bg-[#10B981] text-white shadow-sm'
+              : 'text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#1F2937] dark:hover:text-[#F3F4F6] hover:bg-[#F3F1ED] dark:hover:bg-[#23272E]'
+          }`}
+        >
+          <Activity className="w-3.5 h-3.5" /> 1. Clinical Snapshot
+        </button>
+        <button
+          onClick={() => setActiveTab('diagnostics')}
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
+            activeTab === 'diagnostics'
+              ? 'bg-[#10B981] text-white shadow-sm'
+              : 'text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#1F2937] dark:hover:text-[#F3F4F6] hover:bg-[#F3F1ED] dark:hover:bg-[#23272E]'
+          }`}
+        >
+          <Microscope className="w-3.5 h-3.5" /> 2. Diagnostics & Lab Biomarkers
+        </button>
+        <button
+          onClick={() => setActiveTab('checklist')}
+          className={`flex items-center gap-2 px-4 py-2 text-xs font-semibold rounded-xl transition-all ${
+            activeTab === 'checklist'
+              ? 'bg-[#10B981] text-white shadow-sm'
+              : 'text-[#6B7280] dark:text-[#9CA3AF] hover:text-[#1F2937] dark:hover:text-[#F3F4F6] hover:bg-[#F3F1ED] dark:hover:bg-[#23272E]'
+          }`}
+        >
+          <CheckSquare className="w-3.5 h-3.5" /> 3. Doctor Discussion Checklist
+          {doctorQuestions.length > 0 && (
+            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-white/20 dark:bg-black/20">
+              {doctorQuestions.length}
+            </span>
+          )}
+        </button>
+      </div>
+
+      {/* TAB 1: CLINICAL SNAPSHOT */}
+      <div className={activeTab === 'overview' ? 'space-y-6' : 'hidden print:block space-y-6 print:mt-6'}>
+          {/* Executive Clinical Briefing */}
+          <div className="bg-white dark:bg-[#1B1E23] p-5 sm:p-6 rounded-2xl border border-[#E5E7EB] dark:border-[#2F3540] shadow-sm space-y-2.5">
+            <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-[#10B981]" /> Executive Clinical Briefing
+            </h3>
+            <p className="text-xs text-[#4B5563] dark:text-[#D1D5DB] leading-relaxed">
               {summary.summaryOverview}
             </p>
           </div>
-        </div>
 
-        {/* Section 2: Known Medical Conditions & Diagnoses */}
-        <div id="diagnoses" className="scroll-mt-32 space-y-3 break-inside-avoid">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
-              <Activity className="w-4 h-4 text-[#B91C1C]" /> 2. Known Medical Conditions & Diagnoses
-            </h3>
-            <Badge variant="secondary" className="text-[10px]">
-              {(summary.currentDiseases || []).length} Active • {(summary.pastDiseases || []).length} Past / Resolved
-            </Badge>
-          </div>
+          {/* 3-Column Core Clinical Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {/* Active Diagnoses Card */}
+            <div className="bg-white dark:bg-[#1B1E23] p-5 rounded-2xl border border-[#E5E7EB] dark:border-[#2F3540] shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-1.5">
+                  <Activity className="w-3.5 h-3.5 text-rose-500" /> Active Diagnoses
+                </h4>
+                <Badge variant={filteredDiseases.length > 0 ? 'danger' : 'secondary'} className="text-[10px]">
+                  {filteredDiseases.length} Active
+                </Badge>
+              </div>
 
-          {(summary.currentDiseases || []).length === 0 && (summary.pastDiseases || []).length === 0 ? (
-            <p className="text-xs text-[#9CA3AF] p-3 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/30 border border-[#E5E7EB] dark:border-[#2F3540]">
-              No diagnoses recorded in available documents (absence in records does not confirm clinical absence).
-            </p>
-          ) : (
-            <div className="bg-white dark:bg-[#1B1E23] rounded-xl border border-[#E5E7EB] dark:border-[#2F3540] overflow-hidden divide-y divide-[#E5E7EB]/80 dark:divide-[#2F3540]">
-              {/* Active Conditions */}
-              {(summary.currentDiseases || []).map((d: any) => (
-                <div key={d.id} className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-[#1F2937] dark:text-[#F3F4F6]">{d.name}</span>
-                      {d.icdCode && (
-                        <span className="font-mono text-[10px] text-[#9CA3AF] bg-[#FAF8F5] dark:bg-[#23272E] px-1.5 py-0.5 rounded border border-[#E5E7EB] dark:border-[#2F3540]">
-                          ICD: {d.icdCode}
-                        </span>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 text-[#6B7280] dark:text-[#9CA3AF] mt-1 text-[11px]">
-                      <span>Diagnosed: {d.diagnosedDate || 'Date unrecorded'}</span>
-                      {d.sourceHospital && <span>• Facility: {d.sourceHospital}</span>}
+              {filteredDiseases.length > 0 ? (
+                <div className="space-y-2.5 pt-1">
+                  {filteredDiseases.map((d: any, idx: number) => (
+                    <div
+                      key={d.id || idx}
+                      className="p-3 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540] text-xs space-y-1"
+                    >
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="font-semibold text-[#1F2937] dark:text-[#F3F4F6]">{d.name}</span>
+                        {d.icdCode && (
+                          <span className="px-1.5 py-0.5 rounded bg-rose-50 dark:bg-rose-950/40 text-[10px] font-mono text-rose-600 dark:text-rose-400">
+                            {d.icdCode}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">
+                        Diagnosed: {d.diagnosedDate || 'Recorded'}
+                      </div>
                       {d.sourceReportTitle && (
-                        <span className="text-[#10B981] font-medium flex items-center gap-1">
-                          • Source: {d.sourceReportTitle} {d.sourcePageNumber ? `(p.${d.sourcePageNumber})` : ''}
-                        </span>
+                        <div className="text-[10px] text-[#10B981] truncate">
+                          Source: {d.sourceReportTitle}
+                        </div>
                       )}
                     </div>
-                  </div>
-                  <Badge variant="danger" className="self-start sm:self-auto text-[10px] shrink-0">Active / Chronic</Badge>
+                  ))}
                 </div>
-              ))}
-
-              {/* Past / Resolved Conditions */}
-              {(summary.pastDiseases || []).map((d: any) => (
-                <div key={d.id} className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs opacity-80">
-                  <div>
-                    <span className="font-medium text-[#1F2937] dark:text-[#F3F4F6] line-through decoration-[#9CA3AF]">{d.name}</span>
-                    <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">
-                      Diagnosed: {d.diagnosedDate || 'Date unrecorded'} • Resolved / In Remission
-                    </p>
-                  </div>
-                  <Badge variant="secondary" className="self-start sm:self-auto text-[10px] shrink-0">Past / Resolved</Badge>
+              ) : (
+                <div className="py-6 text-center text-xs text-[#9CA3AF] italic">
+                  No chronic conditions documented in records.
                 </div>
-              ))}
+              )}
             </div>
-          )}
-        </div>
 
-        {/* Section 3: Allergies & Adverse Reactions */}
-        <div id="allergies" className="scroll-mt-32 space-y-3 break-inside-avoid">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-[#B45309]" /> 3. Documented Allergies & Adverse Reactions
-            </h3>
-            <Badge variant="warning" className="text-[10px]">
-              {(summary.knownAllergies || []).length} Documented
-            </Badge>
-          </div>
+            {/* Active Medications Card */}
+            <div className="bg-white dark:bg-[#1B1E23] p-5 rounded-2xl border border-[#E5E7EB] dark:border-[#2F3540] shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-1.5">
+                  <Pill className="w-3.5 h-3.5 text-blue-500" /> Active Medications
+                </h4>
+                <Badge variant={activeMedications.length > 0 ? 'info' : 'secondary'} className="text-[10px]">
+                  {activeMedications.length} Prescribed
+                </Badge>
+              </div>
 
-          {(summary.knownAllergies || []).length === 0 ? (
-            <div className="p-3.5 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/30 border border-[#E5E7EB] dark:border-[#2F3540] text-xs text-[#6B7280] dark:text-[#9CA3AF]">
-              No allergies documented in indexed records. (Absence of documentation does not confirm clinical absence of allergy).
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {(summary.knownAllergies || []).map((allergy: any, idx: number) => {
-                const isObj = typeof allergy === 'object' && allergy !== null;
-                const allergenName = isObj ? allergy.allergen || allergy.name : allergy;
-                const severity = isObj ? allergy.severity : 'Documented';
-                const reaction = isObj ? allergy.reaction : null;
-                const source = isObj ? allergy.sourceReportTitle : null;
-                const page = isObj ? allergy.sourcePageNumber : null;
-
-                return (
-                  <div
-                    key={idx}
-                    className="p-3.5 rounded-xl bg-[#FFFBEB] dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-800/40 text-xs text-[#92400E] dark:text-amber-200 flex flex-col justify-between"
-                  >
-                    <div className="space-y-1">
+              {activeMedications.length > 0 ? (
+                <div className="space-y-2.5 pt-1">
+                  {activeMedications.map((m: any, idx: number) => (
+                    <div
+                      key={m.id || idx}
+                      className="p-3 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540] text-xs space-y-1"
+                    >
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-sm">{allergenName}</span>
-                        <Badge variant="warning" className="text-[10px] capitalize">{severity}</Badge>
+                        <span className="font-semibold text-[#1F2937] dark:text-[#F3F4F6]">{m.name}</span>
+                        {m.dosage && (
+                          <span className="font-mono text-[10px] text-blue-600 dark:text-blue-400">
+                            {m.dosage}
+                          </span>
+                        )}
                       </div>
-                      {reaction && (
-                        <p className="text-[11px] text-[#B45309] dark:text-amber-300">Reaction: {reaction}</p>
+                      <div className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">
+                        {m.frequency || 'Daily'} • Route: {m.route || 'Oral'}
+                      </div>
+                      {m.prescribingDoctor && (
+                        <div className="text-[10px] text-[#9CA3AF]">
+                          Rx: {m.prescribingDoctor}
+                        </div>
                       )}
                     </div>
-                    {source && (
-                      <span className="text-[10px] text-[#B45309]/80 dark:text-amber-400/80 font-mono mt-2 pt-1 border-t border-amber-200/40">
-                        Source: {source} {page ? `(p.${page})` : ''}
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
+                  ))}
+                </div>
+              ) : (
+                <div className="py-6 text-center text-xs text-[#9CA3AF] italic">
+                  No active prescriptions recorded.
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        {/* Section 4: Current & Historical Medications */}
-        <div id="medications" className="scroll-mt-32 space-y-4 break-inside-avoid">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
-              <Pill className="w-4 h-4 text-[#10B981]" /> 4. Pharmacotherapy Regimen
-            </h3>
-            <Badge variant="success" className="text-[10px]">
-              {(summary.activeMedications || []).length} Active Prescriptions
-            </Badge>
+            {/* Known Allergies Card */}
+            <div className="bg-white dark:bg-[#1B1E23] p-5 rounded-2xl border border-[#E5E7EB] dark:border-[#2F3540] shadow-sm space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-500" /> Allergies & Reactions
+                </h4>
+                <Badge variant={filteredAllergies.length > 0 ? 'warning' : 'secondary'} className="text-[10px]">
+                  {filteredAllergies.length} Recorded
+                </Badge>
+              </div>
+
+              {filteredAllergies.length > 0 ? (
+                <div className="space-y-2.5 pt-1">
+                  {filteredAllergies.map((a: any, idx: number) => {
+                    const allergenName = typeof a === 'string' ? a : a.allergen || 'Allergen';
+                    const severity = typeof a === 'object' && a.severity ? a.severity : 'Moderate';
+                    const reaction = typeof a === 'object' && a.reaction ? a.reaction : null;
+                    return (
+                      <div
+                        key={a.id || idx}
+                        className="p-3 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540] text-xs space-y-1"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-semibold text-[#1F2937] dark:text-[#F3F4F6]">{allergenName}</span>
+                          <span className="px-1.5 py-0.5 rounded bg-amber-50 dark:bg-amber-950/40 text-[10px] font-semibold text-amber-700 dark:text-amber-400 capitalize">
+                            {severity}
+                          </span>
+                        </div>
+                        {reaction && (
+                          <div className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">
+                            Reaction: {reaction}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="py-6 text-center text-xs text-[#9CA3AF] italic">
+                  No adverse drug reactions or allergies recorded.
+                </div>
+              )}
+            </div>
           </div>
+      </div>
 
-          {/* Active Medications Sub-section */}
-          <div className="space-y-2">
-            <span className="text-xs font-semibold text-[#15803D] dark:text-emerald-400 uppercase tracking-wider block">
-              Active Prescriptions
-            </span>
-            {(summary.activeMedications || []).length === 0 ? (
-              <p className="text-xs text-[#9CA3AF] p-3 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/30 border border-[#E5E7EB] dark:border-[#2F3540]">
-                No active medications documented in indexed records.
-              </p>
-            ) : (
-              <div className="bg-white dark:bg-[#1B1E23] rounded-xl border border-[#E5E7EB] dark:border-[#2F3540] overflow-hidden divide-y divide-[#E5E7EB]/80 dark:divide-[#2F3540]">
-                {(summary.activeMedications || []).map((m: any) => (
-                  <div key={m.id} className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold text-[#1F2937] dark:text-[#F3F4F6]">{m.name}</span>
-                        {m.rxnormCode && (
-                          <span className="font-mono text-[10px] text-[#9CA3AF] bg-[#FAF8F5] dark:bg-[#23272E] px-1.5 py-0.5 rounded border border-[#E5E7EB] dark:border-[#2F3540]">
-                            RxNorm: {m.rxnormCode}
-                          </span>
-                        )}
+      {/* TAB 2: DIAGNOSTICS & LAB BIOMARKERS */}
+      <div className={activeTab === 'diagnostics' ? 'space-y-6' : 'hidden print:block space-y-6 print:mt-6'}>
+          {/* Flagged / Abnormal Lab Results */}
+          <div className="bg-white dark:bg-[#1B1E23] p-5 sm:p-6 rounded-2xl border border-[#E5E7EB] dark:border-[#2F3540] shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
+                  <Microscope className="w-4 h-4 text-[#10B981]" /> Flagged Laboratory Biomarkers
+                </h3>
+                <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">
+                  Recent laboratory analytes measured outside standard clinical reference intervals.
+                </p>
+              </div>
+              <Badge variant={abnormalLabs.length > 0 ? 'warning' : 'success'}>
+                {abnormalLabs.length} Flagged
+              </Badge>
+            </div>
+
+            {abnormalLabs.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-1">
+                {abnormalLabs.map((lab: any, idx: number) => {
+                  const testName = lab.testName || lab.name || 'Lab Test';
+                  const val = lab.value !== undefined ? lab.value : '--';
+                  const unit = lab.unit || '';
+                  const refRange = lab.referenceRange || lab.standardRange || 'Standard Range';
+                  const statusLabel = lab.status || 'abnormal';
+                  return (
+                    <div
+                      key={lab.id || idx}
+                      className="p-3.5 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540] space-y-1.5"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-[#1F2937] dark:text-[#F3F4F6] truncate max-w-[140px]">
+                          {testName}
+                        </span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400">
+                          {statusLabel}
+                        </span>
                       </div>
-                      <p className="text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">
-                        Dosage: {m.dosage} • Frequency: {m.frequency} • Route: {m.route || 'oral'}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-2 text-[#6B7280] dark:text-[#9CA3AF] mt-1 text-[11px]">
-                        <span>Started: {m.startDate || 'Unrecorded'}</span>
-                        {m.prescribingDoctor && <span>• Prescriber: {m.prescribingDoctor}</span>}
-                        {m.sourceReportTitle && (
-                          <span className="text-[#10B981] font-medium">
-                            • Source: {m.sourceReportTitle} {m.sourcePageNumber ? `(p.${m.sourcePageNumber})` : ''}
-                          </span>
-                        )}
+                      <div className="flex items-baseline gap-1 text-sm font-bold text-[#1F2937] dark:text-[#F3F4F6]">
+                        <span>{val}</span>
+                        <span className="text-xs font-normal text-[#6B7280] dark:text-[#9CA3AF]">{unit}</span>
                       </div>
+                      <div className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">
+                        Ref: {refRange}
+                      </div>
+                      {lab.sourceReportTitle && (
+                        <div className="text-[10px] text-[#10B981] truncate pt-0.5">
+                          {lab.sourceReportTitle}
+                        </div>
+                      )}
                     </div>
-                    <Badge variant="success" className="text-[10px] self-start sm:self-auto py-0.5">Active</Badge>
-                  </div>
-                ))}
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-8 text-center text-xs text-[#9CA3AF] italic">
+                All documented laboratory analytes are within expected clinical reference ranges.
               </div>
             )}
           </div>
 
-          {/* Historical / Discontinued Medications Sub-section */}
-          {(summary.historicalMedications || []).length > 0 && (
-            <div className="space-y-2 pt-2">
-              <span className="text-xs font-semibold text-[#6B7280] dark:text-[#9CA3AF] uppercase tracking-wider block">
-                Discontinued / Completed Historical Medications
-              </span>
-              <div className="bg-white dark:bg-[#1B1E23] rounded-xl border border-[#E5E7EB] dark:border-[#2F3540] overflow-hidden divide-y divide-[#E5E7EB]/80 dark:divide-[#2F3540]">
-                {(summary.historicalMedications || []).map((m: any) => (
-                  <div key={m.id} className="p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs opacity-80">
-                    <div>
-                      <span className="font-medium text-[#1F2937] dark:text-[#F3F4F6]">{m.name} ({m.dosage})</span>
-                      <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">
-                        Started: {m.startDate || 'Unknown'} • Ended: {m.endDate || 'Discontinued'} • Status: {m.status}
-                      </p>
-                    </div>
-                    <Badge variant="secondary" className="text-[10px] self-start sm:self-auto">Historical</Badge>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Section 5: Laboratory Results & Biomarker Trends */}
-        <div id="labs" className="scroll-mt-32 space-y-3 break-inside-avoid">
-          <div className="flex items-center justify-between">
+          {/* Diagnostic Imaging & Procedures */}
+          <div className="bg-white dark:bg-[#1B1E23] p-5 sm:p-6 rounded-2xl border border-[#E5E7EB] dark:border-[#2F3540] shadow-sm space-y-4">
             <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
-              <Activity className="w-4 h-4 text-[#2563EB]" /> 5. Recent Laboratory Results & Biomarkers
+              <Activity className="w-4 h-4 text-blue-500" /> Diagnostic Imaging & Scans
             </h3>
-            <Badge variant="secondary" className="text-[10px]">
-              {(summary.abnormalLabs || []).length} Flagged Abnormal
-            </Badge>
-          </div>
 
-          {/* Abnormal Labs Callout */}
-          {(summary.abnormalLabs || []).length > 0 && (
-            <div className="space-y-2">
-              <span className="text-xs font-semibold text-[#B91C1C] dark:text-rose-400 uppercase tracking-wider block">
-                Out-of-Range Biomarkers Requiring Clinical Attention
-              </span>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                {(summary.abnormalLabs || []).map((lab: any) => (
+            {procedures.length > 0 ? (
+              <div className="space-y-3">
+                {procedures.map((proc: any, idx: number) => (
                   <div
-                    key={lab.id}
-                    className="p-3.5 rounded-xl bg-[#FEF2F2] dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-800/40 text-xs flex flex-col justify-between"
+                    key={proc.id || idx}
+                    className="p-3.5 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540] text-xs space-y-1.5"
                   >
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-[#1F2937] dark:text-[#F3F4F6]">{lab.testName}</span>
-                        <Badge variant="danger" className="text-[10px] capitalize">{lab.status}</Badge>
-                      </div>
-                      <p className="font-mono font-semibold text-sm text-[#B91C1C] dark:text-rose-400 mt-1 tabular-nums">
-                        {lab.value} {lab.unit}
-                        <span className="text-xs font-normal text-[#6B7280] dark:text-[#9CA3AF] ml-2">
-                          (Ref: {lab.referenceRange})
-                        </span>
-                      </p>
-                    </div>
-                    <div className="flex items-center justify-between text-[10px] text-[#6B7280] dark:text-[#9CA3AF] mt-2 pt-1 border-t border-rose-200/40">
-                      <span>Observed: {lab.testDate}</span>
-                      <span>Facility: {lab.hospitalName || 'Lab'}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Standard Recent Labs Table */}
-          <div className="space-y-2 pt-2">
-            <span className="text-xs font-semibold text-[#6B7280] dark:text-[#9CA3AF] uppercase tracking-wider block">
-              Recent Indexed Lab Measurements
-            </span>
-            <div className="bg-white dark:bg-[#1B1E23] rounded-xl border border-[#E5E7EB] dark:border-[#2F3540] overflow-hidden divide-y divide-[#E5E7EB]/80 dark:divide-[#2F3540]">
-              {(summary.recentLabs || summary.abnormalLabs || []).slice(0, 8).map((lab: any) => (
-                <div key={lab.id} className="p-3 flex items-center justify-between text-xs">
-                  <div>
-                    <span className="font-medium text-[#1F2937] dark:text-[#F3F4F6]">{lab.testName}</span>
-                    <span className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] ml-2">
-                      {lab.testDate} • {lab.hospitalName}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono tabular-nums font-semibold text-[#1F2937] dark:text-[#F3F4F6]">
-                      {lab.value} {lab.unit}
-                    </span>
-                    <Badge variant={lab.status === 'normal' ? 'secondary' : 'danger'} className="text-[10px]">
-                      {lab.status}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Section 6: Procedures & Diagnostic Imaging */}
-        <div id="procedures" className="scroll-mt-32 space-y-3 break-inside-avoid">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-[#8B5CF6]" /> 6. Diagnostic Imaging & Procedures
-            </h3>
-            <Badge variant="secondary" className="text-[10px]">
-              {(summary.proceduresAndImaging || []).length} Indexed
-            </Badge>
-          </div>
-
-          {(summary.proceduresAndImaging || []).length === 0 ? (
-            <p className="text-xs text-[#9CA3AF] p-3 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/30 border border-[#E5E7EB] dark:border-[#2F3540]">
-              No imaging or procedure records documented in available vault files.
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {(summary.proceduresAndImaging || []).map((proc: any) => (
-                <div
-                  key={proc.id}
-                  className="p-3.5 rounded-xl bg-white dark:bg-[#1B1E23] border border-[#E5E7EB] dark:border-[#2F3540] text-xs space-y-1.5 flex flex-col justify-between"
-                >
-                  <div>
                     <div className="flex items-center justify-between">
-                      <span className="font-semibold text-[#1F2937] dark:text-[#F3F4F6]">{proc.title}</span>
-                      <Badge variant="secondary" className="text-[10px] capitalize">{proc.category?.replace('_', ' ')}</Badge>
+                      <span className="font-semibold text-[#1F2937] dark:text-[#F3F4F6]">
+                        {proc.name || proc.procedureName || 'Diagnostic Procedure'}
+                      </span>
+                      <span className="text-[11px] font-mono text-[#6B7280] dark:text-[#9CA3AF]">
+                        {proc.date || 'Recorded'}
+                      </span>
                     </div>
-                    {proc.summary && (
-                      <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] line-clamp-2 mt-1">
-                        {proc.summary}
+                    {proc.findings && (
+                      <p className="text-[11px] text-[#4B5563] dark:text-[#D1D5DB] leading-relaxed">
+                        Findings: {proc.findings}
                       </p>
                     )}
+                    {proc.facility && (
+                      <div className="text-[10px] text-[#9CA3AF]">
+                        Facility: {proc.facility}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex items-center justify-between text-[10px] text-[#9CA3AF] pt-2 border-t border-[#E5E7EB]/50 dark:border-[#2F3540]/50 font-mono">
-                    <span>Date: {proc.reportDate}</span>
-                    <span>{proc.hospitalName}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {/* Section 7: Recent Longitudinal Milestones */}
-        <div id="timeline" className="scroll-mt-32 space-y-3 break-inside-avoid">
-          <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
-            <History className="w-4 h-4 text-[#10B981]" /> 7. Key Longitudinal Milestones
-          </h3>
-          <div className="space-y-2">
-            {(summary.timelineHighlights || []).map((hl: any, idx: number) => {
-              const text = typeof hl === 'object' && hl !== null ? `${hl.date}: ${hl.title} (${hl.hospitalName || ''})` : hl;
-              return (
-                <div
-                  key={idx}
-                  className="p-3 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/50 text-xs text-[#374151] dark:text-[#D1D5DB] border border-[#E5E7EB] dark:border-[#2F3540] flex items-center gap-2.5"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#10B981] shrink-0" />
-                  <span>{text}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Section 8: Conflicting or Uncertain Information */}
-        <div id="conflicts" className="scroll-mt-32 space-y-3 break-inside-avoid">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 text-[#DC2626]" /> 8. Conflicting Observations & Missing Data Disclosures
-            </h3>
-            <Badge variant="secondary" className="text-[10px]">
-              {(summary.conflictingInformation || []).length} Discrepancies Noted
-            </Badge>
-          </div>
-
-          {(summary.conflictingInformation || []).length > 0 && (
-            <div className="space-y-2">
-              {(summary.conflictingInformation || []).map((conf, idx) => (
-                <div
-                  key={idx}
-                  className="p-3.5 rounded-xl bg-[#FEF2F2] dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 text-xs text-[#991B1B] dark:text-rose-300 space-y-1"
-                >
-                  <span className="font-semibold block">{conf.topic}</span>
-                  <p className="text-[11px] leading-relaxed">{conf.details}</p>
-                  {conf.recordsInvolved && conf.recordsInvolved.length > 0 && (
-                    <ul className="text-[10px] list-disc list-inside font-mono pt-1 text-[#B91C1C] dark:text-rose-400">
-                      {conf.recordsInvolved.map((rec, rIdx) => (
-                        <li key={rIdx}>{rec}</li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Explicit Missing Data Disclosures */}
-          <div className="p-3.5 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/30 border border-[#E5E7EB] dark:border-[#2F3540] text-xs space-y-1.5 text-[#6B7280] dark:text-[#9CA3AF]">
-            <span className="font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-1.5">
-              <HelpCircle className="w-3.5 h-3.5 text-[#6B7280]" /> Data Boundaries & Incomplete Record Notices:
-            </span>
-            <ul className="list-disc list-inside space-y-0.5 text-[11px]">
-              {(summary.missingDataDisclosures || [
-                'Digest compiled from indexed documents. Any unuploaded or non-digitized records are not reflected.',
-                'Absence of conditions or allergies in records does not confirm clinical absence.'
-              ]).map((disc, idx) => (
-                <li key={idx}>{disc}</li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        {/* Section 9: Questions for the Doctor (Interactive & Print-Friendly) */}
-        <div id="questions" className="scroll-mt-32 space-y-3 break-inside-avoid">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
-              <FileQuestion className="w-4 h-4 text-[#2563EB]" /> 9. Patient Appointment Notes & Questions for the Doctor
-            </h3>
-            <span className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] font-mono">
-              (Patient notes, not clinician directives)
-            </span>
-          </div>
-
-          <div className="space-y-2">
-            {doctorQuestions.map((q, idx) => (
-              <div
-                key={idx}
-                className="p-3 rounded-xl bg-white dark:bg-[#1B1E23] border border-[#E5E7EB] dark:border-[#2F3540] flex items-center justify-between text-xs gap-3"
-              >
-                <div className="flex items-start gap-2.5">
-                  <span className="font-semibold text-[#2563EB] font-mono shrink-0">{idx + 1}.</span>
-                  <span className="text-[#1F2937] dark:text-[#F3F4F6]">{q}</span>
-                </div>
-                <button
-                  onClick={() => handleRemoveQuestion(idx)}
-                  className="text-[#9CA3AF] hover:text-[#DC2626] transition-colors p-1 shrink-0 print:hidden"
-                  title="Remove note"
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
+                ))}
               </div>
-            ))}
+            ) : (
+              <div className="py-8 text-center text-xs text-[#9CA3AF] italic">
+                No diagnostic imaging studies or procedural reports indexed yet.
+              </div>
+            )}
           </div>
 
-          {/* Add Question Input Box (hidden in print) */}
-          <div className="flex items-center gap-2 pt-1 print:hidden">
-            <input
-              type="text"
-              value={newQuestionText}
-              onChange={(e) => setNewQuestionText(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleAddQuestion(); }}
-              placeholder="Add a question or discussion point for your doctor..."
-              className="flex-1 h-9 px-3 rounded-xl bg-[#FAF8F5] dark:bg-[#121417] border border-[#E5E7EB] dark:border-[#2F3540] text-xs text-[#1F2937] dark:text-[#F3F4F6] focus:outline-none"
-            />
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={handleAddQuestion}
-              leftIcon={<Plus className="w-3.5 h-3.5" />}
-            >
-              Add Note
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={handleSaveQuestions}
-              disabled={isSavingQuestions}
-            >
-              {isSavingQuestions ? 'Saving...' : 'Save Notes'}
-            </Button>
-          </div>
+          {/* Longitudinal Milestones */}
+          {timelineHighlights.length > 0 && (
+            <div className="bg-white dark:bg-[#1B1E23] p-5 sm:p-6 rounded-2xl border border-[#E5E7EB] dark:border-[#2F3540] shadow-sm space-y-3">
+              <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-[#10B981]" /> Longitudinal Timeline Milestones
+              </h3>
+              <div className="space-y-2 pt-1">
+                {timelineHighlights.map((hl: any, idx: number) => {
+                  const text = typeof hl === 'string' ? hl : hl.description || hl.title || '';
+                  const date = typeof hl === 'object' ? hl.date : '';
+                  return (
+                    <div
+                      key={idx}
+                      className="flex items-start gap-2.5 p-2.5 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/40 border border-[#E5E7EB]/80 dark:border-[#2F3540] text-xs"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#10B981] mt-1.5 shrink-0" />
+                      <div className="flex-1">
+                        <span className="text-[#1F2937] dark:text-[#F3F4F6]">{text}</span>
+                        {date && (
+                          <span className="ml-2 text-[10px] text-[#9CA3AF] font-mono">({date})</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Footer Provenance Note */}
-        <div className="pt-6 border-t border-[#E5E7EB] dark:border-[#2F3540] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#9CA3AF] font-mono">
-          <span>ChronaNexus Clinical Intelligence System</span>
-          <span>End-to-End Cryptographic & Source Provenance Grounded</span>
+      {/* TAB 3: DOCTOR DISCUSSION CHECKLIST */}
+      <div className={activeTab === 'checklist' ? 'space-y-6' : 'hidden print:block space-y-6 print:mt-6'}>
+          <div className="bg-white dark:bg-[#1B1E23] p-5 sm:p-6 rounded-2xl border border-[#E5E7EB] dark:border-[#2F3540] shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
+                  <CheckSquare className="w-4 h-4 text-[#10B981]" /> Appointment Discussion Checklist
+                </h3>
+                <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">
+                  Prepare for your doctor visit by checking off items as discussed or adding custom clinical questions.
+                </p>
+              </div>
+
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={handleSaveQuestions}
+                isLoading={isSavingQuestions}
+                leftIcon={<Save className="w-3.5 h-3.5" />}
+                className="shrink-0"
+              >
+                Save Checklist
+              </Button>
+            </div>
+
+            {/* Checklist Items */}
+            <div className="space-y-2 pt-1">
+              {doctorQuestions.map((q, idx) => {
+                const isChecked = !!completedQuestions[idx];
+                return (
+                  <div
+                    key={idx}
+                    className={`flex items-center justify-between gap-3 p-3 rounded-xl border transition-all text-xs ${
+                      isChecked
+                        ? 'bg-emerald-50/40 dark:bg-emerald-950/20 border-emerald-200/80 dark:border-emerald-900/40 text-[#6B7280] dark:text-[#9CA3AF] line-through'
+                        : 'bg-[#FAF8F5] dark:bg-[#23272E]/50 border-[#E5E7EB] dark:border-[#2F3540] text-[#1F2937] dark:text-[#F3F4F6]'
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => toggleQuestionComplete(idx)}
+                      className="flex items-center gap-3 text-left flex-1"
+                    >
+                      {isChecked ? (
+                        <CheckSquare className="w-4 h-4 text-[#10B981] shrink-0" />
+                      ) : (
+                        <Square className="w-4 h-4 text-[#9CA3AF] shrink-0" />
+                      )}
+                      <span>{q}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveQuestion(idx)}
+                      className="p-1 rounded text-[#9CA3AF] hover:text-rose-600 transition-colors shrink-0 print:hidden"
+                      title="Remove question"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Add Custom Question Form */}
+            <div className="pt-2 print:hidden space-y-3">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={newQuestionText}
+                  onChange={(e) => setNewQuestionText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAddQuestion();
+                    }
+                  }}
+                  placeholder="Type a clinical question or concern for your appointment..."
+                  className="flex-1 h-9 px-3 rounded-xl bg-[#FAF8F5] dark:bg-[#121417] border border-[#E5E7EB] dark:border-[#2F3540] text-xs text-[#1F2937] dark:text-[#F3F4F6] placeholder-[#9CA3AF] focus:outline-none focus:border-[#10B981]"
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddQuestion}
+                  disabled={!newQuestionText.trim()}
+                  leftIcon={<Plus className="w-3.5 h-3.5" />}
+                >
+                  Add
+                </Button>
+              </div>
+
+              {/* Suggested Question Chips */}
+              <div className="space-y-1.5">
+                <span className="text-[11px] font-medium text-[#6B7280] dark:text-[#9CA3AF]">Quick Suggestions:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    'Review potential side effects and interactions of active medications.',
+                    'Discuss target reference ranges for flagged abnormal lab results.',
+                    'Evaluate necessity and timing of follow-up imaging or scans.',
+                    'Inquire about recommended dietary or lifestyle modifications.'
+                  ].map((chip, idx) => (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleAddSuggestedQuestion(chip)}
+                      className="px-2.5 py-1 rounded-lg text-[11px] bg-[#FAF8F5] dark:bg-[#23272E] border border-[#E5E7EB] dark:border-[#2F3540] text-[#4B5563] dark:text-[#9CA3AF] hover:text-[#10B981] hover:border-[#10B981]/50 transition-colors text-left"
+                    >
+                      + {chip}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
 
       {/* Share Secure Physician Link Modal */}
       {isShareModalOpen && (
@@ -696,7 +713,7 @@ export const DoctorSummaryPage: React.FC = () => {
                 <Lock className="w-3.5 h-3.5 text-[#10B981]" /> Time-Bound Encryption Active
               </span>
               <p className="text-[#6B7280] dark:text-[#9CA3AF] leading-relaxed">
-                This token provides access to this exact grounded summary view and auto-expires in 48 hours.
+                This token provides read-only access to this verified clinical summary and auto-expires in 48 hours.
               </p>
             </div>
 
@@ -729,3 +746,5 @@ export const DoctorSummaryPage: React.FC = () => {
     </div>
   );
 };
+
+export default DoctorSummaryPage;

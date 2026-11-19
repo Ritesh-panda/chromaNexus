@@ -3,11 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/Button';
 import { ShieldCheck, ArrowRight, RotateCcw } from 'lucide-react';
 import { useUI } from '@/contexts/UIContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 export const OTPVerificationPage: React.FC = () => {
   const [otp, setOtp] = useState(['5', '8', '2', '9', '1', '4']);
   const [isVerifying, setIsVerifying] = useState(false);
   const { addToast } = useUI();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const handleOtpChange = (val: string, idx: number) => {
@@ -32,7 +34,11 @@ export const OTPVerificationPage: React.FC = () => {
         title: 'Identity Verified',
         message: 'Your ChronaNexus patient vault is now active.',
       });
-      navigate('/dashboard');
+      if (isAuthenticated) {
+        navigate('/onboarding');
+      } else {
+        navigate('/login');
+      }
     }, 1000);
   };
 
@@ -47,7 +53,7 @@ export const OTPVerificationPage: React.FC = () => {
           Enter 6-Digit Security PIN
         </h2>
         <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] max-w-xs mx-auto">
-          We sent a verification code to your registered mobile device.
+          We sent a verification code to your registered device. Enter the code below to complete vault authorization.
         </p>
       </div>
 

@@ -28,7 +28,12 @@ import {
   Loader2,
   AlertCircle,
   Activity,
+  Zap,
+  Cpu,
+  Cloud,
+  Server,
 } from 'lucide-react';
+import { aiSettingsService, type AIModeConfig } from '@/services/aiSettings.service';
 
 export const SettingsPage: React.FC = () => {
   const { theme, setTheme } = useTheme();
@@ -60,8 +65,46 @@ export const SettingsPage: React.FC = () => {
     aiDigest: true,
   });
 
+  // AI Inference Mode state
+  const [aiMode, setAiMode] = useState<'online' | 'offline'>('online');
+  const [isUpdatingAiMode, setIsUpdatingAiMode] = useState(false);
+  const [aiConfig, setAiConfig] = useState<AIModeConfig | null>(null);
+
+  useEffect(() => {
+    aiSettingsService.getAIMode().then((cfg) => {
+      setAiConfig(cfg);
+      setAiMode(cfg.mode);
+    });
+  }, []);
+
+  const handleToggleAiMode = async (newMode: 'online' | 'offline') => {
+    setIsUpdatingAiMode(true);
+    try {
+      const updated = await aiSettingsService.setAIMode(newMode);
+      setAiConfig(updated);
+      setAiMode(updated.mode);
+      addToast({
+        type: 'success',
+        title: `AI Mode Switched to ${newMode === 'online' ? 'Online (Groq)' : 'Offline (Ollama)'}`,
+        message:
+          newMode === 'online'
+            ? 'Using Groq LPU (openai/gpt-oss-120b) with automatic Ollama fallback.'
+            : 'Using 100% on-device local Ollama (llama3.2:3b). Zero internet required.',
+      });
+    } catch {
+      addToast({
+        type: 'error',
+        title: 'Switch Failed',
+        message: 'Could not update AI inference engine mode.',
+      });
+    } finally {
+      setIsUpdatingAiMode(false);
+    }
+  };
+
   const tabs = [
     { id: 'appearance', label: 'Theme & Appearance', icon: <Sun className="w-4 h-4" /> },
+    { id: 'ai-engine', label: 'AI Inference Engine', icon: <Zap className="w-4 h-4 text-[#10B981]" /> },
     { id: 'notifications', label: 'Notifications', icon: <Bell className="w-4 h-4" /> },
     { id: 'security', label: 'Security & 2FA', icon: <Lock className="w-4 h-4" /> },
     { id: 'privacy', label: 'Privacy & FHIR R4', icon: <Shield className="w-4 h-4" /> },
@@ -203,6 +246,147 @@ export const SettingsPage: React.FC = () => {
                 <span className="text-xs font-medium">{item.label}</span>
               </button>
             ))}
+          </div>
+        </Card>
+      )}
+
+      {activeTab === 'ai-engine' && (
+        <Card className="p-6 space-y-6 border-[#E5E7EB] dark:border-[#2F3540] bg-white dark:bg-[#1B1E23]">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-[#E5E7EB]/80 dark:border-[#2F3540]">
+            <div>
+              <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-2">
+                <Zap className="w-4 h-4 text-[#10B981]" /> AI Inference Engine & Hybrid Failover
+              </h3>
+              <p className="text-xs text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">
+                Toggle between cloud-accelerated Groq LPU and 100% private local on-device Ollama.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">Active Engine:</span>
+              <Badge variant={aiMode === 'online' ? 'success' : 'default'} className="text-[11px] font-medium">
+                {aiMode === 'online' ? '⚡ Groq LPU (Online)' : '🛡️ Ollama (Offline Local)'}
+              </Badge>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Online Groq Mode Card */}
+            <div
+              onClick={() => !isUpdatingAiMode && handleToggleAiMode('online')}
+              className={`p-5 rounded-2xl border cursor-pointer transition-all relative ${
+                aiMode === 'online'
+                  ? 'border-[#10B981] bg-[#10B981]/5 ring-1 ring-[#10B981]'
+                  : 'border-[#E5E7EB] dark:border-[#2F3540] hover:border-[#10B981]/50 bg-[#FAF8F5]/50 dark:bg-[#23272E]/30'
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-[#10B981]/10 text-[#10B981]">
+                    <Zap className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6]">Online Cloud (Groq LPU)</h4>
+                    <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">Sub-second 120B medical synthesis</p>
+                  </div>
+                </div>
+                {aiMode === 'online' && (
+                  <CheckCircle2 className="w-5 h-5 text-[#10B981]" />
+                )}
+              </div>
+
+              <div className="mt-4 space-y-2 text-xs">
+                <div className="flex justify-between text-[#6B7280] dark:text-[#9CA3AF]">
+                  <span>Model:</span>
+                  <span className="font-mono font-medium text-[#1F2937] dark:text-[#F3F4F6]">{aiConfig?.online_model || 'openai/gpt-oss-120b'}</span>
+                </div>
+                <div className="flex justify-between text-[#6B7280] dark:text-[#9CA3AF]">
+                  <span>Inference Latency:</span>
+                  <span className="font-medium text-[#10B981]">~0.5s – 0.7s (Instant)</span>
+                </div>
+                <div className="flex justify-between text-[#6B7280] dark:text-[#9CA3AF]">
+                  <span>Internet Connection:</span>
+                  <span className="font-medium text-[#1F2937] dark:text-[#F3F4F6]">Required (Cloud API)</span>
+                </div>
+                <div className="flex justify-between text-[#6B7280] dark:text-[#9CA3AF]">
+                  <span>Offline Auto-Fallback:</span>
+                  <span className="font-medium text-[#10B981]">Enabled (Switches to Ollama)</span>
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <Button
+                  size="sm"
+                  variant={aiMode === 'online' ? 'primary' : 'outline'}
+                  disabled={isUpdatingAiMode}
+                  className="w-full text-xs"
+                >
+                  {aiMode === 'online' ? 'Active Engine' : 'Switch to Groq'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Offline Ollama Mode Card */}
+            <div
+              onClick={() => !isUpdatingAiMode && handleToggleAiMode('offline')}
+              className={`p-5 rounded-2xl border cursor-pointer transition-all relative ${
+                aiMode === 'offline'
+                  ? 'border-[#2563EB] bg-[#2563EB]/5 ring-1 ring-[#2563EB]'
+                  : 'border-[#E5E7EB] dark:border-[#2F3540] hover:border-[#2563EB]/50 bg-[#FAF8F5]/50 dark:bg-[#23272E]/30'
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-2 rounded-xl bg-[#2563EB]/10 text-[#2563EB]">
+                    <Laptop className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6]">Offline Local (Ollama)</h4>
+                    <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">100% on-device private execution</p>
+                  </div>
+                </div>
+                {aiMode === 'offline' && (
+                  <CheckCircle2 className="w-5 h-5 text-[#2563EB]" />
+                )}
+              </div>
+
+              <div className="mt-4 space-y-2 text-xs">
+                <div className="flex justify-between text-[#6B7280] dark:text-[#9CA3AF]">
+                  <span>Model:</span>
+                  <span className="font-mono font-medium text-[#1F2937] dark:text-[#F3F4F6]">{aiConfig?.offline_model || 'llama3.2:3b'}</span>
+                </div>
+                <div className="flex justify-between text-[#6B7280] dark:text-[#9CA3AF]">
+                  <span>Inference Latency:</span>
+                  <span className="font-medium text-[#F59E0B]">~2s – 5s (Local CPU/GPU)</span>
+                </div>
+                <div className="flex justify-between text-[#6B7280] dark:text-[#9CA3AF]">
+                  <span>Internet Connection:</span>
+                  <span className="font-medium text-[#10B981]">Zero Internet Needed</span>
+                </div>
+                <div className="flex justify-between text-[#6B7280] dark:text-[#9CA3AF]">
+                  <span>Data Transmission:</span>
+                  <span className="font-medium text-[#10B981]">100% Stays on Device</span>
+                </div>
+              </div>
+
+              <div className="mt-5">
+                <Button
+                  size="sm"
+                  variant={aiMode === 'offline' ? 'primary' : 'outline'}
+                  disabled={isUpdatingAiMode}
+                  className="w-full text-xs"
+                >
+                  {aiMode === 'offline' ? 'Active Engine' : 'Switch to Local Ollama'}
+                </Button>
+              </div>
+            </div>
+          </div>
+
+          {/* ChronaNexus Symbolic Guardrails Note */}
+          <div className="p-4 rounded-xl bg-[#FAF8F5] dark:bg-[#121417] border border-[#E5E7EB] dark:border-[#2F3540] flex items-start gap-3">
+            <ShieldCheck className="w-5 h-5 text-[#10B981] shrink-0 mt-0.5" />
+            <div className="text-xs text-[#6B7280] dark:text-[#9CA3AF] leading-relaxed">
+              <strong className="text-[#1F2937] dark:text-[#F3F4F6]">ChronaNexus Two-Tier Symbolic Safety Guardrails:</strong> Regardless of whether Online (Groq) or Offline (Ollama) is active, all clinical responses are deterministically validated through ChronaNexus's four veto guardrails: UCUM stoichiometric unit normalization, timeline-anchored medication discontinuation tracker, Review-of-Systems negation scoper, and epistemic conditional filter before reaching the patient or clinician.
+            </div>
           </div>
         </Card>
       )}

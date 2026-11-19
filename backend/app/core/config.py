@@ -33,7 +33,10 @@ class Settings(BaseSettings):
     CHROMA_COLLECTION_NAME: str = os.getenv("CHROMA_COLLECTION_NAME", "chronanexus_clinical_chunks")
 
     # AI & RAG Configuration
-    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "ollama")  # 'ollama', 'gemini', 'mock'
+    LLM_PROVIDER: str = os.getenv("LLM_PROVIDER", "groq")  # 'groq', 'ollama', 'gemini', 'mock'
+    AI_INFERENCE_MODE: str = os.getenv("AI_INFERENCE_MODE", "online")  # 'online' (Groq), 'offline' (Ollama)
+    GROQ_API_KEY: str = os.getenv("GROQ_API_KEY", "")
+    GROQ_MODEL: str = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
     OLLAMA_BASE_URL: str = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
     OLLAMA_MODEL: str = os.getenv("OLLAMA_MODEL", "llama3.2:3b")
     OLLAMA_EMBEDDING_MODEL: str = os.getenv("OLLAMA_EMBEDDING_MODEL", "all-minilm")

@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone
-from sqlalchemy import Column, String, ForeignKey, Text, JSON, DateTime, Integer
+from sqlalchemy import Column, String, ForeignKey, Text, JSON, DateTime, Integer, Boolean
 from sqlalchemy.orm import relationship
 from backend.app.core.database import Base
 
@@ -28,6 +28,8 @@ class ChatMessage(Base):
     timestamp = Column(String(50), nullable=False)
     reasoning_type = Column(String(50), default="fact")  # 'fact' | 'inference'
     citations = Column(JSON, nullable=True, default=list)
+    follow_up_suggestions = Column(JSON, nullable=True, default=list)
+    is_emergency = Column(Boolean, nullable=True, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     conversation = relationship("ChatConversation", back_populates="messages")

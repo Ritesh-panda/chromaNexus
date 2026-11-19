@@ -10,6 +10,11 @@ from backend.app.routers.search import router as search_router
 from backend.app.routers.audit import router as audit_router
 from backend.app.routers.fhir import router as fhir_router
 from backend.app.routers.purge import router as purge_router
+from backend.app.routers.graph import router as graph_router
+from backend.app.routers.settings_router import router as settings_router
+from backend.app.routers.hospitals import router as hospitals_router
+from backend.app.routers.alerts import router as alerts_router
+from backend.app.routers.tts import router as tts_router
 
 __all__ = [
     "auth_router",
@@ -24,4 +29,9 @@ __all__ = [
     "audit_router",
     "fhir_router",
     "purge_router",
+    "graph_router",
+    "settings_router",
+    "hospitals_router",
+    "alerts_router",
+    "tts_router",
 ]

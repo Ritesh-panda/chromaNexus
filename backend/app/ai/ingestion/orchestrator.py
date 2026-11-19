@@ -111,9 +111,46 @@ class DocumentIngestionOrchestrator:
 
             counts = {"diseases": 0, "medications": 0, "lab_results": 0, "procedures": 0}
 
+                        # Stage 3.5: Clinical Date & Category Analysis
+            from backend.app.ai.extractors.metadata_extractor import (
+                extract_document_date,
+                classify_document_category,
+                extract_doctor_and_facility,
+                generate_smart_title
+            )
+
+            detected_date = extract_document_date(full_text, fallback_date=report_date)
+            detected_category = classify_document_category(full_text, file_name=file_name)
+            detected_doctor, detected_facility = extract_doctor_and_facility(
+                full_text,
+                fallback_doctor=None,
+                fallback_facility=hospital_name
+            )
+            smart_title = generate_smart_title(
+                category=detected_category,
+                doctor=detected_doctor,
+                facility=detected_facility,
+                clinical_date=detected_date,
+                file_name=file_name
+            )
+
+            date_str = detected_date
+            hosp_str = detected_facility or hospital_name or "Medical Health Center"
+            doc_str = detected_doctor or "Attending Physician"
+
+            # Update MedicalReport with detected metadata
+            report_rec = db.query(MedicalReport).filter(MedicalReport.id == document_id).first()
+            if report_rec:
+                report_rec.report_date = detected_date
+                report_rec.category = detected_category
+                report_rec.title = smart_title
+                if detected_doctor:
+                    report_rec.doctor_name = detected_doctor
+                if detected_facility:
+                    report_rec.hospital_name = detected_facility
+                db.flush()
+
             # Stage 4: Structured Data Validation & DB Persistence
-            date_str = report_date or "2026-06-15"
-            hosp_str = hospital_name or "Medical Health Center"
 
             for ent in entities:
                 # 4a. Persist ExtractedEntity linked to report with page provenance
@@ -166,18 +203,20 @@ class DocumentIngestionOrchestrator:
                     db.add(med)
 
                 elif ent.category == "disease":
-                    counts["diseases"] += 1
-                    dis = Disease(
-                        patient_id=patient_id,
-                        name=ent.name,
-                        icd_code=ent.value,
-                        status="active",
-                        diagnosed_date=date_str,
-                        source_report_id=document_id,
-                        source_page_number=ent.page_number,
-                        extraction_confidence=ent.confidence
-                    )
-                    db.add(dis)
+                    d_clean = (ent.name or "").strip()
+                    if d_clean and d_clean.lower() not in {"unknown", "none", "n/a", "na", "unspecified", "nil", "no", "not applicable"}:
+                        counts["diseases"] += 1
+                        dis = Disease(
+                            patient_id=patient_id,
+                            name=d_clean,
+                            icd_code=ent.value,
+                            status="active",
+                            diagnosed_date=date_str,
+                            source_report_id=document_id,
+                            source_page_number=ent.page_number,
+                            extraction_confidence=ent.confidence
+                        )
+                        db.add(dis)
 
                 elif ent.category == "procedure":
                     counts["procedures"] += 1
@@ -242,15 +281,47 @@ class DocumentIngestionOrchestrator:
                             )
                             db.add(db_chk)
 
-            # Stage 6: Update MedicalReport status in DB (COMPLETE, UNTRUNCATED)
+            # Stage 6: Update MedicalReport status in DB (COMPLETE, UNTRUNCATED) & Create Timeline Record
             report = db.query(MedicalReport).filter(MedicalReport.id == document_id).first()
             if report:
                 report.status = "completed"
-                report.raw_text = full_text  # Complete document text, no arbitrary truncation
+                report.raw_text = full_text
                 report.checksum = extracted_doc.checksum
                 report.content_checksum = extracted_doc.content_checksum
                 report.page_count = extracted_doc.total_pages
-                report.summary = f"Processed {file_name} ({extracted_doc.total_pages} pages). Extracted {len(entities)} clinical entities."
+                report.summary = f"Processed {file_name} ({extracted_doc.total_pages} pages). Categorized as {detected_category.replace('_', ' ').title()}. Extracted {len(entities)} clinical entities."
+
+            # Synchronize to Patient Longitudinal Timeline
+            evt_type_map = {
+                "prescription": "prescription",
+                "blood_report": "lab_result",
+                "mri": "imaging",
+                "discharge_summary": "hospitalization",
+                "doctor_notes": "doctor_visit"
+            }
+            mapped_evt_type = evt_type_map.get(detected_category, "doctor_visit")
+
+            existing_timeline_evt = db.query(TimelineEvent).filter(TimelineEvent.source_report_id == document_id).first()
+            if not existing_timeline_evt and report:
+                try:
+                    evt_year = int(detected_date.split('-')[0]) if detected_date and '-' in detected_date else 2023
+                except Exception:
+                    evt_year = 2023
+
+                timeline_evt = TimelineEvent(
+                    patient_id=patient_id,
+                    date=detected_date,
+                    year=evt_year,
+                    title=report.title,
+                    event_type=mapped_evt_type,
+                    facility=report.hospital_name or hosp_str,
+                    doctor_name=report.doctor_name or doc_str,
+                    description=f"{detected_category.replace('_', ' ').title()} recorded. Extracted {len(entities)} clinical entities.",
+                    source_report_id=document_id,
+                    source_report_title=report.title,
+                    severity="low"
+                )
+                db.add(timeline_evt)
 
             db.commit()
 

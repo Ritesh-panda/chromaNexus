@@ -8,3 +8,4 @@ export * from './timeline';
 export * from './chat';
 export * from './summary';
 export * from './notification';
+export * from './graph';

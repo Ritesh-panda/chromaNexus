@@ -16,27 +16,15 @@ class InsuranceProviderSchema(BaseModel):
 
 
 class PatientBase(BaseModel):
-    dateOfBirth: Optional[str] = "1988-04-12"
-    gender: str = "male"
-    bloodGroup: str = "O+"
-    heightCm: float = 175.0
-    weightKg: float = 78.0
-    primaryCarePhysician: str = "Dr. Sarah Jenkins, MD"
-    emergencyContact: Dict[str, Any] = Field(default_factory=lambda: {
-        "name": "Elena Vance",
-        "relationship": "Spouse",
-        "phone": "+1 (555) 987-6543"
-    })
-    insurance: Optional[Dict[str, Any]] = Field(default_factory=lambda: {
-        "providerName": "BlueCross Shield Pro",
-        "policyNumber": "BCS-99281-X",
-        "groupNumber": "GRP-8812",
-        "validUntil": "2027-12-31"
-    })
-    knownAllergies: List[str] = Field(default_factory=lambda: [
-        "Penicillin (Moderate Rash)",
-        "Sulfa Drugs (Anaphylaxis Risk)"
-    ])
+    dateOfBirth: Optional[str] = None
+    gender: Optional[str] = "unspecified"
+    bloodGroup: Optional[str] = None
+    heightCm: Optional[float] = None
+    weightKg: Optional[float] = None
+    primaryCarePhysician: Optional[str] = None
+    emergencyContact: Optional[Dict[str, Any]] = None
+    insurance: Optional[Dict[str, Any]] = None
+    knownAllergies: List[str] = Field(default_factory=list)
 
 
 class PatientUpdate(BaseModel):

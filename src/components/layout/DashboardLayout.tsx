@@ -13,39 +13,48 @@ export const DashboardLayout: React.FC = () => {
   const { sidebarOpen, setSidebarOpen } = useUI();
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] dark:bg-[#121417] text-[#1F2937] dark:text-[#F3F4F6] flex font-sans">
+    <div className="min-h-screen bg-[#FAF8F5] dark:bg-[#121417] text-[#1F2937] dark:text-[#F3F4F6] flex font-sans print:bg-white print:text-black">
       {/* Mobile backdrop overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 z-30 bg-[#1F2937]/30 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-[#1F2937]/30 backdrop-blur-sm lg:hidden print:hidden"
           aria-hidden="true"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar Navigation */}
-      <Sidebar />
+      <div className="print:hidden">
+        <Sidebar />
+      </div>
 
       {/* Main Content Area */}
       <div
         className={cn(
           'flex-1 flex flex-col min-w-0 transition-all duration-200',
           'lg:ml-0',
-          sidebarOpen ? 'lg:ml-64' : 'lg:ml-[72px]'
+          sidebarOpen ? 'lg:ml-64' : 'lg:ml-[72px]',
+          'print:ml-0 print:m-0 print:p-0 print:w-full print:max-w-none'
         )}
       >
-        <TopBar />
+        <div className="print:hidden">
+          <TopBar />
+        </div>
 
-        <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto">
-          <Breadcrumb />
+        <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto print:p-0 print:m-0 print:max-w-none print:w-full">
+          <div className="print:hidden">
+            <Breadcrumb />
+          </div>
           <Outlet />
         </main>
       </div>
 
       {/* Dialogs & Notifications */}
-      <GlobalSearchModal />
-      <UploadModal />
-      <ToastContainer />
+      <div className="print:hidden">
+        <GlobalSearchModal />
+        <UploadModal />
+        <ToastContainer />
+      </div>
     </div>
   );
 };

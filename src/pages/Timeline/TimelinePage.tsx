@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { timelineService } from '@/services/timeline.service';
 import { patientService } from '@/services/patient.service';
+import { reportService } from '@/services/report.service';
 import { ClinicalTrendCard } from '@/components/cards/ClinicalTrendCard';
 import type { TimelineEvent, AnalyteSummary, StructuredTrendData } from '@/types';
 import {
@@ -24,6 +25,7 @@ import {
   RefreshCw,
   SlidersHorizontal,
   TrendingUp,
+  ExternalLink,
 } from 'lucide-react';
 
 export const TimelinePage: React.FC = () => {
@@ -596,17 +598,28 @@ export const TimelinePage: React.FC = () => {
                 )}
 
                 {selectedEvent.sourceReportTitle && (
-                  <div className="p-3 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/60 border border-[#E5E7EB] dark:border-[#2F3540] flex items-center justify-between text-xs">
-                    <span className="font-medium text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-1.5">
-                      <FileText className="w-3.5 h-3.5 text-[#10B981]" /> {selectedEvent.sourceReportTitle}
+                  <div className="p-3.5 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/60 border border-[#E5E7EB] dark:border-[#2F3540] flex items-center justify-between text-xs gap-2">
+                    <span className="font-medium text-[#1F2937] dark:text-[#F3F4F6] flex items-center gap-1.5 truncate">
+                      <FileText className="w-4 h-4 text-[#10B981] shrink-0" /> {selectedEvent.sourceReportTitle}
                     </span>
-                    <span className="text-[#10B981] font-medium text-[11px]">Primary Source</span>
+                    <span className="text-[#10B981] font-medium text-[11px] shrink-0">Primary Source</span>
                   </div>
                 )}
 
-                <Button variant="primary" className="w-full mt-2" onClick={() => setSelectedEvent(null)}>
-                  Close
-                </Button>
+                <div className="flex flex-col sm:flex-row gap-2 mt-2">
+                  {selectedEvent.sourceReportId && (
+                    <Button
+                      variant="primary"
+                      className="flex-1 flex items-center justify-center gap-2"
+                      onClick={() => reportService.openDocument(selectedEvent.sourceReportId!)}
+                    >
+                      <ExternalLink className="w-4 h-4" /> Open Original PDF Record
+                    </Button>
+                  )}
+                  <Button variant="secondary" className="sm:w-28" onClick={() => setSelectedEvent(null)}>
+                    Close
+                  </Button>
+                </div>
               </div>
             </Modal>
           )}
@@ -672,11 +685,16 @@ export const TimelinePage: React.FC = () => {
                   onChange={(e) => setSelectedAnalyte(e.target.value)}
                   className="w-full h-8 px-3 rounded-xl border border-[#E5E7EB] dark:border-[#2F3540] bg-white dark:bg-[#23272E] text-xs font-medium text-[#1F2937] dark:text-[#F3F4F6] focus:outline-hidden focus:ring-1 focus:ring-[#10B981]"
                 >
-                  {filteredAnalytes.map((a) => (
-                    <option key={a.canonicalName} value={a.canonicalName}>
-                      {a.canonicalName} ({a.count} observation{a.count > 1 ? 's' : ''} &bull; Latest: {a.latestValue} {a.unit || ''})
-                    </option>
-                  ))}
+                  {filteredAnalytes.map((a) => {
+                    const cleanVal = a.unit && String(a.latestValue).toLowerCase().endsWith(a.unit.toLowerCase())
+                      ? String(a.latestValue).slice(0, -a.unit.length).trim()
+                      : a.latestValue;
+                    return (
+                      <option key={a.canonicalName} value={a.canonicalName}>
+                        {a.canonicalName} ({a.count} observation{a.count > 1 ? 's' : ''} &bull; Latest: {cleanVal} {a.unit || ''})
+                      </option>
+                    );
+                  })}
                 </select>
               </div>
             </div>

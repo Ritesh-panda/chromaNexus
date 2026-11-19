@@ -48,6 +48,9 @@ def generate_doctor_summary_for_patient(
     insurance = patient.insurance
 
     # 3. Known Medical Conditions
+    DISALLOWED_DISEASES = {"unknown", "none", "n/a", "na", "unspecified", "nil", "no", "not applicable"}
+    DISALLOWED_ALLERGENS = {"unknown", "none", "n/a", "na", "nil", "no", "not applicable", "nkda", "no known drug allergies", "no known allergies"}
+
     diseases = db.query(Disease).filter(Disease.patient_id == patient.id).order_by(Disease.diagnosed_date.desc()).all()
     
     def format_disease(d: Disease) -> Dict[str, Any]:
@@ -66,8 +69,31 @@ def generate_doctor_summary_for_patient(
             "sourcePageNumber": d.source_page_number
         }
 
-    current_diseases = [format_disease(d) for d in diseases if d.status in ["active", "chronic"]]
-    past_diseases = [format_disease(d) for d in diseases if d.status in ["resolved", "in_remission", "past", "completed"]]
+    current_diseases_raw = [
+        format_disease(d) for d in diseases 
+        if d.status in ["active", "chronic"] and (d.name or "").strip().lower() not in DISALLOWED_DISEASES
+    ]
+    past_diseases_raw = [
+        format_disease(d) for d in diseases 
+        if d.status in ["resolved", "in_remission", "past", "completed"] and (d.name or "").strip().lower() not in DISALLOWED_DISEASES
+    ]
+
+    # Deduplicate conditions case-insensitively and canonically
+    def deduplicate_diseases(d_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        seen: Dict[str, Dict[str, Any]] = {}
+        for d in d_list:
+            key = d["name"].strip().lower()
+            if "type 2 diabetes" in key or key == "diabetes":
+                key = "type 2 diabetes mellitus"
+            if key not in seen:
+                seen[key] = d
+            else:
+                if not seen[key].get("icdCode") and d.get("icdCode"):
+                    seen[key] = d
+        return list(seen.values())
+
+    current_diseases = deduplicate_diseases(current_diseases_raw)
+    past_diseases = deduplicate_diseases(past_diseases_raw)
 
     # 4. Allergies & Adverse Reactions
     allergies = db.query(Allergy).filter(Allergy.patient_id == patient.id).all()
@@ -89,24 +115,30 @@ def generate_doctor_summary_for_patient(
             "sourcePageNumber": a.source_page_number
         }
 
-    known_allergies_list = [format_allergy(a) for a in allergies]
+    known_allergies_list = [
+        format_allergy(a) for a in allergies
+        if (a.allergen or "").strip().lower() not in DISALLOWED_ALLERGENS
+    ]
     
     # Fallback to patient.known_allergies if Allergy table has none yet
     if not known_allergies_list and patient.known_allergies:
         for idx, item in enumerate(patient.known_allergies):
             if isinstance(item, str):
-                known_allergies_list.append({
-                    "id": f"allergy-legacy-{idx}",
-                    "allergen": item,
-                    "category": "medication",
-                    "severity": "moderate",
-                    "reaction": None,
-                    "status": "active",
-                    "sourceReportTitle": "Patient Profile Intake",
-                    "sourcePageNumber": None
-                })
+                if item.strip().lower() not in DISALLOWED_ALLERGENS:
+                    known_allergies_list.append({
+                        "id": f"allergy-legacy-{idx}",
+                        "allergen": item,
+                        "category": "medication",
+                        "severity": "moderate",
+                        "reaction": None,
+                        "status": "active",
+                        "sourceReportTitle": "Patient Profile Intake",
+                        "sourcePageNumber": None
+                    })
             elif isinstance(item, dict):
-                known_allergies_list.append(item)
+                allergen_name = (item.get("allergen") or "").strip().lower()
+                if allergen_name not in DISALLOWED_ALLERGENS:
+                    known_allergies_list.append(item)
 
     # 5. Medications: Partition Current vs Historical
     medications = db.query(Medication).filter(Medication.patient_id == patient.id).order_by(Medication.start_date.desc()).all()
@@ -132,14 +164,31 @@ def generate_doctor_summary_for_patient(
             "sourcePageNumber": m.source_page_number
         }
 
-    active_medications = [
+    active_medications_raw = [
         format_medication(m) for m in medications 
         if m.status in ["active", "as_needed"]
     ]
-    historical_medications = [
+    historical_medications_raw = [
         format_medication(m) for m in medications 
         if m.status in ["discontinued", "completed", "inactive"]
     ]
+
+    # Deduplicate medications by normalized drug name
+    def deduplicate_meds(m_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        seen: Dict[str, Dict[str, Any]] = {}
+        for m in m_list:
+            key = (m.get("name") or "").strip().lower()
+            if not key:
+                continue
+            if key not in seen:
+                seen[key] = m
+            else:
+                if len(m.get("dosage") or "") > len(seen[key].get("dosage") or ""):
+                    seen[key] = m
+        return list(seen.values())
+
+    active_medications = deduplicate_meds(active_medications_raw)
+    historical_medications = deduplicate_meds(historical_medications_raw)
 
     # 6. Laboratory Results
     lab_results = db.query(LabResult).filter(LabResult.patient_id == patient.id).order_by(LabResult.test_date.desc()).all()
@@ -274,7 +323,7 @@ def generate_doctor_summary_for_patient(
     demog = f"{patient_name}"
     if age:
         demog += f", {age}-year-old"
-    if gender and gender != "Not recorded":
+    if gender and gender.lower() not in ["not recorded", "unspecified", "unknown"]:
         demog += f" {gender.lower()}"
     overview_parts.append(f"{demog}. Longitudinal medical intelligence digest grounded across {len(reports_by_id)} indexed clinical documents.")
     
@@ -370,7 +419,11 @@ def generate_doctor_summary_for_patient(
     db.commit()
     db.refresh(existing_summary)
 
+    if not existing_summary.share_token:
+        existing_summary.share_token = f"share_token_{uuid.uuid4().hex}"
+        db.commit()
+
     if existing_summary.share_token:
-        summary_dict["shareLink"] = f"https://chronanexus.app/physician-view/{existing_summary.share_token}"
+        summary_dict["shareLink"] = f"/physician-view/{existing_summary.share_token}"
 
     return summary_dict

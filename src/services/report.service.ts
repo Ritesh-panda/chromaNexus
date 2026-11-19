@@ -2,6 +2,19 @@ import api from '@/services/axios';
 import { MOCK_REPORTS } from '@/constants/mockData';
 import type { MedicalReport, ReportCategory } from '@/types';
 
+function isDemoUser(): boolean {
+  try {
+    const saved = localStorage.getItem('chronanexus_auth_user');
+    if (saved) {
+      const u = JSON.parse(saved);
+      return u?.email === 'alex.vance@example.com';
+    }
+  } catch {
+    // Ignore
+  }
+  return false;
+}
+
 export interface UploadReportParams {
   file: File;
   category: ReportCategory;
@@ -85,6 +98,9 @@ export const reportService = {
       const response = await api.get('/reports', { params });
       return response.data;
     } catch {
+      if (!isDemoUser()) {
+        return [];
+      }
       let reports = [...MOCK_REPORTS];
       const category = typeof paramsOrCategory === 'string' ? paramsOrCategory : paramsOrCategory?.category;
       const q = (typeof paramsOrCategory === 'string' ? search : paramsOrCategory?.search)?.toLowerCase();
@@ -127,6 +143,9 @@ export const reportService = {
       const response = await api.get('/reports/facilities');
       return response.data;
     } catch {
+      if (!isDemoUser()) {
+        return [];
+      }
       const unique = Array.from(new Set(MOCK_REPORTS.map((r) => r.hospitalName)));
       return unique;
     }
@@ -137,14 +156,37 @@ export const reportService = {
       const response = await api.get(`/reports/${id}`);
       return response.data;
     } catch {
+      if (!isDemoUser()) {
+        return null;
+      }
       const report = MOCK_REPORTS.find((r) => r.id === id);
       return report || null;
     }
   },
 
   async getIngestionStatus(documentId: string): Promise<DocumentIngestionStatus> {
-    const response = await api.get(`/documents/${documentId}/status`);
-    return response.data;
+    try {
+      const response = await api.get(`/documents/${documentId}/status`);
+      return response.data;
+    } catch {
+      const response = await api.get(`/reports/${documentId}/status`);
+      return response.data;
+    }
+  },
+
+  async openDocument(documentId: string): Promise<void> {
+    try {
+      const response = await api.get(`/documents/${documentId}/download`, {
+        responseType: 'blob',
+      });
+      const contentType = (response.headers['content-type'] as string) || 'application/pdf';
+      const blob = new Blob([response.data], { type: contentType });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+    } catch (err) {
+      console.warn('Failed to fetch blob, opening direct stream:', err);
+      window.open(`/api/v1/documents/${documentId}/download`, '_blank');
+    }
   },
 
   async uploadReport(params: UploadReportParams): Promise<MedicalReport> {
@@ -156,9 +198,37 @@ export const reportService = {
     if (params.reportDate) formData.append('report_date', params.reportDate);
 
     const response = await api.post('/documents/upload', formData, {
-      headers: { 'Content-Type': 'multipart/form-data' },
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
     });
     return response.data;
+  },
+
+  async updateReport(id: string, data: Partial<MedicalReport>): Promise<MedicalReport> {
+    const response = await api.put(`/reports/${id}`, data);
+    return response.data;
+  },
+
+  async downloadDocument(documentId: string, fileName?: string): Promise<void> {
+    try {
+      const response = await api.get(`/documents/${documentId}/download`, {
+        responseType: 'blob',
+      });
+      const contentType = (response.headers['content-type'] as string) || 'application/pdf';
+      const blob = new Blob([response.data], { type: contentType });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName || `Medical_Report_${documentId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000);
+    } catch (err) {
+      console.warn('Failed to download blob, opening direct stream:', err);
+      window.open(`/api/v1/documents/${documentId}/download`, '_blank');
+    }
   },
 
   async deleteReport(id: string): Promise<boolean> {
@@ -170,3 +240,4 @@ export const reportService = {
     }
   },
 };
+export default reportService;

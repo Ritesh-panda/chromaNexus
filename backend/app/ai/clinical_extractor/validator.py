@@ -38,7 +38,8 @@ class ClinicalDataValidator:
 
     KNOWN_LAB_UNITS = {
         "mg/dl", "g/dl", "%", "mmol/l", "iu/l", "u/l", "mcg/ml", "ng/ml", "pg/ml",
-        "mmhg", "meq/l", "cells/mcL", "/cumm", "fl", "pg", "mg/l", "bpm"
+        "mmhg", "meq/l", "cells/mcl", "/cumm", "fl", "pg", "mg/l", "bpm",
+        "×10³/µl", "x10³/µl", "×10⁶/µl", "x10⁶/µl", "k/µl", "k/ul", "m/µl", "m/ul", "/µl", "/ul"
     }
 
     @classmethod

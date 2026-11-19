@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { ChatBubble } from '@/components/cards/ChatBubble';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -6,6 +7,9 @@ import { useUI } from '@/contexts/UIContext';
 import { useUser } from '@/contexts/UserContext';
 import type { ChatMessage, ConversationThread } from '@/types';
 import { chatService } from '@/services/chat.service';
+import { reportService } from '@/services/report.service';
+import { patientService } from '@/services/patient.service';
+import type { MedicalReport, Disease, Medication } from '@/types';
 import {
   MOCK_REPORTS,
   MOCK_DISEASES,
@@ -24,8 +28,13 @@ import {
   Activity,
   Pill,
   FileText,
-  UserCheck
+  UserCheck,
+  Globe,
+  Mic,
+  MicOff,
+  Building2
 } from 'lucide-react';
+import { HospitalLocatorModal } from '@/components/dialogs/HospitalLocatorModal';
 
 export const AIChatPage: React.FC = () => {
   const { addToast } = useUI();
@@ -38,10 +47,82 @@ export const AIChatPage: React.FC = () => {
   const [isLoadingThreads, setIsLoadingThreads] = useState(true);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [showContextPanel, setShowContextPanel] = useState(true);
+  const [contextReports, setContextReports] = useState<MedicalReport[]>([]);
+  const [contextDiseases, setContextDiseases] = useState<Disease[]>([]);
+  const [contextMeds, setContextMeds] = useState<Medication[]>([]);
+  const [isListening, setIsListening] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState<'en' | 'hi' | 'or' | 'te' | 'ta' | 'bn'>('en');
+  const [isHospitalModalOpen, setIsHospitalModalOpen] = useState(false);
+  const recognitionRef = useRef<any>(null);
+
+  const toggleVoiceRecording = () => {
+    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRec) {
+      addToast({
+        type: 'warning',
+        title: 'Voice Input Unsupported',
+        message: 'Your browser does not support Web Speech Recognition. Please try Chrome, Edge, or a mobile browser.'
+      });
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRec();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      const langMap: Record<string, string> = {
+        en: 'en-US',
+        hi: 'hi-IN',
+        or: 'or-IN',
+        te: 'te-IN',
+        ta: 'ta-IN',
+        bn: 'bn-IN'
+      };
+      recognition.lang = langMap[selectedLanguage] || 'en-US';
+
+      recognition.onstart = () => setIsListening(true);
+      recognition.onresult = (event: any) => {
+        const transcript = Array.from(event.results)
+          .map((r: any) => r[0].transcript)
+          .join('');
+        setInputQuery(transcript);
+      };
+      recognition.onerror = () => setIsListening(false);
+      recognition.onend = () => setIsListening(false);
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch {
+      setIsListening(false);
+    }
+  };
+
+  useEffect(() => {
+    let isMounted = true;
+    Promise.all([
+      reportService.getReports(),
+      patientService.getDiagnoses(),
+      patientService.getMedications()
+    ]).then(([reps, dis, meds]) => {
+      if (isMounted) {
+        setContextReports(reps || []);
+        setContextDiseases(dis || []);
+        setContextMeds(meds || []);
+      }
+    }).catch(() => {});
+    return () => { isMounted = false; };
+  }, []);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const suggestedPrompts = [
-    'What are the MRI findings and impression for Alex Vance\'s right knee joint?',
+    'What are the key clinical findings in my uploaded reports?',
     'What is the patient\'s HbA1c level?',
     'What medicines did I take for high blood pressure?',
     'When was my highest cholesterol reading?',
@@ -168,7 +249,7 @@ export const AIChatPage: React.FC = () => {
     setIsTyping(true);
 
     try {
-      const response = await chatService.sendMessage(query, targetThreadId);
+      const response = await chatService.sendMessage(query, targetThreadId, selectedLanguage);
       setMessages((prev) => [...prev, response]);
       setThreads((prev) =>
         prev.map((t) => (t.id === targetThreadId ? { ...t, messageCount: t.messageCount + 2 } : t))
@@ -223,10 +304,11 @@ export const AIChatPage: React.FC = () => {
                     : 'text-[#6B7280] dark:text-[#9CA3AF] hover:bg-[#FAF8F5] dark:hover:bg-[#23272E]/60'
                 }`}
               >
-                <span className="truncate flex items-center gap-2">
-                  <MessageSquare className="w-3.5 h-3.5 shrink-0 opacity-70" /> {th.title}
+                <span className="truncate flex items-center gap-2 min-w-0 mr-1.5">
+                  <MessageSquare className="w-3.5 h-3.5 shrink-0 opacity-70" />
+                  <span className="truncate">{th.title}</span>
                 </span>
-                <span className="text-[10px] text-[#9CA3AF] tabular-nums shrink-0">{th.lastMessageDate}</span>
+                <span className="text-[10px] text-[#9CA3AF] tabular-nums shrink-0 pl-1">{th.lastMessageDate}</span>
               </button>
             ))
           )}
@@ -245,35 +327,63 @@ export const AIChatPage: React.FC = () => {
       {/* Center Main Chat Workspace */}
       <div className="flex-1 flex flex-col bg-white dark:bg-[#1B1E23] rounded-2xl border border-[#E5E7EB] dark:border-[#2F3540] overflow-hidden shadow-[0_1px_3px_0_rgba(0,0,0,0.02)] min-w-0">
         {/* Chat Header */}
-        <div className="p-3.5 px-5 border-b border-[#E5E7EB] dark:border-[#2F3540] flex items-center justify-between bg-white dark:bg-[#1B1E23]">
-          <div className="flex items-center space-x-3 min-w-0">
+        <div className="p-3.5 px-5 border-b border-[#E5E7EB] dark:border-[#2F3540] flex items-center justify-between bg-white dark:bg-[#1B1E23] gap-3">
+          <div className="flex items-center space-x-3 min-w-0 shrink-0">
             <div className="w-8 h-8 rounded-xl bg-[#ECFDF5] dark:bg-emerald-950/40 border border-emerald-200/60 dark:border-emerald-800/40 flex items-center justify-center text-[#10B981] font-semibold text-xs shrink-0">
               CN
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] truncate">
+              <h3 className="text-sm font-semibold text-[#1F2937] dark:text-[#F3F4F6] truncate whitespace-nowrap">
                 Clinical Intelligence Assistant
               </h3>
-              <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] flex items-center gap-1.5">
+              <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] flex items-center gap-1.5 whitespace-nowrap">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#10B981]" />
-                Longitudinal Patient Memory Grounded
+                Patient Memory Grounded
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
-            <Badge variant="success" className="text-[10px] hidden sm:inline-flex">Citations Grounded</Badge>
+          <div className="flex items-center gap-2 shrink-0">
+            {/* Multilingual Selector */}
+            <div className="flex items-center gap-1.5 bg-[#FAF8F5] dark:bg-[#23272E] px-2.5 py-1.5 rounded-xl border border-[#E5E7EB] dark:border-[#2F3540]">
+              <Globe className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <select
+                value={selectedLanguage}
+                onChange={(e) => setSelectedLanguage(e.target.value as any)}
+                className="bg-transparent text-xs font-medium text-[#1F2937] dark:text-[#F3F4F6] focus:outline-none cursor-pointer pr-1"
+                title="Select Consultation Language"
+              >
+                <option value="en" className="dark:bg-[#1B1E23]">🇬🇧 English</option>
+                <option value="hi" className="dark:bg-[#1B1E23]">🇮🇳 हिंदी (Hindi)</option>
+                <option value="or" className="dark:bg-[#1B1E23]">🇮🇳 ଓଡ଼ିଆ (Odia)</option>
+                <option value="te" className="dark:bg-[#1B1E23]">🇮🇳 తెలుగు (Telugu)</option>
+                <option value="ta" className="dark:bg-[#1B1E23]">🇮🇳 தமிழ் (Tamil)</option>
+                <option value="bn" className="dark:bg-[#1B1E23]">🇮🇳 বাংলা (Bengali)</option>
+              </select>
+            </div>
+
+            {/* Dedicated Voice Assistant Link */}
+            <Link
+              to="/voice"
+              className="p-1.5 px-2.5 rounded-xl border border-emerald-200/80 dark:border-emerald-900/60 bg-emerald-50/60 dark:bg-emerald-950/30 text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 hover:bg-emerald-100/60 dark:hover:bg-emerald-900/40 transition-colors shadow-sm shrink-0 whitespace-nowrap"
+              title="Open Dedicated Voice Assistant"
+            >
+              <Mic className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 animate-pulse" />
+              <span>Voice</span>
+            </Link>
+
+            {/* Patient Context Panel Toggle */}
             <button
               onClick={() => setShowContextPanel(!showContextPanel)}
-              className={`p-1.5 px-2.5 rounded-xl border text-xs font-medium flex items-center gap-1.5 transition-colors ${
+              className={`p-1.5 px-2.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-colors shrink-0 whitespace-nowrap ${
                 showContextPanel
-                  ? 'bg-[#ECFDF5] text-[#10B981] border-emerald-200/60 dark:bg-emerald-950/40 dark:border-emerald-800/40'
+                  ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40'
                   : 'bg-[#FAF8F5] text-[#6B7280] border-[#E5E7EB] dark:bg-[#23272E] dark:text-[#9CA3AF] dark:border-[#2F3540]'
               }`}
-              title="Toggle Contextual Patient Record Panel"
+              title={showContextPanel ? "Hide Patient Context Panel" : "Show Patient Context Panel"}
             >
-              <PanelRight className="w-4 h-4" />
-              <span className="hidden md:inline">Patient Memory</span>
+              <PanelRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Context</span>
             </button>
           </div>
         </div>
@@ -298,34 +408,62 @@ export const AIChatPage: React.FC = () => {
               </p>
             </div>
           ) : (
-            messages.map((msg) => <ChatBubble key={msg.id} message={msg} />)
+            messages.map((msg) => (
+              <ChatBubble
+                key={msg.id}
+                message={msg}
+                onPromptClick={(p) => handleSend(p)}
+                onFindHospitals={() => setIsHospitalModalOpen(true)}
+              />
+            ))
           )}
 
           {isTyping && (
             <div className="flex items-center space-x-2 text-xs text-[#6B7280] dark:text-[#9CA3AF]">
               <Loader2 className="w-3.5 h-3.5 text-[#10B981] animate-spin" />
-              <span>Searching medical memory and generating grounded clinical response...</span>
+              <span>Analyzing clinical context and preparing response...</span>
             </div>
           )}
 
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Suggested Prompts Bar */}
-        <div className="px-4 sm:px-5 py-2 border-t border-[#E5E7EB] dark:border-[#2F3540] flex items-center gap-1.5 overflow-x-auto bg-[#FAF8F5] dark:bg-[#1B1E23]">
-          <span className="text-[10px] font-semibold text-[#9CA3AF] shrink-0 flex items-center gap-1">
-            <HelpCircle className="w-3 h-3" /> Prompts:
-          </span>
-          {suggestedPrompts.map((prompt, idx) => (
-            <button
-              key={idx}
-              onClick={() => handleSend(prompt)}
-              className="px-2.5 py-1 rounded-lg bg-white dark:bg-[#23272E] hover:bg-[#F3F1ED] dark:hover:bg-[#2D323B] border border-[#E5E7EB] dark:border-[#2F3540] text-xs text-[#4B5563] dark:text-[#D1D5DB] transition-colors shrink-0 text-left font-normal"
-            >
-              {prompt}
-            </button>
-          ))}
-        </div>
+        {/* Dynamic Context-Aware Follow-Up Chips / Prompts Bar */}
+        {(() => {
+          const lastAiMsg = [...messages].reverse().find((m) => m.sender === 'ai');
+          const hasDynamicPrompts = Boolean(lastAiMsg?.followUpSuggestions && lastAiMsg.followUpSuggestions.length > 0);
+          const activePrompts = hasDynamicPrompts ? lastAiMsg!.followUpSuggestions! : suggestedPrompts;
+
+          return (
+            <div className="px-4 sm:px-5 py-2 border-t border-[#E5E7EB] dark:border-[#2F3540] flex items-center gap-1.5 overflow-x-auto bg-[#FAF8F5] dark:bg-[#1B1E23]">
+              <span className="text-[10px] font-semibold text-[#6B7280] dark:text-[#9CA3AF] shrink-0 flex items-center gap-1">
+                {hasDynamicPrompts ? (
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
+                    ✨ Suggested:
+                  </span>
+                ) : (
+                  <>
+                    <HelpCircle className="w-3 h-3" /> Prompts:
+                  </>
+                )}
+              </span>
+              {activePrompts.map((prompt, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSend(prompt)}
+                  className={`px-2.5 py-1 rounded-lg text-xs transition-colors shrink-0 text-left font-medium flex items-center gap-1 ${
+                    hasDynamicPrompts
+                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200/80 dark:border-emerald-800/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/60'
+                      : 'bg-white dark:bg-[#23272E] hover:bg-[#F3F1ED] dark:hover:bg-[#2D323B] border border-[#E5E7EB] dark:border-[#2F3540] text-[#4B5563] dark:text-[#D1D5DB]'
+                  }`}
+                >
+                  {hasDynamicPrompts && <span>→</span>}
+                  <span>{prompt}</span>
+                </button>
+              ))}
+            </div>
+          );
+        })()}
 
         {/* Input Composer */}
         <div className="p-3.5 px-4 sm:px-5 border-t border-[#E5E7EB] dark:border-[#2F3540] bg-white dark:bg-[#1B1E23]">
@@ -352,6 +490,20 @@ export const AIChatPage: React.FC = () => {
                 <Paperclip className="w-4 h-4" />
               </button>
             </div>
+
+            {/* Voice Input Microphone Button */}
+            <button
+              type="button"
+              onClick={toggleVoiceRecording}
+              className={`p-2.5 rounded-xl transition-all shrink-0 flex items-center justify-center ${
+                isListening
+                  ? 'bg-red-500 text-white animate-pulse shadow-md ring-2 ring-red-400/50'
+                  : 'text-[#6B7280] dark:text-[#9CA3AF] hover:bg-[#F3F1ED] dark:hover:bg-[#23272E] border border-[#E5E7EB] dark:border-[#2F3540]'
+              }`}
+              title={isListening ? 'Listening to speech... Click to stop' : 'Speak query via Microphone (Speech-to-Text)'}
+            >
+              {isListening ? <MicOff className="w-4 h-4 text-white" /> : <Mic className="w-4 h-4" />}
+            </button>
 
             <Button
               type="submit"
@@ -389,14 +541,18 @@ export const AIChatPage: React.FC = () => {
               <Activity className="w-3 h-3 text-[#B91C1C]" /> Active Conditions
             </span>
             <div className="space-y-1.5">
-              {MOCK_DISEASES.filter(d => d.status === 'active' || d.status === 'chronic').slice(0, 3).map((d) => (
-                <div key={d.id} className="p-2 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/60 border border-[#E5E7EB] dark:border-[#2F3540] text-xs">
-                  <div className="flex items-center justify-between font-medium text-[#1F2937] dark:text-[#F3F4F6]">
-                    <span className="truncate">{d.name}</span>
-                    <span className="font-mono text-[10px] text-[#9CA3AF]">{d.icdCode}</span>
+              {contextDiseases.length === 0 ? (
+                <p className="text-[11px] text-[#9CA3AF] italic p-1">No active conditions recorded</p>
+              ) : (
+                contextDiseases.slice(0, 3).map((d) => (
+                  <div key={d.id} className="p-2 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/60 border border-[#E5E7EB] dark:border-[#2F3540] text-xs">
+                    <div className="flex items-center justify-between font-medium text-[#1F2937] dark:text-[#F3F4F6]">
+                      <span className="truncate">{d.name}</span>
+                      {d.icdCode && <span className="font-mono text-[10px] text-[#9CA3AF]">{d.icdCode}</span>}
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </div>
 
@@ -406,31 +562,45 @@ export const AIChatPage: React.FC = () => {
               <Pill className="w-3 h-3 text-[#10B981]" /> Pharmacotherapy
             </span>
             <div className="space-y-1.5">
-              {MOCK_MEDICATIONS.filter(m => m.status === 'active').slice(0, 3).map((m) => (
-                <div key={m.id} className="p-2 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/60 border border-[#E5E7EB] dark:border-[#2F3540] text-xs">
-                  <p className="font-medium text-[#1F2937] dark:text-[#F3F4F6] truncate">{m.name}</p>
-                  <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">{m.dosage} • {m.frequency}</p>
-                </div>
-              ))}
+              {contextMeds.length === 0 ? (
+                <p className="text-[11px] text-[#9CA3AF] italic p-1">No active medications recorded</p>
+              ) : (
+                contextMeds.slice(0, 3).map((m) => (
+                  <div key={m.id} className="p-2 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/60 border border-[#E5E7EB] dark:border-[#2F3540] text-xs">
+                    <p className="font-medium text-[#1F2937] dark:text-[#F3F4F6] truncate">{m.name}</p>
+                    <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF] mt-0.5">{m.dosage || ''} {m.frequency ? `• ${m.frequency}` : ''}</p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 
           {/* Grounded Document Sources in Memory */}
           <div className="space-y-2 pt-1 border-t border-[#E5E7EB]/80 dark:border-[#2F3540]">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-[#9CA3AF] flex items-center gap-1.5">
-              <FileText className="w-3 h-3 text-[#10B981]" /> Grounded Records ({MOCK_REPORTS.length})
+              <FileText className="w-3 h-3 text-[#10B981]" /> Grounded Records ({contextReports.length})
             </span>
             <div className="space-y-1.5">
-              {MOCK_REPORTS.slice(0, 3).map((r) => (
-                <div key={r.id} className="p-2 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/60 border border-[#E5E7EB] dark:border-[#2F3540] text-xs">
-                  <p className="font-medium text-[#1F2937] dark:text-[#F3F4F6] truncate">{r.title}</p>
-                  <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF] font-mono mt-0.5">{r.reportDate} • {r.hospitalName.split(' ')[0]}</p>
-                </div>
-              ))}
+              {contextReports.length === 0 ? (
+                <p className="text-[11px] text-[#9CA3AF] italic p-1">No medical documents uploaded yet</p>
+              ) : (
+                contextReports.slice(0, 3).map((r) => (
+                  <div key={r.id} className="p-2 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/60 border border-[#E5E7EB] dark:border-[#2F3540] text-xs">
+                    <p className="font-medium text-[#1F2937] dark:text-[#F3F4F6] truncate">{r.title}</p>
+                    <p className="text-[10px] text-[#6B7280] dark:text-[#9CA3AF] font-mono mt-0.5">{r.reportDate} • {(r.hospitalName || '').split(' ')[0]}</p>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </div>
       )}
+
+      {/* Hospital Locator Modal (OpenStreetMap) */}
+      <HospitalLocatorModal
+        isOpen={isHospitalModalOpen}
+        onClose={() => setIsHospitalModalOpen(false)}
+      />
     </div>
   );
 };

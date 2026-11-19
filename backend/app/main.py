@@ -28,6 +28,11 @@ from backend.app.routers import (
     audit_router,
     fhir_router,
     purge_router,
+    graph_router,
+    settings_router,
+    hospitals_router,
+    alerts_router,
+    tts_router,
 )
 
 
@@ -51,10 +56,11 @@ async def lifespan(app: FastAPI):
     # Initialize database tables
     Base.metadata.create_all(bind=current_engine)
     
-    # Auto-seed initial demo patient profile (Alex Vance)
+    # Demo patient auto-seeding is strictly opt-in
     db = current_session_factory()
     try:
-        seed_initial_data(db)
+        if os.environ.get("SEED_DEMO_DATA", "false").lower() in ("true", "1"):
+            seed_initial_data(db)
         
         # Initialize persistent ChromaDB vector store and sync pre-existing chunks non-destructively
         try:
@@ -103,6 +109,11 @@ app.include_router(search_router, prefix=settings.API_V1_STR)
 app.include_router(audit_router, prefix=settings.API_V1_STR)
 app.include_router(fhir_router, prefix=settings.API_V1_STR)
 app.include_router(purge_router, prefix=settings.API_V1_STR)
+app.include_router(graph_router, prefix=settings.API_V1_STR)
+app.include_router(settings_router, prefix=settings.API_V1_STR)
+app.include_router(hospitals_router, prefix=settings.API_V1_STR)
+app.include_router(alerts_router, prefix=settings.API_V1_STR)
+app.include_router(tts_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/health")

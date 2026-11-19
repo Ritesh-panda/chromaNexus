@@ -16,6 +16,9 @@ import {
   ChevronRight,
   ShieldCheck,
   Activity,
+  Share2,
+  Mic,
+  Building2,
   X
 } from 'lucide-react';
 import { cn } from '@/utils/cn';
@@ -29,10 +32,13 @@ export interface NavItem {
 
 export const navItems: NavItem[] = [
   { label: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
-  { label: 'Medical Vault', path: '/vault', icon: <FolderLock className="w-4 h-4" />, badge: '8' },
+  { label: 'Medical Vault', path: '/vault', icon: <FolderLock className="w-4 h-4" /> },
   { label: 'Reports', path: '/reports', icon: <FileCheck className="w-4 h-4" /> },
   { label: 'Timeline', path: '/timeline', icon: <GitCommit className="w-4 h-4" /> },
+  { label: 'Knowledge Graph', path: '/graph', icon: <Share2 className="w-4 h-4" /> },
   { label: 'AI Assistant', path: '/chat', icon: <Bot className="w-4 h-4" />, badge: 'AI' },
+  { label: 'Voice Assistant', path: '/voice', icon: <Mic className="w-4 h-4" />, badge: 'LIVE' },
+  { label: 'Hospital Finder', path: '/hospitals', icon: <Building2 className="w-4 h-4" /> },
   { label: 'Doctor Summary', path: '/doctor-summary', icon: <Stethoscope className="w-4 h-4" /> },
   { label: 'Profile', path: '/profile', icon: <User className="w-4 h-4" /> },
   { label: 'Settings', path: '/settings', icon: <Settings className="w-4 h-4" /> },
@@ -145,16 +151,6 @@ export const Sidebar: React.FC = () => {
 
       {/* Footer / Privacy Status & Logout */}
       <div className="pt-3 border-t border-[#E5E7EB]/80 dark:border-[#2F3540] space-y-2">
-        {sidebarOpen && (
-          <div className="p-2.5 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/60 border border-[#E5E7EB] dark:border-[#2F3540] flex items-center space-x-2">
-            <ShieldCheck className="w-3.5 h-3.5 text-[#10B981] shrink-0" />
-            <div className="text-[10px] leading-tight text-[#4B5563] dark:text-[#9CA3AF]">
-              <span className="font-semibold block text-[#1F2937] dark:text-[#F3F4F6]">HIPAA Compliant</span>
-              <span>Encrypted Patient Memory</span>
-            </div>
-          </div>
-        )}
-
         <button
           onClick={handleLogout}
           aria-label="Log out"

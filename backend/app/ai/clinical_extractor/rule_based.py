@@ -46,9 +46,51 @@ class RuleBasedClinicalExtractor(ClinicalEntityExtractor):
         ),
         (
             "Platelet Count",
-            r"(?:Platelet\s+Count|Platelets)[:\s]+([\d,]+)\s*(/cumm|cells/mcL|k/uL)?",
-            "cells/mcL",
-            "150,000 - 450,000"
+            r"\b(?:Platelet\s+Count|Platelets)[\s:\n|]+([\d,.]+)\s*([^\n\r|]*?[µu]L|/cumm|cells/mcL|k/uL)?",
+            "×10³/µL",
+            "150-400 ×10³/µL"
+        ),
+        (
+            "Hemoglobin",
+            r"\b(?:Hemoglobin|Hgb)[\s:\n|]+([\d\.]+)\s*(g/dL|g/L)?",
+            "g/dL",
+            "13.0 - 17.0 g/dL"
+        ),
+        (
+            "Hematocrit",
+            r"\b(?:Hematocrit|Hct)[\s:\n|]+([\d\.]+)\s*(%)?",
+            "%",
+            "39 - 50 %"
+        ),
+        (
+            "Red Blood Cell (RBC) Count",
+            r"\b(?:RBC|Red\s+Blood\s+Cells?)[\s:\n|]+([\d\.]+)\s*([^\n\r|]*?[µu]L|M/[µu]L)?",
+            "×10⁶/µL",
+            "4.5 - 5.9 ×10⁶/µL"
+        ),
+        (
+            "White Blood Cell (WBC) Count",
+            r"\b(?:WBC|White\s+Blood\s+Cells?)[\s:\n|]+([\d\.]+)\s*([^\n\r|]*?[µu]L|cells/mcL)?",
+            "×10³/µL",
+            "4.0 - 11.0 ×10³/µL"
+        ),
+        (
+            "Mean Corpuscular Volume (MCV)",
+            r"\b(?:MCV|Mean\s+Corpuscular\s+Volume)[\s:\n|]+([\d\.]+)\s*(fL)?",
+            "fL",
+            "80 - 100 fL"
+        ),
+        (
+            "Neutrophils",
+            r"\b(?:Neutrophils?)[\s:\n|]+([\d\.]+)\s*(%)?",
+            "%",
+            "40 - 75 %"
+        ),
+        (
+            "Lymphocytes",
+            r"\b(?:Lymphocytes?)[\s:\n|]+([\d\.]+)\s*(%)?",
+            "%",
+            "20 - 45 %"
         ),
         (
             "Resting Blood Pressure",
@@ -118,6 +160,8 @@ class RuleBasedClinicalExtractor(ClinicalEntityExtractor):
                 for match in re.finditer(pattern, p_text, re.IGNORECASE):
                     val_str = match.group(1).replace(",", "")
                     unit_str = match.group(2) or default_unit
+                    if any(c in unit_str for c in ["■", "\ufffd", "?", "I/"]):
+                        unit_str = default_unit
                     
                     validated = ClinicalDataValidator.validate_lab_result(
                         test_name=lab_name,

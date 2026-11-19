@@ -147,7 +147,17 @@ BIOMARKER_CATALOG: Dict[str, BiomarkerDefinition] = {
         reference_range_male="< 200",
         reference_range_female="< 200",
         reference_range_general="< 200 mg/dL",
-        synonyms=["total cholesterol", "cholesterol", "chol", "total chol", "serum cholesterol"]
+        synonyms=["total cholesterol", "total chol", "serum total cholesterol", "cholesterol, total", "serum cholesterol, total"]
+    ),
+    "non_hdl_cholesterol": BiomarkerDefinition(
+        canonical_name="Non-HDL Cholesterol",
+        loinc_code="43396-1",
+        category="lipid_panel",
+        standard_unit="mg/dL",
+        reference_range_male="< 130",
+        reference_range_female="< 130",
+        reference_range_general="< 130 mg/dL",
+        synonyms=["non-hdl cholesterol", "non-hdl", "non hdl cholesterol", "non hdl"]
     ),
     "hdl_cholesterol": BiomarkerDefinition(
         canonical_name="High-Density Lipoprotein (HDL) Cholesterol",

@@ -144,8 +144,22 @@ def _aggregate_patient_events(
     diseases = db.query(Disease).filter(Disease.patient_id == patient_id).all()
     for dis in diseases:
         d_name = (dis.name or "").strip()
+        if not d_name or d_name.lower() in ["unknown", "none", "n/a", "unspecified", "not recorded"]:
+            continue
         if d_name.lower() in referenced_diagnoses:
             continue
+
+        # Attach entity to referenced report
+        if dis.source_report_id and dis.source_report_id in referenced_report_ids:
+            for ev in results:
+                if ev.sourceReportId == dis.source_report_id:
+                    if not ev.connectedEntities:
+                        ev.connectedEntities = {"diseases": [], "medications": [], "labResults": []}
+                    if "diseases" not in ev.connectedEntities:
+                        ev.connectedEntities["diseases"] = []
+                    if d_name not in ev.connectedEntities["diseases"]:
+                        ev.connectedEntities["diseases"].append(d_name)
+                    referenced_diagnoses.add(d_name.lower())
 
         raw_date = dis.diagnosed_date or "Unknown Date"
         is_unknown = not _is_valid_iso_date(raw_date)
@@ -187,7 +201,22 @@ def _aggregate_patient_events(
     meds = db.query(Medication).filter(Medication.patient_id == patient_id).all()
     for med in meds:
         m_name = (med.name or "").strip()
+        if not m_name or m_name.lower() in ["unknown", "none", "n/a", "unspecified"]:
+            continue
         if m_name.lower() in referenced_meds:
+            continue
+
+        # If this medication belongs to a report that already has a timeline event, attach entity instead of duplicating cards
+        if med.source_report_id and med.source_report_id in referenced_report_ids:
+            for ev in results:
+                if ev.sourceReportId == med.source_report_id:
+                    if not ev.connectedEntities:
+                        ev.connectedEntities = {"diseases": [], "medications": [], "labResults": []}
+                    if "medications" not in ev.connectedEntities:
+                        ev.connectedEntities["medications"] = []
+                    if m_name not in ev.connectedEntities["medications"]:
+                        ev.connectedEntities["medications"].append(m_name)
+                    referenced_meds.add(m_name.lower())
             continue
 
         raw_date = med.start_date or "Unknown Date"
@@ -267,24 +296,47 @@ def get_timeline(
         include_records=include_all_records
     )
 
-    # Apply filters
-    if year:
+    # Apply filters safely handling FastAPI Query defaults
+    if year and isinstance(year, int):
         events = [e for e in events if e.year == year]
 
-    if event_type and event_type != "all":
-        if event_type == "medication_start":
-            events = [e for e in events if e.type in ["medication_start", "medication_stop"]]
+    if event_type and isinstance(event_type, str) and event_type != "all":
+        et = event_type.lower().strip()
+        if et in ["diagnosis", "diagnoses", "condition"]:
+            events = [
+                e for e in events 
+                if e.type in ["diagnosis", "condition"] 
+                or (e.connectedEntities and bool(e.connectedEntities.get("diseases")))
+            ]
+        elif et in ["medication_start", "medications", "medication", "prescription", "prescriptions"]:
+            events = [
+                e for e in events 
+                if e.type in ["medication_start", "medication_stop", "prescription"] 
+                or (e.connectedEntities and bool(e.connectedEntities.get("medications")))
+            ]
+        elif et in ["lab_test", "lab_result", "labs", "blood_report"]:
+            events = [
+                e for e in events 
+                if e.type in ["lab_test", "lab_result"] 
+                or (e.connectedEntities and bool(e.connectedEntities.get("labResults")))
+            ]
+        elif et in ["imaging", "mri", "x_ray", "ct_scan"]:
+            events = [e for e in events if e.type in ["imaging", "mri", "x_ray", "ct_scan"]]
+        elif et in ["medical_report", "reports", "records"]:
+            events = [e for e in events if e.type in ["medical_report", "lab_result", "prescription", "imaging", "hospital_visit"]]
+        elif et in ["hospital_visit", "consultation", "consultations"]:
+            events = [e for e in events if e.type in ["hospital_visit", "consultation"]]
         else:
             events = [e for e in events if e.type == event_type]
 
-    if facility and facility != "all":
+    if facility and isinstance(facility, str) and facility != "all":
         f_lower = facility.lower().strip()
         events = [e for e in events if e.facility and f_lower in e.facility.lower()]
 
-    if start_date:
+    if start_date and isinstance(start_date, str):
         events = [e for e in events if not e.isUnknownDate and e.date >= start_date]
 
-    if end_date:
+    if end_date and isinstance(end_date, str):
         events = [e for e in events if not e.isUnknownDate and e.date <= end_date]
 
     # Sort: Valid dates first (descending or ascending), Unknown dates at the bottom

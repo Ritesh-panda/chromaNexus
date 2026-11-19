@@ -1,0 +1,148 @@
+\chapter{Appendix}
+\label{chap:appendix}
+
+This chapter provides supplementary technical documentation, including structured REST API interface specifications, core procedural decision specifications, the complete capstone development timeline, and canonical clinical ontology reference intervals.
+
+\section{Appendix A: REST API Interface Specifications}
+\label{sec:app_api_payloads}
+
+Table~\ref{tab:app_a_endpoints} details the HTTP request methods, authentication requirements, input schemas, and expected response payloads for core platform services, adhering to OpenAPI 3.1 specifications.
+
+\small
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.23\linewidth} >{\raggedright\arraybackslash}p{0.09\linewidth} >{\raggedright\arraybackslash}p{0.24\linewidth} >{\raggedright\arraybackslash}p{0.34\linewidth}@{}}
+\caption{Representative REST API interface specifications}\label{tab:app_a_endpoints} \\
+\toprule
+\textbf{Endpoint Route} & \textbf{HTTP Verb} & \textbf{Security / Headers} & \textbf{Payload Schema \& Expected Output} \\
+\midrule
+\endfirsthead
+\toprule
+\multicolumn{4}{c}{\small\textit{Representative REST API interface specifications (Continued)}} \\[4pt]
+\midrule
+\textbf{Endpoint Route} & \textbf{HTTP Verb} & \textbf{Security / Headers} & \textbf{Payload Schema \& Expected Output} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{4}{r}{\footnotesize\textit{Continued on next page...}} \\
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+\texttt{/api/\allowbreak v1/\allowbreak auth/\allowbreak register} & POST & Public route; \texttt{Content-Type: application/\allowbreak json} & Input: \texttt{\{name, email, password\}}. Output: HTTP 201 with created user profile and bearer token. \\
+\texttt{/api/\allowbreak v1/\allowbreak documents/\allowbreak upload} & POST & Bearer JWT token; \texttt{multipart/\allowbreak form-data} & Input: Binary PDF file stream. Output: HTTP 201 with document ID, SHA-256 hash, and extracted table count. \\
+\texttt{/api/\allowbreak v1/\allowbreak chat/\allowbreak messages} & POST & Bearer JWT token; \texttt{application/\allowbreak json} & Input: \texttt{\{text, language, source\}}. Output: HTTP 200 with verified clinical response, citations, and status. \\
+\texttt{/api/\allowbreak v1/\allowbreak voice/\allowbreak tts} & POST & Public / Authenticated; \texttt{application/\allowbreak json} & Input: \texttt{\{text, language\}}. Output: HTTP 200 with streamed binary MP3 audio buffer ($<1.5$~s). \\
+\texttt{/api/\allowbreak v1/\allowbreak emergency/\allowbreak triage} & POST & Bearer JWT token; \texttt{application/\allowbreak json} & Input: \texttt{\{symptoms, latitude, longitude\}}. Output: HTTP 200 with triage JSON payload and nearby hospitals. \\
+\texttt{/api/\allowbreak v1/\allowbreak summaries/\allowbreak share} & POST & Attending Clinician JWT; \texttt{application/\allowbreak json} & Input: \texttt{\{patient\_id, expiry\_hours\}}. Output: HTTP 201 with 48-hour secure signed portal access token. \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+
+\section{Appendix B: Core Procedural Decision Specifications}
+\label{sec:app_core_algorithms}
+
+\subsection{B.1 Database Test Mutation Interception Logic}
+To prevent automated test runners from corrupting persistent clinic state, the interception layer enforces a strict deterministic protocol:
+\begin{enumerate}
+    \item \textbf{Hook Registration}: The listener attaches to the SQLAlchemy database engine via the low-level \texttt{before\_cursor\_execute} lifecycle event.
+    \item \textbf{Execution Context Inspection}: Prior to statement execution, the listener checks whether either \texttt{PYTEST\_CURRENT\_TEST} or \texttt{CHRONANEXUS\_TEST\_ENV} is defined in the execution environment.
+    \item \textbf{Target Verification}: The target connection string is evaluated. If the target contains persistent file references (such as \texttt{chronanexus.db}), the listener triggers defensive assertion parsing.
+    \item \textbf{Mutation Blocking}: The normalized SQL statement prefix is checked against the mutation set:
+    \begin{equation}
+        \mathcal{M}_{\text{blocked}} = \{\texttt{INSERT}, \texttt{UPDATE}, \texttt{DELETE}, \texttt{DROP}, \texttt{ALTER}, \texttt{CREATE}\}
+    \end{equation}
+    If the statement begins with any blocked token, cursor execution is intercepted and a \texttt{MutationBlockedError} is raised immediately.
+\end{enumerate}
+
+\subsection{B.2 Indic Unicode Phonetic Transliteration Transformation}
+The phonetic bridge enables real-time spoken Odia synthesis using Bengali neural acoustic models via deterministic Unicode code point transposition:
+\begin{enumerate}
+    \item \textbf{Codepoint Identification}: For each UTF-8 character $c$ in the Odia input string, the integer scalar value $U = \text{ord}(c)$ is extracted.
+    \item \textbf{Block Offset Mapping}: If $U$ lies within the Odia Unicode block ($\text{0x0B00} \le U \le \text{0x0B7F}$), the isomorphic Bengali codepoint is calculated:
+    \begin{equation}
+        U_{\text{Bengali}} = U - \text{0x0180}
+    \end{equation}
+    \item \textbf{Linguistic Exception Handling}: Specialized glyphs lacking a direct 1-to-1 visual correspondence are mapped to their closest phonetic equivalents (e.g., Odia \textit{Ra} maps to Bengali \textit{Ra} \texttt{0x09B0}, and Odia \textit{Lla} / \textit{Rra} map to Bengali liquid consonants).
+    \item \textbf{Synthesis Streaming}: The resulting UTF-8 text is streamed to the \texttt{bn-\allowbreak IN-\allowbreak Bashkar\allowbreak Neural} acoustic model, preserving regional Odia prosody and cadence.
+\end{enumerate}
+
+
+\section{Appendix C: Capstone Development Timeline}
+\label{sec:app_timeline}
+
+Table~\ref{tab:11_1_timeline} documents the capstone engineering milestones reconstructed from Git version control history and weekly supervisor review sheets.
+
+\small
+\begin{longtable}{@{}p{0.26\linewidth} p{0.64\linewidth}@{}}
+\caption{Capstone engineering timeline and development milestones}\label{tab:11_1_timeline} \\
+\toprule
+\textbf{Development Window} & \textbf{Core Milestones and Technical Deliverables Completed} \\
+\midrule
+\endfirsthead
+\toprule
+\multicolumn{2}{c}{\small\textit{Capstone engineering timeline (Continued)}} \\[4pt]
+\midrule
+\textbf{Development Window} & \textbf{Core Milestones and Technical Deliverables Completed} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{2}{r}{\footnotesize\textit{Continued on next page...}} \\
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+\textbf{04 Aug -- 17 Aug 2025} & Requirements specification; React 19 + Vite frontend scaffold; Tailwind CSS v4 design tokens. \\
+\textbf{18 Aug -- 31 Aug 2025} & JWT authentication routes; Dashboard layout; FastAPI backend initialization; SQLAlchemy relational schema. \\
+\textbf{01 Sep -- 21 Sep 2025} & Document Vault upload pipeline; PyMuPDF vector cell tracing; dual SHA-256 deduplication guardrails. \\
+\textbf{22 Sep -- 12 Oct 2025} & Longitudinal patient memory engine; LOINC/RxNorm catalogs; interactive clinical timeline (2019--2026). \\
+\textbf{13 Oct -- 02 Nov 2025} & Dense vector search (ChromaDB BGE); BM25 Okapi lexical engine; Reciprocal Rank Fusion ($k=60$). \\
+\textbf{03 Nov -- 23 Nov 2025} & Structured Query Engine (temporal trends, unit mismatch detection, vital trajectory analytics). \\
+\textbf{24 Nov -- 14 Dec 2025} & Evidence Grounding pipeline (\texttt{ClaimExtractor}, \texttt{EvidenceVerifier}, \texttt{CitationValidator}). \\
+\textbf{15 Dec 2025 -- 10 Jan 2026} & Multilingual voice assistant (Edge Neural TTS); Indic Unicode bridge ($\Delta = -0\text{x}0180$); 108 emergency triage. \\
+\textbf{11 Jan -- 31 Jan 2026} & OpenStreetMap Overpass hospital geolocation; Physician summary digest with 48h sharing link. \\
+\textbf{01 Feb -- 28 Feb 2026} & Automated test execution (190 unit and integration tests across 12 pytest suites); final report preparation. \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+
+\section{Appendix D: Supported Clinical Catalogs \& Canonical Intervals}
+\label{sec:app_catalogs}
+
+Table~\ref{tab:11_2_catalogs} itemizes the standardized laboratory analytes, pharmaceutical substances, and diagnostic entities operationalized within the ChronaNexus clinical memory engine.
+
+\small
+\begin{longtable}{@{}p{0.25\linewidth} p{0.14\linewidth} p{0.16\linewidth} p{0.35\linewidth}@{}}
+\caption{Standardized clinical terminologies and canonical reference intervals}\label{tab:11_2_catalogs} \\
+\toprule
+\textbf{Analyte / Substance} & \textbf{Standard Code} & \textbf{Catalog} & \textbf{Canonical Reference Interval} \\
+\midrule
+\endfirsthead
+\toprule
+\multicolumn{4}{c}{\small\textit{Standardized clinical terminologies (Continued)}} \\[4pt]
+\midrule
+\textbf{Analyte / Substance} & \textbf{Standard Code} & \textbf{Catalog} & \textbf{Canonical Reference Interval} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{4}{r}{\footnotesize\textit{Continued on next page...}} \\
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+\textbf{Hemoglobin A1c (HbA1c)} & \texttt{4548-4} & LOINC & Normal: $< 5.7\%$, Diabetic: $\ge 6.5\%$ \\
+\textbf{Fasting Blood Glucose} & \texttt{1558-6} & LOINC & Normal: $70 - 99\text{ mg/dL}$, Impaired: $100 - 125\text{ mg/dL}$ \\
+\textbf{Total Cholesterol} & \texttt{2093-3} & LOINC & Desirable: $< 200\text{ mg/dL}$, High: $\ge 240\text{ mg/dL}$ \\
+\textbf{Triglycerides} & \texttt{2571-8} & LOINC & Normal: $< 150\text{ mg/dL}$, High: $200 - 499\text{ mg/dL}$ \\
+\textbf{HDL Cholesterol} & \texttt{2085-9} & LOINC & Optimal: $\ge 40\text{ mg/dL}$ (Male), $\ge 50\text{ mg/dL}$ (Female) \\
+\textbf{LDL Cholesterol (Calculated)} & \texttt{13457-7} & LOINC & Optimal: $< 100\text{ mg/dL}$, High: $160 - 189\text{ mg/dL}$ \\
+\textbf{Serum Creatinine} & \texttt{2160-0} & LOINC & Normal: $0.7 - 1.3\text{ mg/dL}$ \\
+\textbf{Serum Potassium} & \texttt{2823-3} & LOINC & Normal: $3.5 - 5.0\text{ mEq/L}$ \\
+\textbf{Metformin Hydrochloride} & \texttt{6809} & RxNorm & Biguanide antihyperglycemic oral agent \\
+\textbf{Lisinopril} & \texttt{29046} & RxNorm & ACE inhibitor antihypertensive oral agent \\
+\textbf{Atorvastatin Calcium} & \texttt{83367} & RxNorm & HMG-CoA reductase inhibitor lipid-lowering agent \\
+\textbf{Type 2 Diabetes Mellitus} & \texttt{E11.9} & ICD-10-CM & Non-insulin-dependent diabetes without complications \\
+\textbf{Hyperlipidemia, Unspecified} & \texttt{E78.5} & ICD-10-CM & Elevated blood serum lipids and lipoproteins \\
+\bottomrule
+\end{longtable}
+\normalsize

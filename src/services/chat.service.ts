@@ -34,11 +34,16 @@ export const chatService = {
     }
   },
 
-  async sendMessage(query: string, conversationId: string): Promise<ChatMessage> {
+  async sendMessage(
+    query: string, 
+    conversationId: string, 
+    language: string = 'en',
+    source: 'text' | 'voice' = 'text'
+  ): Promise<ChatMessage> {
     try {
       const response = await api.post<ChatMessage>(
         `/chat/conversations/${conversationId}/messages`,
-        { text: query },
+        { text: query, language, source },
         { timeout: 90000 }
       );
       return response.data;

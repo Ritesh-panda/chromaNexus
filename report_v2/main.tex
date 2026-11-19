@@ -1,0 +1,147 @@
+\documentclass[12pt,a4paper]{report}
+
+\usepackage{fontspec}
+\setmainfont{Times New Roman}
+
+\usepackage[left=0.75in,right=0.75in,top=1in,bottom=1in]{geometry}
+\setlength{\headheight}{14pt}
+\usepackage{setspace}
+\onehalfspacing
+
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{cite}
+\usepackage{titlesec}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{needspace}
+\usepackage{microtype}
+\emergencystretch=3em
+\usepackage[hidelinks]{hyperref}
+
+% Table padding
+\setlength{\tabcolsep}{5pt}
+\renewcommand{\arraystretch}{1.2}
+
+% Code listing style
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{backcolour}{rgb}{0.97,0.97,0.97}
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegray},
+    keywordstyle=\color{blue},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{teal},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    frame=single,
+    rulecolor=\color{black!20}
+}
+\lstset{style=mystyle}
+
+% Headings styling
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\centering}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{20pt}{40pt}
+
+% Header and Footer setup
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\leftmark}
+\fancyhead[R]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyfoot[C]{\thepage}
+  \renewcommand{\headrulewidth}{0pt}
+}
+
+\begin{document}
+
+% ==========================================
+% FRONT MATTER (Roman numerals i, ii, iii...)
+% ==========================================
+\pagenumbering{roman}
+
+\include{frontmatter/titlepage}
+\include{frontmatter/certificate}
+\include{frontmatter/acknowledgement}
+\include{frontmatter/declaration}
+\include{frontmatter/abstract}
+
+\tableofcontents
+\newpage
+\listoftables
+\newpage
+\listoffigures
+\newpage
+\include{frontmatter/abbreviations}
+
+% ==========================================
+% MAIN CHAPTERS (Arabic numerals 1, 2, 3...)
+% ==========================================
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+% Chapter 1: Introduction (Phase 1)
+\include{chapters/chapter1_introduction}
+
+% Chapter 2: Literature Survey (Phase 2)
+\include{chapters/chapter2_literature_survey}
+
+% Chapter 3: System Analysis (Phase 3)
+\include{chapters/chapter3_system_analysis}
+
+% Chapter 4: System Architecture (Phase 4)
+\include{chapters/chapter4_system_architecture}
+
+% Chapter 5: System Implementation (Phase 5)
+\include{chapters/chapter5_implementation}
+
+% Chapter 6: Machine Learning and Data Pipeline (Phase 6)
+\include{chapters/chapter6_ml_and_data}
+
+% Chapter 7: System Testing and Validation (Phase 7)
+\include{chapters/chapter7_testing_and_validation}
+
+% Chapter 8: Cost and Sizing Analysis (Phase 8)
+\include{chapters/chapter8_cost_sizing}
+
+% Chapter 9: Results and Discussion (Phase 9)
+\include{chapters/chapter9_results_discussion}
+
+% Chapter 10: Conclusion and Future Work (Phase 10)
+\include{chapters/chapter10_conclusion}
+
+% Chapter 11: Appendix (Phase 11)
+\include{chapters/chapter11_appendix}
+
+% ==========================================
+% REFERENCES
+% ==========================================
+\newpage
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+% ==========================================
+% BIODATA
+% ==========================================
+\include{chapters/biodata}
+
+\end{document}

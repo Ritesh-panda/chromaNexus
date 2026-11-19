@@ -1,4 +1,4 @@
-﻿import json
+import json
 import logging
 import re
 from typing import List, Dict, Any, Optional
@@ -200,13 +200,25 @@ class LLMClinicalExtractor(ClinicalEntityExtractor):
         self,
         entities: List[ExtractedClinicalEntity]
     ) -> List[ExtractedClinicalEntity]:
-        """Deduplicates extracted entities preserving higher confidence and page provenance."""
+        """Deduplicates extracted entities preserving higher confidence, richest details, and page provenance."""
         seen = {}
         for ent in entities:
-            key = (ent.category, ent.name.strip().lower(), str(ent.value or "").strip().lower(), ent.page_number)
+            c_name = ent.name.strip().lower()
+            if "type 2 diabetes" in c_name or c_name == "diabetes":
+                norm_name = "type 2 diabetes mellitus"
+            else:
+                norm_name = c_name
+
+            key = (ent.category, norm_name, ent.page_number)
             if key not in seen:
                 seen[key] = ent
             else:
-                if ent.confidence > seen[key].confidence:
+                existing = seen[key]
+                # Prefer entity with values or richer dosage/code
+                if not existing.value and ent.value:
+                    seen[key] = ent
+                elif existing.value and ent.value and len(str(ent.value)) > len(str(existing.value)):
+                    seen[key] = ent
+                elif ent.confidence > existing.confidence:
                     seen[key] = ent
         return list(seen.values())

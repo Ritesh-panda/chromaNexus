@@ -75,6 +75,18 @@ class StructuredQueryDetector:
         q = query.strip()
         q_lower = q.lower()
 
+        # 0. Check if query is asking for clinical guidance, lifestyle, exercise, diet, or treatment advice rather than a structured database lookup
+        ADVICE_PATTERNS = [
+            r"\b(?:how\s+to|how\s+can\s+i|ways\s+to|how\s+do\s+i)\s+(?:lower|reduce|decrease|control|manage|treat|bring\s+down|prevent|cure|raise|increase)\b",
+            r"\b(?:what\s+exercises?|what\s+workouts?|what\s+activities|how\s+much\s+exercise)\b",
+            r"\b(?:what\s+(?:should|can)\s+i\s+(?:eat|drink|do|avoid|take))\b",
+            r"\b(?:diet|dietary|nutrition|meal\s+plan|food|foods|lifestyle|home\s+remed(?:y|ies)|natural\s+ways)\b",
+            r"\b(?:tips|advice|guidance|recommendations?)\s+(?:for|on|to|about)\b",
+            r"\b(?:can\s+i\s+(?:eat|drink|exercise|do))\b"
+        ]
+        if any(re.search(pat, q_lower) for pat in ADVICE_PATTERNS):
+            return StructuredQueryIntent(is_structured_query=False, raw_query=q)
+
         # 1. Multi-analyte queries ("Which of my recorded lab values have increased/decreased?")
         if re.search(r"\bwhich\s+(?:of\s+my\s+)?(?:recorded\s+)?(?:lab\s+)?(?:values|results|tests)\s+(?:have\s+)?(?:increased|risen|gone\s+up)\b", q_lower):
             return StructuredQueryIntent(

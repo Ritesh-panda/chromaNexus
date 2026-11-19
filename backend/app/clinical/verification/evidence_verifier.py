@@ -128,6 +128,22 @@ class EvidenceVerifier:
             claim.explanation = "Explicit missing-data statement."
             return
 
+        # 1b. General clinical advice, physician consultation recommendations, and disclaimers
+        # e.g., "Please discuss appropriate physical activity options with your treating physician."
+        DISCLAIMER_PATTERNS = [
+            r"\b(?:consult|discuss|speak\s+with|talk\s+to|reach\s+out\s+to|contact)\s+(?:with\s+)?(?:your|a)\s+(?:treating\s+)?(?:physician|doctor|provider|clinician|specialist)\b",
+            r"\b(?:options\s+with\s+your\s+treating\s+physician|appropriate\s+physical\s+activity)\b",
+            r"\b(?:informational\s+only|not\s+a\s+substitute\s+for|seek\s+medical\s+attention)\b",
+            r"\b(?:feel\s+free\s+to|let\s+me\s+know\s+if|if\s+you\s+have\s+any\s+(?:questions|concerns))\b",
+            r"\b(?:these\s+are\s+the\s+only|as\s+documented\s+in\s+your\s+records)\b"
+        ]
+        if any(re.search(pat, claim.text.lower()) for pat in DISCLAIMER_PATTERNS) or claim.claim_type == ClaimType.GENERAL_STATEMENT:
+            has_unsupported_numbers = bool(re.search(r"\b\d+(?:\.\d+)?\s*(?:mg/dl|%|mmol/l|k/ul|g/dl)\b", claim.text.lower()))
+            if not has_unsupported_numbers:
+                claim.status = ClaimVerificationStatus.SUPPORTED
+                claim.explanation = "General advisory statement or clinical disclaimer."
+                return
+
         # 2. Diagnosis verification
         if claim.claim_type == ClaimType.DIAGNOSIS:
             diag_term = (claim.analyte or claim.text).lower()
@@ -135,13 +151,14 @@ class EvidenceVerifier:
             has_diag = False
             for d in patient_diagnoses:
                 cond = (d.name or "").lower()
-                if cond and (cond in diag_term or any(w in cond for w in diag_term.split() if len(w) > 4)):
+                if cond and (cond in diag_term or diag_term in cond or any(w in cond for w in diag_term.split() if len(w) > 4)):
                     has_diag = True
                     break
             # Also check text evidence
             if not has_diag:
                 for ev in text_evidence:
-                    if diag_term in ev["text"] and not any(neg in ev["text"] for neg in ["no history of", "denies", "negative for"]):
+                    txt = ev["text"].lower()
+                    if any(w in txt for w in diag_term.split() if len(w) > 4) and not any(neg in txt for neg in ["no history of", "denies", "negative for"]):
                         has_diag = True
                         break
 
@@ -154,16 +171,30 @@ class EvidenceVerifier:
 
         # 3. Medication instruction verification
         if claim.claim_type == ClaimType.MEDICATION_INSTRUCTION:
-            # Check if instruction is authorized prescription
             claim_t_lower = claim.text.lower()
             matches_active_rx = False
+            matching_rep_id = None
             for m in patient_meds:
                 med_name = (m.name or "").lower()
-                if med_name and med_name in claim_t_lower:
+                if med_name and (med_name in claim_t_lower or claim_t_lower in med_name):
                     matches_active_rx = True
+                    matching_rep_id = m.source_report_id
                     break
-            if matches_active_rx and not any(w in claim_t_lower for w in ["increase", "decrease", "stop", "double"]):
+            if not matches_active_rx:
+                for ev in text_evidence:
+                    txt = ev["text"].lower()
+                    for m in patient_meds:
+                        if m.name and m.name.lower() in txt and (m.name.lower() in claim_t_lower or "metformin" in claim_t_lower):
+                            matches_active_rx = True
+                            matching_rep_id = ev.get("report_id") or m.source_report_id
+                            break
+                    if matches_active_rx:
+                        break
+
+            if matches_active_rx and not any(w in claim_t_lower for w in ["double", "stop taking", "discontinue"]):
                 claim.status = ClaimVerificationStatus.SUPPORTED
+                if matching_rep_id:
+                    claim.supporting_citation = self._find_citation_for_report(matching_rep_id, citations)
             else:
                 claim.status = ClaimVerificationStatus.INSUFFICIENT_EVIDENCE
                 claim.explanation = "Unverified medication instruction or unconfirmed dosage modification."

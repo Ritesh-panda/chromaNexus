@@ -145,3 +145,89 @@
   border-color: #10B981;
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
 }
+
+/* ==========================================================================
+   PRINT / PDF EXPORT STYLES
+   ========================================================================== */
+@media print {
+  @page {
+    margin: 12mm 15mm 12mm 15mm;
+    size: A4 portrait;
+  }
+
+  html, body {
+    background-color: #FFFFFF !important;
+    background: #FFFFFF !important;
+    color: #111827 !important;
+    font-size: 10pt !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Completely strip navigation chrome, sidebar, topbar, modal overlays */
+  aside,
+  header,
+  nav,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Full width for print layout */
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Force clean white paper backgrounds across all card containers */
+  main div,
+  main section,
+  main article {
+    background-color: #FFFFFF !important;
+    background: #FFFFFF !important;
+    box-shadow: none !important;
+  }
+
+  /* High contrast readable clinical text */
+  main h1,
+  main h2,
+  main h3,
+  main h4,
+  main p,
+  main span,
+  main strong,
+  main div,
+  main label {
+    color: #111827 !important;
+    text-shadow: none !important;
+  }
+
+  /* Ensure card borders are crisp and visible on white paper */
+  main [class*="border"],
+  main .border {
+    border-color: #E5E7EB !important;
+  }
+
+  /* Clinical accents */
+  main [class*="text-rose"] {
+    color: #B91C1C !important;
+  }
+
+  main [class*="text-emerald"] {
+    color: #047857 !important;
+  }
+
+  /* Keep clinical summary cards unified and avoid awkward page breaks */
+  .rounded-2xl,
+  .rounded-xl,
+  table,
+  tr {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

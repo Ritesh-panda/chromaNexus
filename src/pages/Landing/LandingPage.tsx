@@ -92,7 +92,7 @@ export const LandingPage: React.FC = () => {
                 <div className="flex items-center space-x-2">
                   <span className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
                   <span className="text-xs font-mono font-medium text-[#6B7280] dark:text-[#9CA3AF]">
-                    Patient Memory Graph • Alex Vance (38M)
+                    Patient Memory Graph • Clinical Trajectory Model
                   </span>
                 </div>
                 <Badge variant="success">Active Memory Graph</Badge>
@@ -101,13 +101,13 @@ export const LandingPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5">
                 <div className="p-4 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540]">
                   <span className="text-xs font-medium text-[#6B7280] dark:text-[#9CA3AF] block mb-1">Longitudinal Documents</span>
-                  <p className="text-xl sm:text-2xl font-semibold text-[#1F2937] dark:text-[#F3F4F6] tabular-nums">8 Connected Reports</p>
-                  <p className="text-[11px] text-[#9CA3AF] mt-0.5">Spans 2019 — 2026</p>
+                  <p className="text-xl sm:text-2xl font-semibold text-[#1F2937] dark:text-[#F3F4F6] tabular-nums">Structured Clinical Ingestion</p>
+                  <p className="text-[11px] text-[#9CA3AF] mt-0.5">Automated OCR & Provenance</p>
                 </div>
                 <div className="p-4 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540]">
-                  <span className="text-xs font-medium text-[#6B7280] dark:text-[#9CA3AF] block mb-1">Active Condition</span>
-                  <p className="text-xl sm:text-2xl font-semibold text-[#1F2937] dark:text-[#F3F4F6]">Type 2 Diabetes</p>
-                  <p className="text-[11px] text-[#15803D] dark:text-emerald-400 mt-0.5 tabular-nums">HbA1c: 7.2% ➔ 6.7%</p>
+                  <span className="text-xs font-medium text-[#6B7280] dark:text-[#9CA3AF] block mb-1">Biomarker Surveillance</span>
+                  <p className="text-xl sm:text-2xl font-semibold text-[#1F2937] dark:text-[#F3F4F6]">Dynamic Lab Trajectories</p>
+                  <p className="text-[11px] text-[#15803D] dark:text-emerald-400 mt-0.5 tabular-nums">Normalized analyte tracking</p>
                 </div>
                 <div className="p-4 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/50 border border-[#E5E7EB] dark:border-[#2F3540]">
                   <span className="text-xs font-medium text-[#6B7280] dark:text-[#9CA3AF] block mb-1">Clinical Decision Support</span>

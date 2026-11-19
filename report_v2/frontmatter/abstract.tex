@@ -1,0 +1,24 @@
+\chapter*{ABSTRACT}
+\addcontentsline{toc}{chapter}{Abstract}
+
+In contemporary healthcare delivery, longitudinal patient records remain severely fragmented across heterogeneous diagnostic laboratories, multi-specialty hospital chains, proprietary Electronic Health Record (EHR) portals, and unstructured paper documents. Critical clinical decisions---such as detecting subtle glycemic decompensation, identifying polypharmacy contraindications, reconciling conflicting laboratory measurements across testing sites, and providing timely triage advice---are hindered by institutional information silos. Generic commercial large language models (LLMs) deployed in clinical question-answering present catastrophic risks of medical hallucination, numerical trend fabrication, and ungrounded advice. 
+
+\textbf{CHRONANEXUS} is an integrated, privacy-preserving, dual-channel clinical intelligence and auditable decision-support platform engineered to transform fragmented medical documents into a verifiable longitudinal patient knowledge graph. The system's foundational design principle is: \textit{``Instead of storing files, ChronaNexus stores clinical understanding.''}
+
+The system comprises a component-driven React 19 single-page application, an asynchronous FastAPI backend exposing versioned REST endpoints, an ACID relational clinical store (SQLite) with full schema versioning, and an embedded ChromaDB vector database. Six core subsystems are integrated end-to-end:
+\begin{enumerate}
+  \item \textbf{Document Vault}: Multi-page PDF parsing using PyMuPDF vector table extraction, layout-aware markdown normalization, and dual-scope SHA-256 cryptographic deduplication.
+  \item \textbf{Medical Understanding Engine}: Clinical entity normalization mapping unstructured text into standard terminologies (LOINC, RxNorm, ICD-10) with page provenance tracking.
+  \item \textbf{Patient Memory \& Timeline Engine}: Chronological reconstruction of multi-facility encounters (2019--2026) with automated conflict detection across conflicting hospital systems.
+  \item \textbf{Dual-Channel Hybrid Retrieval (RAG)}: Fusion of dense semantic retrieval (\texttt{BAAI/\allowbreak bge-small-\allowbreak en-v1.5}, $384$ dimensions) and lexical BM25 Okapi search via Reciprocal Rank Fusion ($k=60$).
+  \item \textbf{Evidence Grounding \& Verification Pipeline}: Deterministic atomic claim decomposition, structured delta trend verification, and fail-closed citation auditing to eliminate hallucinated assertions.
+  \item \textbf{Multilingual Clinical Voice Consultation}: Low-latency voice consultation supporting six languages (English, Hindi, Odia, Telugu, Tamil, Bengali) featuring an isomorphic Unicode phonetic transliteration bridge for Eastern Indo-Aryan speech synthesis, emergency triage payload structuring for 108 dispatch, and OpenStreetMap hospital discovery.
+\end{enumerate}
+
+Automated verification across $190$ backend unit and integration tests distributed across $12$ pytest test suites confirms that ChronaNexus achieves an overall claim verification accuracy of $86.00\%$ ($F_1 = 0.8727$), $100\%$ citation attribution precision on evaluated benchmark cases, and mean response latencies of $1.28\text{ s}$ (cloud LLM) and $2.45\text{ s}$ (local SLM CPU inference).
+
+\vspace{0.8cm}
+\noindent
+\textbf{Keywords:} Clinical Decision Support, Longitudinal EHR, Hybrid Retrieval-Augmented Generation, Reciprocal Rank Fusion, Claim Verification, Multilingual Voice Synthesis, Indic Speech Bridge, Local SLM.
+
+\clearpage

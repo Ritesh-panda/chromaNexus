@@ -77,12 +77,12 @@ def get_patient_profile(current_patient: Patient = Depends(get_current_patient))
     return PatientResponse(
         id=current_patient.id,
         userId=current_patient.user_id,
-        dateOfBirth=current_patient.date_of_birth or "1988-04-12",
-        gender=current_patient.gender or "male",
-        bloodGroup=current_patient.blood_group or "O+",
-        heightCm=current_patient.height_cm or 178.0,
-        weightKg=current_patient.weight_kg or 82.0,
-        primaryCarePhysician=current_patient.primary_care_physician or "Dr. Sarah Jenkins, MD",
+        dateOfBirth=current_patient.date_of_birth,
+        gender=current_patient.gender or "unspecified",
+        bloodGroup=current_patient.blood_group,
+        heightCm=current_patient.height_cm,
+        weightKg=current_patient.weight_kg,
+        primaryCarePhysician=current_patient.primary_care_physician,
         emergencyContact=current_patient.emergency_contact or {},
         insurance=current_patient.insurance or {},
         knownAllergies=current_patient.known_allergies or []
@@ -137,8 +137,22 @@ def get_patient_diagnoses(
     current_patient: Patient = Depends(get_current_patient),
     db: Session = Depends(get_db)
 ):
+    disallowed = {"unknown", "none", "n/a", "na", "unspecified", "nil", "no", "not applicable"}
     diseases = db.query(Disease).filter(Disease.patient_id == current_patient.id).order_by(Disease.diagnosed_date.desc()).all()
-    return [format_disease_response(d) for d in diseases]
+    filtered = [d for d in diseases if (d.name or "").strip().lower() not in disallowed]
+    
+    # Deduplicate by canonical normalized condition
+    deduped: Dict[str, Disease] = {}
+    for d in filtered:
+        norm = (d.name or "").strip().lower()
+        if "type 2 diabetes" in norm or norm == "diabetes":
+            norm = "type 2 diabetes mellitus"
+        if norm not in deduped:
+            deduped[norm] = d
+        else:
+            if not deduped[norm].icd_code and d.icd_code:
+                deduped[norm] = d
+    return [format_disease_response(d) for d in deduped.values()]
 
 
 @router.get("/me/medications", response_model=List[MedicationResponse])
@@ -147,7 +161,17 @@ def get_patient_medications(
     db: Session = Depends(get_db)
 ):
     meds = db.query(Medication).filter(Medication.patient_id == current_patient.id).order_by(Medication.start_date.desc()).all()
-    return [format_medication_response(m) for m in meds]
+    deduped_meds: Dict[str, Medication] = {}
+    for m in meds:
+        norm = (m.name or "").strip().lower()
+        if not norm:
+            continue
+        if norm not in deduped_meds:
+            deduped_meds[norm] = m
+        else:
+            if len(m.dosage or "") > len(deduped_meds[norm].dosage or ""):
+                deduped_meds[norm] = m
+    return [format_medication_response(m) for m in deduped_meds.values()]
 
 
 @router.get("/me/labs", response_model=List[LabResultResponse])

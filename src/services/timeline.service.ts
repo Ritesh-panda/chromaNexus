@@ -2,6 +2,19 @@ import { api } from './axios';
 import { MOCK_TIMELINE_EVENTS } from '@/constants/mockData';
 import type { TimelineEvent, TimelineSummary } from '@/types';
 
+function isDemoUser(): boolean {
+  try {
+    const saved = localStorage.getItem('chronanexus_auth_user');
+    if (saved) {
+      const u = JSON.parse(saved);
+      return u?.email === 'alex.vance@example.com';
+    }
+  } catch {
+    // Ignore
+  }
+  return false;
+}
+
 export interface TimelineQueryParams {
   filterType?: string;
   facility?: string;
@@ -48,6 +61,10 @@ export const timelineService = {
       console.warn('Timeline API request encountered an issue:', err);
     }
 
+    if (!isDemoUser()) {
+      return [];
+    }
+
     // Fallback if offline / demo mode
     let events = [...MOCK_TIMELINE_EVENTS];
     const filterType = typeof params === 'string' ? params : params?.filterType;
@@ -66,7 +83,10 @@ export const timelineService = {
     } catch (err) {
       console.warn('Timeline facilities API request encountered an issue:', err);
     }
-    // Extract from mock data
+    if (!isDemoUser()) {
+      return [];
+    }
+    // Extract from mock data for demo
     const set = new Set<string>();
     MOCK_TIMELINE_EVENTS.forEach((e) => {
       if (e.facility) set.add(e.facility);

@@ -19,7 +19,11 @@ def get_conversations(
     current_patient: Patient = Depends(get_current_patient),
     db: Session = Depends(get_db)
 ):
-    threads = db.query(ChatConversation).filter(ChatConversation.patient_id == current_patient.id).order_by(ChatConversation.updated_at.desc()).all()
+    # Only return clinical text chat inquiries; isolate voice consultation sessions
+    threads = db.query(ChatConversation).filter(
+        ChatConversation.patient_id == current_patient.id,
+        ~ChatConversation.id.like("voice_%")
+    ).order_by(ChatConversation.updated_at.desc()).all()
     return [
         ConversationResponse(
             id=t.id,
@@ -72,7 +76,9 @@ def get_conversation_messages(
             text=m.text,
             timestamp=m.timestamp,
             reasoningType=m.reasoning_type or "fact",
-            citations=[CitationSchema(**c) for c in (m.citations or [])]
+            citations=[CitationSchema(**c) for c in (m.citations or [])],
+            isEmergency=bool(getattr(m, 'is_emergency', False)),
+            followUpSuggestions=getattr(m, 'follow_up_suggestions', []) or []
         ) for m in conv.messages
     ]
 
@@ -114,12 +120,14 @@ def send_message(
     db.flush()
 
     # Process AI reasoning with conversation history, grounded citations, and structured trends (Phase 5)
-    ai_text, reasoning_type, citations, structured_trend = process_clinical_chat_query(
+    ai_text, reasoning_type, citations, structured_trend, is_emergency, emergency_type, follow_up_suggestions = process_clinical_chat_query(
         db=db,
         patient=current_patient,
         query=msg_in.text,
         conversation_history=recent_history,
-        return_trend=True
+        return_trend=True,
+        language=getattr(msg_in, "language", "en"),
+        source=getattr(msg_in, "source", "text")
     )
 
     ai_msg = ChatMessage(
@@ -128,7 +136,9 @@ def send_message(
         text=ai_text,
         timestamp=datetime.now().strftime("%I:%M %p"),
         reasoning_type=reasoning_type,
-        citations=citations
+        citations=citations,
+        follow_up_suggestions=follow_up_suggestions,
+        is_emergency=is_emergency
     )
     db.add(ai_msg)
     conv.updated_at = datetime.now(timezone.utc)
@@ -143,5 +153,8 @@ def send_message(
         timestamp=ai_msg.timestamp,
         reasoningType=ai_msg.reasoning_type,
         citations=[CitationSchema(**c) for c in raw_citations if isinstance(c, dict)],
-        structuredTrend=StructuredTrendSchema(**structured_trend) if structured_trend else None
+        structuredTrend=StructuredTrendSchema(**structured_trend) if structured_trend else None,
+        isEmergency=is_emergency,
+        emergencyType=emergency_type,
+        followUpSuggestions=follow_up_suggestions
     )

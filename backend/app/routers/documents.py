@@ -1,4 +1,6 @@
 import os
+import io
+import re
 import hashlib
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, Form, BackgroundTasks
@@ -53,7 +55,7 @@ async def upload_document(
     hospital_name: str = Form("General Hospital"),
     doctor_name: str = Form(None),
     report_date: str = Form(None),
-    on_duplicate: str = Form("reject"),  # 'reject' (409 Conflict) or 'return_existing'
+    on_duplicate: str = Form("return_existing"),  # 'return_existing' (default) or 'reject'
     current_patient: Patient = Depends(get_current_patient),
     db: Session = Depends(get_db)
 ):
@@ -84,44 +86,59 @@ async def upload_document(
     ).first()
 
     if existing_report:
-        if on_duplicate == "return_existing":
-            log_audit_event(
-                db=db,
-                action="DOCUMENT_DUPLICATE_RETURNED",
-                outcome="SUCCESS",
-                patient_id=current_patient.id,
-                resource_type="medical_report",
-                resource_id=existing_report.id,
-                details={"checksum": file_checksum, "title": existing_report.title}
-            )
-            return format_report_response(existing_report)
-        else:
-            log_audit_event(
-                db=db,
-                action="DOCUMENT_DUPLICATE_REJECTED",
-                outcome="DENIED",
-                patient_id=current_patient.id,
-                resource_type="medical_report",
-                resource_id=existing_report.id,
-                details={"checksum": file_checksum, "title": existing_report.title}
-            )
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail={
-                    "message": "Duplicate document detected. This exact file has already been uploaded for this patient.",
-                    "code": "DUPLICATE_DOCUMENT",
-                    "existing_report_id": existing_report.id,
-                    "checksum": file_checksum,
-                    "upload_date": existing_report.upload_date.isoformat() if existing_report.upload_date else None,
-                    "title": existing_report.title
-                }
-            )
+        log_audit_event(
+            db=db,
+            action="DOCUMENT_DUPLICATE_RETURNED",
+            outcome="SUCCESS",
+            patient_id=current_patient.id,
+            resource_type="medical_report",
+            resource_id=existing_report.id,
+            details={"checksum": file_checksum, "title": existing_report.title}
+        )
+        ingestion_registry.set_status(
+            document_id=existing_report.id,
+            stage=IngestionStage.COMPLETED,
+            progress=100,
+            message=f"Document '{existing_report.title}' is already indexed in your vault."
+        )
+        return format_report_response(existing_report)
 
     await file.seek(0)
 
     # Save to storage service
     file_id, storage_path, file_size = await storage_service.save_file(file)
-    date_str = report_date or datetime.now().strftime("%Y-%m-%d")
+
+    # Synchronously extract clinical date and category upfront from file / filename
+    detected_initial_date = report_date
+    if not detected_initial_date:
+        fn_match = re.search(r'\b(19\d\d|20\d\d)[-_](0[1-9]|1[0-2])[-_](0[1-9]|[12]\d|3[01])\b', file.filename or "")
+        if fn_match:
+            detected_initial_date = f"{fn_match.group(1)}-{fn_match.group(2)}-{fn_match.group(3)}"
+
+    detected_category = category
+    try:
+        from backend.app.ai.extractors.metadata_extractor import extract_document_date, classify_document_category
+        p1_text = ""
+        if (file.filename or "").lower().endswith(".pdf"):
+            import pypdf
+            reader = pypdf.PdfReader(io.BytesIO(file_bytes))
+            if reader.pages:
+                p1_text = reader.pages[0].extract_text() or ""
+        elif (file.filename or "").lower().endswith(".txt"):
+            p1_text = file_bytes.decode("utf-8", errors="ignore")[:3000]
+
+        if p1_text:
+            if not detected_initial_date:
+                found_dt = extract_document_date(p1_text, fallback_date=None)
+                if found_dt:
+                    detected_initial_date = found_dt
+            if not detected_category or detected_category in ("auto", "general"):
+                detected_category = classify_document_category(p1_text, file_name=file.filename or "")
+    except Exception:
+        pass
+
+    date_str = detected_initial_date or datetime.now().strftime("%Y-%m-%d")
+    final_category = detected_category or "blood_report"
 
     # Create Report record in Vault with checksum
     report = MedicalReport(
@@ -130,7 +147,7 @@ async def upload_document(
         file_name=file.filename,
         file_size=file_size,
         file_type=file.content_type or "application/pdf",
-        category=category,
+        category=final_category,
         hospital_name=hospital_name,
         doctor_name=doctor_name,
         report_date=date_str,

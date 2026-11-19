@@ -8,8 +8,10 @@ import {
   Tooltip,
   CartesianGrid,
 } from 'recharts';
+import { useAuth } from '@/contexts/AuthContext';
+import { TrendingUp, FileText } from 'lucide-react';
 
-const data = [
+const demoData = [
   { year: '2021', hba1c: 5.6, glucose: 95, cholesterol: 242 },
   { year: '2022', hba1c: 5.8, glucose: 102, cholesterol: 228 },
   { year: '2023', hba1c: 7.2, glucose: 142, cholesterol: 210 },
@@ -19,11 +21,26 @@ const data = [
 ];
 
 export const VitalsTrendChart: React.FC = () => {
+  const { user } = useAuth();
+  const isDemo = user?.email === 'alex.vance@example.com';
+
+  if (!isDemo) {
+    return (
+      <div className="w-full py-12 px-4 text-center space-y-2 border border-dashed border-[#E5E7EB] dark:border-[#2F3540] rounded-xl bg-[#FAF8F5]/50 dark:bg-[#23272E]/30">
+        <TrendingUp className="w-8 h-8 text-[#9CA3AF] mx-auto" />
+        <p className="text-xs font-semibold text-[#1F2937] dark:text-[#F3F4F6]">No Longitudinal Biomarker Data Yet</p>
+        <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] max-w-sm mx-auto">
+          Upload laboratory blood tests or metabolic panels. ChronaNexus will automatically construct your multi-year longitudinal biomarker trajectory graph here.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full pt-2 space-y-2">
       <div className="w-full h-64 sm:h-72">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <AreaChart data={demoData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="colorHbA1c" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#10B981" stopOpacity={0.25} />
@@ -79,3 +96,4 @@ export const VitalsTrendChart: React.FC = () => {
     </div>
   );
 };
+export default VitalsTrendChart;

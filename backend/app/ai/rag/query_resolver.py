@@ -51,7 +51,7 @@ class ConversationQueryResolver:
         },
         "diabetes": {
             "keywords": {
-                "diabetes", "diabetic", "blood sugar", "glucose", "a1c", "hba1c",
+                "diabetes", "diabetic", "blood sugar", "sugar", "sugar level", "glucose", "a1c", "hba1c",
                 "glycemic", "metformin", "insulin", "e11.9"
             },
             "expansion": "diabetes Type 2 Diabetes Mellitus HbA1c blood glucose Metformin glycemic",
@@ -172,10 +172,88 @@ class ConversationQueryResolver:
         "compare", "comparison", "difference", "stable", "stabilized"
     }
 
+    RED_FLAG_PATTERNS = [
+        r"\b(?:chest\s+pain|pain\s+in\s+(?:my\s+)?chest)\b",
+        r"\b(?:heart\s+attack|cardiac\s+arrest)\b",
+        r"\b(?:can(?:not|'t)\s+breathe|trouble\s+breathing|breathless(?:ness)?|difficulty\s+breathing|shortness\s+of\s+breath)\b",
+        r"\b(?:stroke|facial\s+droop|slurred\s+speech|speech\s+is\s+slurred)\b",
+        r"\b(?:severe\s+bleed(?:ing)?|hemorrhage|coughing\s+up\s+blood)\b",
+        r"\b(?:unconscious(?:ness)?|passed\s+out|lost\s+consciousness|blacked\s+out)\b",
+        r"\b(?:seizure|convulsion|fitting)\b",
+        r"\b(?:anaphylax(?:is)?|severe\s+allergic\s+reaction)\b",
+        r"\b(?:suicid\w*|kill\s+myself|end\s+my\s+life)\b",
+        r"\b(?:crushing\s+(?:chest\s+)?pain)\b",
+        # Multilingual Indic Emergency Patterns
+        r"(?:ଛାତି.*(?:ବିନ୍ଧା|ଯନ୍ତ୍ରଣା|କଷ୍ଟ|ଦରଜ)|ନିଶ୍ୱାସ.*(?:କଷ୍ଟ|ବନ୍ଦ)|ହାର୍ଟ.*ଆଟାକ|ଚେତାଶୂନ୍ୟ|ଅଚେତ|ବେହୋସ|ପ୍ରଚୁର\s*ରକ୍ତ)",
+        r"(?:सीने.*दर्द|छाती.*दर्द|सांस.*(?:तकलीफ|फूल|दिक्कत)|हार्ट.*अटैक|बेहोश|खून.*उल्टी|दौरा)",
+        r"(?:বুকে.*ব্যথা|শ্বাস.*কষ্ট|হার্ট.*অ্যাটাক|অজ্ঞান|রক্তপাত)",
+        r"(?:ఛాతీ.*నొప్పి|శ్వాస.*ఆడక|గుండెపోటు|స్పృహతప్ప)",
+        r"(?:நெஞ்சு.*வலி|மூச்சு.*திணறல்|மாரடைப்பு|மயக்கம்)",
+        r"\b(?:seene\s+mein\s+dard|saans\s+phool|heart\s+attack\s+lag\s+raha)\b"
+    ]
+
+    SYMPTOM_PATTERNS = [
+        r"\b(?:i\s+am|i'm|i\s+feel|feeling)\s+(?:sick|unwell|ill|nauseous|dizzy|faint|weak|terrible|awful|poorly|down)\b",
+        r"\b(?:i\s+have|i\s+got|having)\s+(?:a\s+)?(?:fever|headache|migraine|nausea|vomiting|vomit|diarrhea|cough|sore\s+throat|chills|cold|body\s+ache|fatigue|pain|stomach\s+ache|belly\s+pain|cramps|acid\s+reflux|heartburn)\b",
+        r"\b(?:my\s+(?:head|stomach|throat|back|belly|body|joint|joints|eye|ear|muscle))\s+(?:hurts|aches|is\s+hurting|is\s+aching|is\s+burning|is\s+sore)\b",
+        r"\b(?:throw(?:ing)?\s+up|vomit(?:ing)?)\b",
+        r"\bfeeling\s+sick\b",
+        r"\bam\s+sick\b",
+        r"\bi\s+feel\s+like\s+vomiting\b",
+        r"\bcatch(?:ing)?\s+a\s+cold\b",
+        r"\bi\s+am\s+not\s+feeling\s+well\b",
+        # Odia Symptom Expressions
+        r"(?:ମୁଁ\s*ଅସୁସ୍ଥ|ଅସୁସ୍ଥ\s*ଅଛି|ଦେହ\s*ଖରାପ|ଭଲ\s*ଲାଗୁନି|ଜ୍ୱର|ମୁଣ୍ଡ\s*(?:ବିନ୍ଧା|ବୁଲା)|ବାନ୍ତି|ପେଟ\s*(?:କାଟୁଛି|ବିନ୍ଧା)|କାଶ|ଥଣ୍ଡା|ଦରଜ|ଦୁର୍ବଳ\s*ଲାଗୁଛି)",
+        # Hindi Symptom Expressions
+        r"(?:मैं\s*बीमार|तबीयत\s*(?:खराब|ठीक\s*नहीं)|अच्छा\s*नहीं\s*लग\s*रहा|बुखार|सिर\s*दर्द|सर\s*दर्द|उल्टी|चक्कर|पेट\s*दर्द|खांसी|जुकाम|कमजोरी\s*लग\s*रही)",
+        # Bengali Symptom Expressions
+        r"(?:আমি\s*অসুস্থ|শরীর\s*খারাপ|খারাপ\s*লাগছে|জ্বর|মাথা\s*ব্যথা|বমি|পেট\s*ব্যথা|কাশি|ঠান্ডা)",
+        # Telugu Symptom Expressions
+        r"(?:నాకు\s*అనారోగ్యం|ఒంట్లో\s*బాగాలేదు|జ్వరం|తలనెప్పి|వాంతులు|కడుపునొప్పి|దగ్గు|నీరసం)",
+        # Tamil Symptom Expressions
+        r"(?:உடம்பு\s*சரியில்லை|காய்ச்சல்|தலைவலி|வாந்தி|வயிற்று\s*வலி|இருமல்|சோர்வு)",
+        # Transliterated Indic Symptoms
+        r"\b(?:tabiyat\s+kharab|bimar\s+hoon|bukhar\s+hai|sar\s+dard\s+hai|chakkar\s+aa\s+rahe|deho\s+kharap|asustha\s+achhi)\b"
+    ]
+
+    GENERAL_CONVERSATION_PATTERNS = [
+        # Friendly Greetings & Wellness Check-Ins (Patient conversational chit-chat)
+        r"\b(?:i\s+am|i'm|i\s+feel|feeling)\s+(?:fine|good|well|better|okay|ok|great|alright|healthy|happy)\b",
+        r"\bhow\s+are\s+you\b",
+        r"\bhow\s+(?:is\s+it\s+going|are\s+things)\b",
+        r"\b(?:doing\s+(?:well|good|fine|okay|ok|great))\b",
+        r"\b(?:thank\s+(?:you|u)|thanks|thankyou)\b",
+        r"\b(?:good\s+to\s+(?:see|hear|meet)\s+you)\b",
+        r"\b(?:why\s+(?:are\s+you|you\s+are)\s+(?:not\s+able|unable)|why\s+can(?:'t|\s+not)\s+you)\b",
+        r"\bgeneric\s+questions?\b",
+        r"\b(?:chit\s*chat|small\s*talk|just\s+chat(?:ting)?)\b",
+        r"\bthat(?:'s|\s+is)\s+not\b",
+        r"\b(?:i\s+did(?:n't|\s+not)\s+(?:ask|mean|say)|not\s+what\s+i\s+(?:asked|meant))\b",
+        r"\b(?:i\s+am\s+(?:willing|trying|ready)\s+to)\b",
+        r"\b(?:talk\s+to\s+me|speak\s+with\s+me|can\s+we\s+talk|let(?:'s|\s+us)\s+talk)\b",
+        r"\b(?:are\s+you\s+there|can\s+you\s+hear\s+me|hello\s+there)\b",
+        r"\b(?:who\s+are\s+you|what\s+is\s+your\s+name)\b",
+        r"\bwhat\s+(?:can|do)\s+you\s+do\b",
+        r"\bhow\s+do\s+you\s+work\b",
+        r"\bignore\s+(?:the\s+)?(?:command|instruction|database|rule)\b",
+        r"^(?:hi|hello|hey|namaste|greetings|good\s+morning|good\s+afternoon|good\s+evening|what's\s+up)\b",
+        # Multilingual Indic Friendly Greetings & Check-Ins
+        r"(?:ଭଲ\s*ଅଛି|ଭଲ\s*ଲାଗୁଛି|କେମିତି\s*ଅଛନ୍ତି|ସବୁ\s*ଠିକ୍\s*ଅଛି|ଧନ୍ୟବାଦ|କିଛି\s*ଅସୁବିଧା\s*ନାହିଁ|ନମସ୍କାର|ଜୟ\s*ଜଗନ୍ନାଥ|ତୁମେ\s*କିଏ|ତୁମେ\s*କଣ\s*କରିପାରିବ|ଆପଣ\s*କିଏ)",
+        r"(?:मैं\s*ठीक\s*हूँ|अच्छा\s*लग\s*रहा\s*है|सब\s*ठीक\s*है|आप\s*कैसे\s*हैं|धन्यवाद|शुक्रिया|नमस्ते|नमस्कार|प्रणाम|आप\s*कौन\s*हैं|आप\s*क्या\s*कर\s*सकते\s*हैं)",
+        r"(?:আমি\s*ভালো\s*আছি|ভালো\s*লাগছে|আপনি\s*কেমন\s*আছেন|ধন্যবাদ)",
+        r"(?:బాగున్నాను|బాగుంది|మీరు\s*ఎలా\s*ఉన్నారు|ధన్యవాదాలు)",
+        r"(?:நன்றாக\s*இருக்கிறேன்|நல்லா\s*இருக்கிறேன்|எப்படி\s*இருக்கிறீர்கள்|நன்றி)",
+        r"\b(?:theek\s+hoon|sab\s+theek\s+hai|bhalo\s+achi|bagunnanu|fine\s+hoon)\b",
+        r"\bwhat\s+is\s+(?:type\s+2\s+diabetes|diabetes|hba1c|cholesterol|ldl|hdl|hypertension|blood\s+pressure|metformin|a\s+lipid\s+profile)\b(?!\s+(?:in\s+my|for\s+me|my\s+level|my\s+reading|my\s+result|my\s+report))",
+        r"\bhow\s+does\s+(?:metformin|a\s+statin|atorvastatin|insulin|blood\s+sugar\s+medication)\s+work\b",
+        r"\btell\s+me\s+about\s+(?:metformin|diabetes|cholesterol|hyperlipidemia)\b(?!\s+(?:in\s+my|from\s+my|my\s+level|my\s+reading|my\s+report))"
+    ]
+
     def resolve(
         self,
         query: str,
-        conversation_history: Optional[List[Dict[str, str]]] = None
+        conversation_history: Optional[List[Dict[str, str]]] = None,
+        language: Optional[str] = "en"
     ) -> ResolvedQuery:
         if not query or not query.strip():
             return ResolvedQuery(
@@ -196,8 +274,56 @@ class ConversationQueryResolver:
         # 1. Format bounded recent history string (last 6 messages = 3 full turns)
         formatted_history = self._format_history(history)
 
-        # 2. Check for broad health status / overview questions
-        if self._is_overview_query(lower_query):
+        # 2. Critical Safety Interceptor: Check for life-threatening Red Flags / Emergency
+        for pat in self.RED_FLAG_PATTERNS:
+            if re.search(pat, lower_query, re.IGNORECASE):
+                return ResolvedQuery(
+                    original_query=clean_query,
+                    resolved_query=clean_query,
+                    active_topic="emergency",
+                    is_follow_up=False,
+                    is_overview=False,
+                    intent=QueryIntent.EMERGENCY,
+                    keywords=["emergency", "critical", "immediate", "108"],
+                    formatted_history=formatted_history
+                )
+
+        # 3. Clinical Symptom Presentation / Triage
+        for pat in self.SYMPTOM_PATTERNS:
+            if re.search(pat, lower_query, re.IGNORECASE):
+                return ResolvedQuery(
+                    original_query=clean_query,
+                    resolved_query=clean_query,
+                    active_topic="symptom_triage",
+                    is_follow_up=False,
+                    is_overview=False,
+                    intent=QueryIntent.SYMPTOM_TRIAGE,
+                    keywords=["symptom", "triage", "illness", "feeling", "sick"],
+                    formatted_history=formatted_history
+                )
+
+        # Check if the query contains a specific clinical topic or overview request
+        detected_topic = self._detect_topic(lower_query)
+        is_overview = self._is_overview_query(lower_query)
+
+        # 4. Meta questions, system capabilities, greetings, & general medical education
+        # Only route to GENERAL_CONVERSATION if there is NO clinical topic or overview requested!
+        if not detected_topic and not is_overview:
+            for pat in self.GENERAL_CONVERSATION_PATTERNS:
+                if re.search(pat, lower_query, re.IGNORECASE):
+                    return ResolvedQuery(
+                        original_query=clean_query,
+                        resolved_query=clean_query,
+                        active_topic="general_conversation",
+                        is_follow_up=False,
+                        is_overview=False,
+                        intent=QueryIntent.GENERAL_CONVERSATION,
+                        keywords=["general", "knowledge", "conversation"],
+                        formatted_history=formatted_history
+                    )
+
+        # 5. Check for broad health status / overview questions
+        if is_overview:
             return ResolvedQuery(
                 original_query=clean_query,
                 resolved_query=clean_query,
@@ -284,7 +410,23 @@ class ConversationQueryResolver:
                 formatted_history=formatted_history
             )
 
-        # 7. Default standalone query
+        # 7. Multilingual Fallback: If query contains Indic / Non-ASCII text or explicit non-English language
+        # and has no explicit documented medical analyte, route to SYMPTOM_TRIAGE or GENERAL_CONVERSATION
+        # so it is not erroneously rejected by extractive English document verification.
+        is_indic_text = any(ord(c) > 127 for c in clean_query)
+        if is_indic_text or (language and str(language).lower()[:2] != "en"):
+            return ResolvedQuery(
+                original_query=clean_query,
+                resolved_query=clean_query,
+                active_topic="symptom_triage",
+                is_follow_up=False,
+                is_overview=False,
+                intent=QueryIntent.SYMPTOM_TRIAGE,
+                keywords=["symptom", "triage", "illness", "multilingual"],
+                formatted_history=formatted_history
+            )
+
+        # 8. Default standalone query
         return ResolvedQuery(
             original_query=clean_query,
             resolved_query=clean_query,

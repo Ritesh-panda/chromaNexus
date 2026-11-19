@@ -34,12 +34,15 @@ class ClaimExtractor:
 
     DIAGNOSIS_PATTERNS = [
         r"\b(?:diagnosed\s+with|diagnosis\s+of|confirmed\s+case\s+of|suffers?\s+from|condition\s+of)\s+([a-zA-Z0-9\s\-]{3,40}?)(?=[,.;]|\band\b|\bwith\b|\Z)",
-        r"\b(?:you\s+have|patient\s+has)\s+([a-zA-Z0-9\s\-]{3,40}?\s+(?:diabetes|hypertension|disease|syndrome|carcinoma|infection|deficiency|failure|disorder|neuropathy|retinopathy|nephropathy))\b"
+        r"\b(?:you\s+have|patient\s+has)\s+([a-zA-Z0-9\s\-]{3,40}?\s+(?:diabetes|hypertension|disease|syndrome|carcinoma|infection|deficiency|failure|disorder|neuropathy|retinopathy|nephropathy))\b",
+        r"\b([a-zA-Z0-9\s\-]{3,40}?\s+(?:diabetes|mellitus|hypertension|hyperlipidemia|disease|syndrome|disorder))\s*[-–—:]\s*(?:diagnosed|documented|recorded|active)",
+        r"\b([a-zA-Z0-9\s\-]{3,40}?)\s+(?:was\s+diagnosed|diagnosed\s+on)\b"
     ]
 
     MEDICATION_INSTRUCTION_PATTERNS = [
-        r"\b(?:take|taking|start|stop|increase|decrease|prescribed|dosage\s+of)\s+([a-zA-Z0-9\s\-]{3,30}?\s+(?:\d+(?:\.\d+)?\s*(?:mg|mcg|units|ml|tablets?)|daily|twice\s+daily|bid|tid|prn))\b",
-        r"\b(?:should\s+take|increase\s+your|decrease\s+your|stop\s+taking|start\s+taking)\s+([a-zA-Z0-9\s\-]{3,40}?)(?=[,.;]|\Z)"
+        r"\b(?:take|taking|start|stop|increase|decrease|prescribed|prescription|dosage|dose|regimen)\b",
+        r"\b(?:metformin|amoxicillin|atorvastatin|lisinopril|levothyroxine|amlodipine|omeprazole|losartan|gabapentin|hydrochlorothiazide|insulin|aspirin)\b",
+        r"\b(?:tablets?|capsules?|mg\s+orally|twice\s+daily|once\s+daily|with\s+meals)\b"
     ]
 
     NEGATION_PATTERNS = [
@@ -82,33 +85,40 @@ class ClaimExtractor:
 
     def _decompose_sentences(self, text: str) -> List[str]:
         """
-        Splits text by sentence boundaries, but also decomposes compound clauses
+        Splits text by sentence boundaries, bullet points, and newlines, but also decomposes compound clauses
         joining supported factual claims with ungrounded medical claims.
         """
         split_sents = []
-        for s in re.split(r"(?<=[.!?])\s+|;\s*", text):
-            s = s.strip()
-            if not s:
+        # Pre-split on newlines and markdown list items so each distinct proposition is verified independently
+        lines = re.split(r"\r?\n+", text)
+        for line in lines:
+            line_clean = line.strip().lstrip("-*•> ").strip()
+            if not line_clean:
                 continue
 
-            # Split compound conjunctions where a secondary medical claim is appended
-            subparts = re.split(
-                r"(?<=,)\s+(?:and\s+you|and\s+the\s+patient|and\s+were|and\s+was|and\s+have|and\s+has|and\s+should|but\s+you|but\s+the\s+patient)\s+",
-                s,
-                flags=re.IGNORECASE
-            )
-            if len(subparts) > 1:
-                p0 = subparts[0].rstrip(",").strip()
-                if p0:
-                    split_sents.append(p0 + ".")
-                for sp in subparts[1:]:
-                    sp_clean = sp.rstrip(".!?").strip()
-                    if sp_clean:
-                        if not sp_clean.lower().startswith(("you", "the patient", "patient")):
-                            sp_clean = "You " + sp_clean
-                        split_sents.append(sp_clean + ".")
-            else:
-                split_sents.append(s)
+            for s in re.split(r"(?<=[.!?])\s+|;\s*", line_clean):
+                s = s.strip()
+                if not s:
+                    continue
+
+                # Split compound conjunctions where a secondary medical claim is appended
+                subparts = re.split(
+                    r"(?<=,)\s+(?:and\s+you|and\s+the\s+patient|and\s+were|and\s+was|and\s+have|and\s+has|and\s+should|but\s+you|but\s+the\s+patient)\s+",
+                    s,
+                    flags=re.IGNORECASE
+                )
+                if len(subparts) > 1:
+                    p0 = subparts[0].rstrip(",").strip()
+                    if p0:
+                        split_sents.append(p0 + ".")
+                    for sp in subparts[1:]:
+                        sp_clean = sp.rstrip(".!?").strip()
+                        if sp_clean:
+                            if not sp_clean.lower().startswith(("you", "the patient", "patient")):
+                                sp_clean = "You " + sp_clean
+                            split_sents.append(sp_clean + ".")
+                else:
+                    split_sents.append(s)
 
         return split_sents
 
@@ -118,7 +128,8 @@ class ClaimExtractor:
         cand_facilities: Set[str],
         cand_report_titles: Set[str]
     ) -> ClinicalClaim:
-        sent_lower = sent.lower()
+        clean_text = re.sub(r"[*_#`]", "", sent).strip()
+        sent_lower = clean_text.lower()
 
         # 1. Missing Data Check
         if any(re.search(pat, sent_lower) for pat in self.MISSING_DATA_PATTERNS):
@@ -128,22 +139,38 @@ class ClaimExtractor:
             )
 
         # 2. Medication Instruction Check
-        for pat in self.MEDICATION_INSTRUCTION_PATTERNS:
-            if re.search(pat, sent_lower):
-                return ClinicalClaim(
-                    text=sent,
-                    claim_type=ClaimType.MEDICATION_INSTRUCTION
-                )
+        has_drug = any(re.search(r"\b" + re.escape(d) + r"\b", sent_lower) for d in [
+            "metformin", "amoxicillin", "atorvastatin", "lisinopril", "levothyroxine",
+            "amlodipine", "omeprazole", "losartan", "gabapentin", "hydrochlorothiazide",
+            "insulin", "aspirin", "antibiotic", "statin"
+        ])
+        has_action = any(re.search(r"\b" + re.escape(a) + r"\b", sent_lower) for a in [
+            "take", "taking", "start", "stop", "increase", "decrease", "dose", "dosage", "prescribed", "modify", "adjust"
+        ])
+        is_generic_advisory = any(w in sent_lower for w in ["discuss", "consult", "doctor", "physician", "provider"])
+        if has_drug and has_action and not is_generic_advisory:
+            return ClinicalClaim(
+                text=sent,
+                claim_type=ClaimType.MEDICATION_INSTRUCTION
+            )
 
         # 3. Diagnosis Check
         for pat in self.DIAGNOSIS_PATTERNS:
             m_diag = re.search(pat, sent_lower)
             if m_diag:
-                diag_cand = m_diag.group(1).strip()
+                diag_cand = m_diag.group(1).strip().strip("*_ \t")
                 return ClinicalClaim(
                     text=sent,
                     claim_type=ClaimType.DIAGNOSIS,
                     analyte=diag_cand
+                )
+
+        for known_diag in ["type 2 diabetes", "diabetes mellitus", "diabetes", "hyperlipidemia", "hypertension"]:
+            if known_diag in sent_lower:
+                return ClinicalClaim(
+                    text=sent,
+                    claim_type=ClaimType.DIAGNOSIS,
+                    analyte=known_diag
                 )
 
         # 4. Dates & Years (Mask dates before extracting numeric lab values)
@@ -153,13 +180,18 @@ class ClaimExtractor:
         date_mask_pat = (
             r"\b(19\d\d|20\d\d)[-/](0?[1-9]|1[0-2])[-/](0?[1-9]|[12]\d|3[01])\b|"
             r"\b(0?[1-9]|1[0-2])[-/](0?[1-9]|[12]\d|3[01])[-/](19\d\d|20\d\d)\b|"
-            r"\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(?:0?[1-9]|[12]\d|3[01]),?\s+(?:19\d\d|20\d\d)\b"
+            r"\b(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+(?:0?[1-9]|[12]\d|3[01]),?\s+(?:19\d\d|20\d\d)\b|"
+            r"\b(?:0?[1-9]|[12]\d|3[01])\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*,?\s+(?:19\d\d|20\d\d)\b"
         )
         s_no_dates = re.sub(date_mask_pat, " ", sent, flags=re.IGNORECASE)
         s_no_years = re.sub(r"\b(19\d\d|20\d\d)\b", " ", s_no_dates)
 
         # 5. Extract Numbers
-        nums = re.findall(r"\b(?:\d+\.\d+|\d+)\b", s_no_years)
+        # Mask duration / frequency / non-clinical lifestyle units so they are not mistaken for lab measurements
+        duration_pat = r"\b(?:\d+(?:\s*-\s*\d+)?|\d+\.?\d*)\s*(?:minutes?|mins?|hours?|hrs?|seconds?|secs?|days?|weeks?|months?|years?|times?|steps?|sessions?|reps?|sets?)\b"
+        s_no_durations = re.sub(duration_pat, " ", s_no_years, flags=re.IGNORECASE)
+        s_no_ordinals = re.sub(r"\b(?:step|phase|section|option|tip|point|rule)\s+\d+\b", " ", s_no_durations, flags=re.IGNORECASE)
+        nums = re.findall(r"\b(?:\d+\.\d+|\d+)\b", s_no_ordinals)
 
         # 6. Extract Units
         unit_tokens = re.findall(r"[a-z0-9%\^/]+", sent_lower)
@@ -184,8 +216,17 @@ class ClaimExtractor:
         # Determine Claim Type
         if any(w in sent_lower for w in ["conflict", "conflicting", "discrepanc", "highest", "lowest", "peak", "trend", "increased", "decreased", "stable", "history"]):
             claim_type = ClaimType.TEMPORAL_MEASUREMENT
-        elif nums:
-            claim_type = ClaimType.NUMERICAL_LAB
+        elif nums and analyte_name and (unit_str or any(re.search(r"\b" + re.escape(w) + r"\b", sent_lower) for w in ["was", "is", "level", "reading", "result", "measured", "value", "recorded", "documented"])):
+            # Check if this sentence is purely general lifestyle/exercise advice rather than a patient lab measurement
+            is_lifestyle_advice = any(w in sent_lower for w in [
+                "exercise", "aerobic", "walking", "cycling", "swimming", "workout", "routine",
+                "diet", "carbohydrate", "hydration", "drink", "water", "sleep", "rest", "lifestyle",
+                "recommended", "aim for", "guidelines"
+            ]) and not any(w in sent_lower for w in ["your latest", "your recorded", "result was", "level was", "reading was"])
+            if is_lifestyle_advice:
+                claim_type = ClaimType.GENERAL_STATEMENT
+            else:
+                claim_type = ClaimType.NUMERICAL_LAB
         elif any(w in sent_lower for w in ["tear", "effusion", "mri", "x-ray", "ct", "ultrasound", "scan", "findings", "degeneration", "intact"]):
             claim_type = ClaimType.NARRATIVE_FINDING
         else:
@@ -230,6 +271,16 @@ class ClaimExtractor:
 
         # Multi-word aliases first
         common_analytes = [
+            ("non-hdl cholesterol", "Non-HDL Cholesterol"),
+            ("non-hdl", "Non-HDL Cholesterol"),
+            ("ldl cholesterol", "Low-Density Lipoprotein (LDL) Cholesterol, Calculated"),
+            ("ldl-c", "Low-Density Lipoprotein (LDL) Cholesterol, Calculated"),
+            ("ldl", "Low-Density Lipoprotein (LDL) Cholesterol, Calculated"),
+            ("hdl cholesterol", "High-Density Lipoprotein (HDL) Cholesterol"),
+            ("hdl-c", "High-Density Lipoprotein (HDL) Cholesterol"),
+            ("hdl", "High-Density Lipoprotein (HDL) Cholesterol"),
+            ("triglycerides", "Triglycerides, Serum"),
+            ("triglyceride", "Triglycerides, Serum"),
             ("total cholesterol", "Cholesterol, Total"),
             ("cholesterol", "Cholesterol, Total"),
             ("fasting blood sugar", "Glucose, Fasting Blood"),
@@ -305,4 +356,7 @@ class ClaimExtractor:
         # 3. Month Day, Year
         for m in re.finditer(r"\b(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\s+(0?[1-9]|[12]\d|3[01]),?\s+(19\d\d|20\d\d)\b", text, re.I):
             found.append((int(m.group(3)), cls.MONTH_NAMES[m.group(1).lower()], int(m.group(2))))
+        # 4. Day Month Year
+        for m in re.finditer(r"\b(0?[1-9]|[12]\d|3[01])\s+(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|jun(?:e)?|jul(?:y)?|aug(?:ust)?|sep(?:tember)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?),?\s+(19\d\d|20\d\d)\b", text, re.I):
+            found.append((int(m.group(3)), cls.MONTH_NAMES[m.group(2).lower()], int(m.group(1))))
         return found

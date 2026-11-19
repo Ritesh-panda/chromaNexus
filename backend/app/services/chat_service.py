@@ -12,7 +12,9 @@ def process_clinical_chat_query(
     patient: Patient,
     query: str,
     conversation_history: Optional[List[Dict[str, str]]] = None,
-    return_trend: bool = False
+    return_trend: bool = False,
+    language: Optional[str] = "en",
+    source: Optional[str] = "text"
 ):
     """
     Evaluates patient memory query against PostgresVectorStore and SQL relational tables using Hybrid RAG.
@@ -30,10 +32,20 @@ def process_clinical_chat_query(
     rag_response = pipeline.query(
         question=query,
         patient_id=patient.id,
-        conversation_history=conversation_history
+        conversation_history=conversation_history,
+        language=language,
+        source=source
     )
 
     if return_trend:
-        return rag_response.answer, rag_response.reasoning_type, rag_response.citations, rag_response.structured_trend
+        return (
+            rag_response.answer,
+            rag_response.reasoning_type,
+            rag_response.citations,
+            rag_response.structured_trend,
+            getattr(rag_response, 'is_emergency', False),
+            getattr(rag_response, 'emergency_type', None),
+            getattr(rag_response, 'follow_up_suggestions', [])
+        )
     return rag_response.answer, rag_response.reasoning_type, rag_response.citations
 

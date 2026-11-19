@@ -29,9 +29,12 @@ import {
   ShieldCheck,
   AlertCircle,
   Eye,
-  FolderLock
+  FolderLock,
+  Radio,
+  ExternalLink
 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { alertService, type HealthAlert } from '@/services/alert.service';
 
 export const DashboardPage: React.FC = () => {
   const { setUploadModalOpen } = useUI();
@@ -43,29 +46,34 @@ export const DashboardPage: React.FC = () => {
   const [diseases, setDiseases] = useState<Disease[]>([]);
   const [medications, setMedications] = useState<Medication[]>([]);
   const [timelineEvents, setTimelineEvents] = useState<TimelineEvent[]>([]);
+  const [healthAlerts, setHealthAlerts] = useState<HealthAlert[]>([]);
 
   useEffect(() => {
     let isMounted = true;
     const loadDashboardData = async () => {
       try {
-        const [reps, dis, meds, timeline] = await Promise.all([
+        const [reps, dis, meds, timeline, alerts] = await Promise.all([
           reportService.getReports(),
           patientService.getDiagnoses(),
           patientService.getMedications(),
           timelineService.getTimelineEvents(),
+          alertService.getHealthAlerts()
         ]);
+        const isDemo = user?.email === 'alex.vance@example.com';
         if (isMounted) {
-          setReports(reps && reps.length > 0 ? reps : MOCK_REPORTS);
-          setDiseases(dis && dis.length > 0 ? dis : MOCK_DISEASES);
-          setMedications(meds && meds.length > 0 ? meds : MOCK_MEDICATIONS);
-          setTimelineEvents(timeline && timeline.length > 0 ? timeline : MOCK_TIMELINE_EVENTS);
+          setReports(isDemo ? (reps && reps.length > 0 ? reps : MOCK_REPORTS) : (reps || []));
+          setDiseases(isDemo ? (dis && dis.length > 0 ? dis : MOCK_DISEASES) : (dis || []));
+          setMedications(isDemo ? (meds && meds.length > 0 ? meds : MOCK_MEDICATIONS) : (meds || []));
+          setTimelineEvents(isDemo ? (timeline && timeline.length > 0 ? timeline : MOCK_TIMELINE_EVENTS) : (timeline || []));
+          setHealthAlerts(alerts || []);
         }
       } catch {
+        const isDemo = user?.email === 'alex.vance@example.com';
         if (isMounted) {
-          setReports(MOCK_REPORTS);
-          setDiseases(MOCK_DISEASES);
-          setMedications(MOCK_MEDICATIONS);
-          setTimelineEvents(MOCK_TIMELINE_EVENTS);
+          setReports(isDemo ? MOCK_REPORTS : []);
+          setDiseases(isDemo ? MOCK_DISEASES : []);
+          setMedications(isDemo ? MOCK_MEDICATIONS : []);
+          setTimelineEvents(isDemo ? MOCK_TIMELINE_EVENTS : []);
         }
       }
     };
@@ -73,8 +81,47 @@ export const DashboardPage: React.FC = () => {
     return () => { isMounted = false; };
   }, []);
 
-  const activeDiseases = diseases.filter(d => d.status === 'active' || d.status === 'chronic');
-  const activeMeds = medications.filter(m => m.status === 'active');
+  const dedupedDiseases = React.useMemo(() => {
+    const map = new Map<string, Disease>();
+    for (const d of diseases) {
+      let key = d.name.toLowerCase().trim();
+      if (key.includes('type 2 diabetes') || key === 'diabetes') {
+        key = 'type 2 diabetes mellitus';
+      }
+      if (!map.has(key)) {
+        map.set(key, d);
+      } else {
+        if (!map.get(key)!.icdCode && d.icdCode) {
+          map.set(key, d);
+        }
+      }
+    }
+    return Array.from(map.values());
+  }, [diseases]);
+
+  const activeDiseases = React.useMemo(() => {
+    return dedupedDiseases.filter(d => d.status === 'active' || d.status === 'chronic');
+  }, [dedupedDiseases]);
+
+  const dedupedMedications = React.useMemo(() => {
+    const map = new Map<string, Medication>();
+    for (const m of medications) {
+      const key = m.name.toLowerCase().trim();
+      if (!map.has(key)) {
+        map.set(key, m);
+      } else {
+        if ((m.dosage?.length || 0) > (map.get(key)!.dosage?.length || 0)) {
+          map.set(key, m);
+        }
+      }
+    }
+    return Array.from(map.values());
+  }, [medications]);
+
+  const activeMeds = React.useMemo(() => {
+    return dedupedMedications.filter(m => m.status === 'active');
+  }, [dedupedMedications]);
+
   const recentReports = reports.slice(0, 4);
   const recentTimeline = timelineEvents.slice(0, 3);
 
@@ -171,11 +218,23 @@ export const DashboardPage: React.FC = () => {
               {activeDiseases.length === 0 ? (
                 <span className="text-[#9CA3AF]">None active</span>
               ) : (
-                activeDiseases.slice(0, 2).map((d) => (
-                  <span key={d.id} className="font-semibold text-[#1F2937] dark:text-[#F3F4F6] truncate">
-                    {d.name.split(' ')[0]}
-                  </span>
-                ))
+                activeDiseases.slice(0, 2).map((d) => {
+                  let shortName = d.name;
+                  if (shortName.toLowerCase().includes('type 2 diabetes')) {
+                    shortName = 'Type 2 Diabetes';
+                  } else if (shortName.length > 18) {
+                    shortName = shortName.slice(0, 16) + '...';
+                  }
+                  return (
+                    <span
+                      key={d.id}
+                      title={d.name}
+                      className="font-medium text-[#1F2937] dark:text-[#F3F4F6] bg-white dark:bg-[#1B1E23] px-2 py-0.5 rounded-md border border-[#E5E7EB] dark:border-[#2F3540] text-[11px]"
+                    >
+                      {shortName}
+                    </span>
+                  );
+                })
               )}
               {activeDiseases.length > 2 && (
                 <Badge variant="secondary" className="text-[10px] py-0 px-1.5">+{activeDiseases.length - 2}</Badge>
@@ -229,6 +288,18 @@ export const DashboardPage: React.FC = () => {
               </Button>
             </div>
 
+            {recentReports.length === 0 ? (
+              <div className="py-8 text-center space-y-2">
+                <div className="w-10 h-10 mx-auto rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+                  <FileText className="w-5 h-5" />
+                </div>
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">No medical records uploaded yet</p>
+                <p className="text-[11px] text-slate-400 max-w-xs mx-auto">Upload your first prescription or laboratory report to automatically generate your timeline.</p>
+                <Button variant="secondary" size="sm" onClick={() => setUploadModalOpen(true)} leftIcon={<Upload className="w-3.5 h-3.5" />}>
+                  Upload Document
+                </Button>
+              </div>
+            ) : (
             <div className="divide-y divide-[#E5E7EB]/70 dark:divide-[#2F3540]">
               {recentReports.map((report) => (
                 <div
@@ -269,6 +340,7 @@ export const DashboardPage: React.FC = () => {
                 </div>
               ))}
             </div>
+            )}
           </Card>
         </div>
 
@@ -286,6 +358,11 @@ export const DashboardPage: React.FC = () => {
               <Badge variant="success">{activeMeds.length} Active Rx</Badge>
             </div>
 
+            {activeMeds.length === 0 ? (
+              <div className="py-6 text-center text-xs text-slate-400">
+                No active medications recorded yet. Prescriptions uploaded to your vault will automatically appear here.
+              </div>
+            ) : (
             <div className="space-y-2.5">
               {activeMeds.slice(0, 4).map((med) => (
                 <div
@@ -306,6 +383,7 @@ export const DashboardPage: React.FC = () => {
                 </div>
               ))}
             </div>
+            )}
           </Card>
 
           {/* Clinical Workflows & Shortcuts */}
@@ -365,6 +443,57 @@ export const DashboardPage: React.FC = () => {
                 </span>
                 <ArrowRight className="w-4 h-4 text-[#9CA3AF] group-hover:text-[#10B981] group-hover:translate-x-0.5 transition-all" />
               </button>
+            </div>
+          </Card>
+
+          {/* Live Public Health Advisories Card (MoHFW & WHO) */}
+          <Card className="p-5 sm:p-6 border-[#E5E7EB] dark:border-[#2F3540] space-y-4 bg-white dark:bg-[#1B1E23]">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E5E7EB]/80 dark:border-[#2F3540]">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Radio className="w-4 h-4 text-emerald-500 animate-pulse" /> Live Health Advisories
+                </CardTitle>
+                <CardDescription>Verified bulletins from WHO & MoHFW</CardDescription>
+              </div>
+              <Badge variant="success" className="text-[10px]">Real-Time RSS</Badge>
+            </div>
+
+            <div className="space-y-2.5">
+              {healthAlerts.length === 0 ? (
+                <div className="py-4 text-center text-xs text-[#9CA3AF]">
+                  Fetching latest public health bulletins...
+                </div>
+              ) : (
+                healthAlerts.slice(0, 3).map((al) => (
+                  <div
+                    key={al.id}
+                    className="p-3 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E]/60 border border-[#E5E7EB] dark:border-[#2F3540] space-y-1.5"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-semibold text-xs text-[#1F2937] dark:text-[#F3F4F6] line-clamp-1">
+                        {al.title}
+                      </span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 font-medium shrink-0">
+                        {al.category.split(' ')[0]}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] line-clamp-2 leading-relaxed">
+                      {al.summary}
+                    </p>
+                    <div className="flex items-center justify-between pt-1 text-[10px] text-[#9CA3AF]">
+                      <span>{al.source}</span>
+                      <a
+                        href={al.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-0.5 font-medium"
+                      >
+                        Read Bulletin <ExternalLink className="w-2.5 h-2.5" />
+                      </a>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </Card>
         </div>

@@ -13,15 +13,20 @@ import { LoginPage } from '@/pages/Auth/LoginPage';
 import { SignupPage } from '@/pages/Auth/SignupPage';
 import { ForgotPasswordPage } from '@/pages/Auth/ForgotPasswordPage';
 import { OTPVerificationPage } from '@/pages/Auth/OTPVerificationPage';
+import { OnboardingPage } from '@/pages/Auth/OnboardingPage';
 
 import { DashboardPage } from '@/pages/Dashboard/DashboardPage';
 import { VaultPage } from '@/pages/Vault/VaultPage';
 import { ReportsPage } from '@/pages/Reports/ReportsPage';
 import { TimelinePage } from '@/pages/Timeline/TimelinePage';
 import { AIChatPage } from '@/pages/Chat/AIChatPage';
+import { VoiceAssistantPage } from '@/pages/VoiceAssistant/VoiceAssistantPage';
+import { HospitalFinderPage } from '@/pages/HospitalFinder/HospitalFinderPage';
 import { DoctorSummaryPage } from '@/pages/DoctorSummary/DoctorSummaryPage';
+import { KnowledgeGraphPage } from '@/pages/KnowledgeGraph/KnowledgeGraphPage';
 import { ProfilePage } from '@/pages/Profile/ProfilePage';
 import { SettingsPage } from '@/pages/Settings/SettingsPage';
+import { PhysicianViewPage } from '@/pages/PhysicianView/PhysicianViewPage';
 import { NotFoundPage } from '@/pages/NotFound/NotFoundPage';
 
 export const AppRoutes: React.FC = () => {
@@ -31,6 +36,9 @@ export const AppRoutes: React.FC = () => {
       <Route element={<LandingLayout />}>
         <Route path="/" element={<LandingPage />} />
       </Route>
+
+      {/* Public Physician Share Route */}
+      <Route path="/physician-view/:shareToken" element={<PhysicianViewPage />} />
 
       {/* Auth Routes */}
       <Route element={<AuthLayout />}>
@@ -42,12 +50,16 @@ export const AppRoutes: React.FC = () => {
 
       {/* Authenticated Dashboard Routes */}
       <Route element={<ProtectedRoute />}>
+        <Route path="/onboarding" element={<OnboardingPage />} />
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/vault" element={<VaultPage />} />
           <Route path="/reports" element={<ReportsPage />} />
           <Route path="/timeline" element={<TimelinePage />} />
+          <Route path="/graph" element={<KnowledgeGraphPage />} />
           <Route path="/chat" element={<AIChatPage />} />
+          <Route path="/voice" element={<VoiceAssistantPage />} />
+          <Route path="/hospitals" element={<HospitalFinderPage />} />
           <Route path="/doctor-summary" element={<DoctorSummaryPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />

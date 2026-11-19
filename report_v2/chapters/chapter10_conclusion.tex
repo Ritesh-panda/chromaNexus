@@ -1,0 +1,71 @@
+\chapter{Conclusion and Future Work}
+\label{chap:conclusion}
+
+This chapter concludes the capstone report by summarizing the core contributions delivered by ChronaNexus, detailing current operational limitations, and presenting an actionable engineering roadmap for future clinical expansion.
+
+\section{Conclusion}
+\label{sec:conclusion_summary}
+
+The ChronaNexus project demonstrates that the enduring challenges of longitudinal clinical document fragmentation, generative hallucination, temporal ordering blindness, and regional language exclusion can be successfully resolved through an integrated, privacy-preserving software platform. By unifying vectorized PDF table extraction, standardized ontological mapping (LOINC, RxNorm, ICD-10), dual-channel retrieval (deterministic SQL analytics coupled with dense-lexical hybrid RAG), and asymmetric two-tier fact verification, ChronaNexus establishes an auditable paradigm for healthcare artificial intelligence.
+
+The platform was systematically engineered, evaluated, and validated against modern academic software standards:
+\begin{enumerate}
+    \item \textbf{Longitudinal Patient Intelligence}: Transformed episodic PDF reports spanning 2019 to 2026 into a continuous chronological timeline, equipped with automated multi-facility laboratory discrepancy flags ($\delta_{\text{facility}} > 0.20$).
+    \item \textbf{Asymmetric Evidence Grounding}: Enforced Tier-1 deterministic domain guardrails with absolute veto authority (UCUM stoichiometric conversions, NegEx negation boundaries, epistemic modality filtering), paired with Tier-2 neural bi-encoder paraphrasing ($s \ge 0.58 \land o \ge 0.10$). This achieved an overall verification accuracy of \textbf{86.00\%} ($F_1 = 0.8727$) on the 500-claim benchmark and \textbf{100.0\% citation attribution precision} on evaluated context cases.
+    \item \textbf{Linguistic Equity via Phonetic Isomorphism}: Exploited the structural Unicode code point isomorphism between Eastern Indo-Aryan scripts ($\Delta_{\text{Unicode}} = -0\text{x}0180$), unlocking authentic, high-cadence Odia voice consultations through Bengali neural acoustic models with zero GPU retraining.
+    \item \textbf{Emergency Triage \& Geolocation}: Built-in 108 ambulance dispatch integration paired with OpenStreetMap Overpass API discovery, locating nearby healthcare facilities within 10~km ranked by Haversine distance.
+    \item \textbf{Exhaustive Verification \& Safety Isolation}: Verified across \textbf{190 automated unit and integration tests distributed across 12 pytest suites} with a 100\% pass rate, protected by an active database mutation interceptor that blocks test pollution of live clinical state.
+\end{enumerate}
+
+ChronaNexus fulfills its core technical mandate: transitioning electronic health records from static, fragmented document repositories into active, auditable, and life-saving clinical intelligence.
+
+
+\section{Limitations}
+\label{sec:limitations}
+
+In maintaining scientific and engineering transparency, several architectural and empirical limitations must be acknowledged:
+\begin{enumerate}
+    \item \textbf{Document Digitization Quality}: The PyMuPDF vector cell tracing engine delivers near-perfect extraction on born-digital and high-resolution scanned PDFs; however, severely crumpled, shadowed, or skewed mobile camera captures require upstream geometric deskewing and pre-processing pipelines.
+    \item \textbf{Synthetic Cohort Evaluation}: The 500-claim verification benchmark and longitudinal trajectories were synthesized based on clinical practice patterns. While this allowed controlled evaluation of multi-encounter chronic disease paths, prospective deployment requires formal hospital clinical trials governed by an Institutional Review Board (IRB).
+    \item \textbf{Benchmark Leakage in Synthetic NLI}: As identified in Chapter~\ref{chap:ml_data}, simple five-rule regular expressions can achieve 100\% accuracy on synthetic claim templates without examining patient data, highlighting the inherent leakage vulnerability of synthetic benchmarks.
+    \item \textbf{Lack of Continuous Telemetry}: The current platform ingests episodic lab reports and clinical encounter notes; real-time continuous physiological data streams from wearable IoT sensors (such as continuous glucose monitors) are currently designed but not yet interfaced.
+\end{enumerate}
+
+
+\section{Future Work and Engineering Roadmap}
+\label{sec:future_work}
+
+To advance ChronaNexus from a validated capstone platform into an enterprise-grade clinical ecosystem, Table~\ref{tab:10_1_future} outlines the prioritized engineering roadmap.
+
+\small
+\begin{longtable}{@{}p{0.24\linewidth} p{0.44\linewidth} p{0.22\linewidth}@{}}
+\caption{Planned future research and engineering roadmap}\label{tab:10_1_future} \\
+\toprule
+\textbf{Technical Domain} & \textbf{Proposed Engineering Implementation} & \textbf{Standards / Foundation} \\
+\midrule
+\endfirsthead
+\toprule
+\multicolumn{3}{c}{\small\textit{Future engineering roadmap (Continued)}} \\[4pt]
+\midrule
+\textbf{Technical Domain} & \textbf{Proposed Engineering Implementation} & \textbf{Standards / Foundation} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\footnotesize\textit{Continued on next page...}} \\
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+\textbf{ABDM \& FHIR Gateway} & Implement HL7/FHIR R4 REST adapters to connect directly with Ayushman Bharat Digital Mission (ABDM) Milestone M1--M3 health information exchanges. & HL7 FHIR v4.0.1, ABDM Sandboxing \cite{nha2022abdm}. \\
+\textbf{IoMT Wearable Ingestion} & Connect Bluetooth Low Energy (BLE) continuous glucose monitors (CGM) and pulse oximeters directly into the longitudinal timeline engine. & IEEE 11073 Point-of-Care Medical Device Communication. \\
+\textbf{On-Device GGUF Quantization} & Quantize clinical small language models (e.g., Llama-3.2-3B via llama.cpp 4-bit GGUF) for 100\% offline edge execution on rural clinic laptops. & OnnxRuntime, llama.cpp edge optimization. \\
+\textbf{Automated DDI Screening} & Integrate full NLM RxNav pharmacology databases to execute automated drug-drug interaction (DDI) alerts during prescription ingestion. & RxNorm API, DailyMed contraindication rules. \\
+\textbf{Mobile Camera Scanner} & Build a lightweight React Native client utilizing edge OpenCV for real-time document boundary detection, perspective correction, and contrast enhancement. & Mobile health edge vision architectures. \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+
+\section{Chapter Summary}
+
+This concluding chapter synthesized the technical deliverables, empirical results, and architectural contributions of the ChronaNexus platform. The system successfully demonstrates that auditable claim verification, dual-channel hybrid retrieval, and Indic phonetic speech synthesis can be delivered within a privacy-first, local-capable footprint. With a clearly defined path toward FHIR R4 interoperability, continuous IoMT wearable integration, and on-device quantized inference, ChronaNexus establishes a strong foundation for next-generation clinical decision-support technologies.

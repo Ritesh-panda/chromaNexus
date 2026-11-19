@@ -1,0 +1,127 @@
+\chapter{Cost and Sizing Analysis}
+\label{chap:cost_sizing}
+
+This chapter details the software licensing evaluation, cloud infrastructure sizing, and local clinic edge deployment economics for ChronaNexus.
+
+\section{Software Components and Licensing Cost}
+\label{sec:software_cost}
+
+A foundational engineering design principle of ChronaNexus is ensuring total economic accessibility across resource-constrained clinical settings. All frameworks, linguistic parsers, vector engines, relational databases, and speech synthesis libraries integrated within the platform are open-source and free of commercial licensing royalties.
+
+Table~\ref{tab:8_1_software} itemizes the core software components, licensing models, and incurred acquisition costs.
+
+\small
+\begin{longtable}{@{}p{0.24\linewidth} p{0.32\linewidth} p{0.20\linewidth} p{0.14\linewidth}@{}}
+\caption{Software components, licensing, and acquisition costs}\label{tab:8_1_software} \\
+\toprule
+\textbf{Subsystem Layer} & \textbf{Specific Software Package} & \textbf{License Type} & \textbf{Cost (INR)} \\
+\midrule
+\endfirsthead
+\toprule
+\multicolumn{4}{c}{\small\textit{Software components and cost (Continued)}} \\[4pt]
+\midrule
+\textbf{Subsystem Layer} & \textbf{Specific Software Package} & \textbf{License Type} & \textbf{Cost (INR)} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{4}{r}{\footnotesize\textit{Continued on next page...}} \\
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+\textbf{Frontend Client} & React 19, Vite 6, Tailwind CSS v4 & MIT License & INR~0 \\
+\textbf{UI Components} & Lucide React, Framer Motion, Recharts & MIT License & INR~0 \\
+\textbf{Backend Gateway} & FastAPI 0.115, Uvicorn, Pydantic v2 & MIT / BSD & INR~0 \\
+\textbf{Relational Database} & SQLite 3 (ACID), SQLAlchemy 2.0 & Public Domain / MIT & INR~0 \\
+\textbf{Vector Indexing} & ChromaDB 0.5.5, FastEmbed (ONNX) & Apache 2.0 & INR~0 \\
+\textbf{Dense Embeddings} & \texttt{BAAI/bge-small-en-v1.5} (384 dim) & Apache 2.0 & INR~0 \\
+\textbf{Document Extraction} & PyMuPDF (\texttt{fitz} vector parser) & AGPL v3 / Open Source & INR~0 \\
+\textbf{Clinical Reasoning} & Groq API (Free Tier) / Local Ollama & Community / MIT & INR~0 \\
+\textbf{Speech Synthesis} & Microsoft Edge Neural TTS (\texttt{edge-tts}) & MIT License & INR~0 \\
+\textbf{Geolocation Engine} & OpenStreetMap Overpass API & ODbL License & INR~0 \\
+\midrule
+\textbf{Total Licensing Cost} & \textbf{Complete System Core} & \textbf{100\% Open Source} & \textbf{INR~0} \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+
+\section{Production Cloud Infrastructure Sizing}
+\label{sec:cloud_sizing}
+
+To evaluate enterprise deployment feasibility for a regional healthcare provider serving 10,000 active patients with multi-year longitudinal health records, a cloud infrastructure capacity plan was modeled.
+
+Table~\ref{tab:8_2_cloud} presents the cloud resource specifications, storage capacities, and estimated monthly operating costs.
+
+\small
+\begin{longtable}{@{}p{0.28\linewidth} p{0.44\linewidth} p{0.18\linewidth}@{}}
+\caption{Planned production cloud infrastructure sizing (10,000 active patients)}\label{tab:8_2_cloud} \\
+\toprule
+\textbf{Infrastructure Component} & \textbf{Sizing Specification} & \textbf{Monthly Cost (INR)} \\
+\midrule
+\endfirsthead
+\toprule
+\multicolumn{3}{c}{\small\textit{Production cloud infrastructure sizing (Continued)}} \\[4pt]
+\midrule
+\textbf{Infrastructure Component} & \textbf{Sizing Specification} & \textbf{Monthly Cost (INR)} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\footnotesize\textit{Continued on next page...}} \\
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+\textbf{API Application Server} & 4 vCPU, 16 GB RAM (Linux Container) & INR~3,200 \\
+\textbf{Relational Database} & Managed PostgreSQL 17 (2 vCPU, 8 GB RAM, 100 GB SSD) & INR~4,500 \\
+\textbf{Vector Database Store} & Persistent ChromaDB Volume (50 GB SSD) & INR~1,200 \\
+\textbf{Encrypted Blob Storage} & S3-Compatible Storage (250 GB Encrypted) & INR~800 \\
+\textbf{SSL / Reverse Proxy} & Cloudflare Edge Tunnel & INR~0 \\
+\midrule
+\textbf{Total Monthly Cost} & \textbf{Enterprise Cloud Deployment} & \textbf{INR~9,700 / month} \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+
+\section{Local Clinic Edge Deployment Footprint}
+\label{sec:edge_sizing}
+
+In rural primary health centers (PHCs) with intermittent internet connectivity, ChronaNexus can operate as a fully self-contained edge node on commodity clinic desktop hardware with zero recurring cloud expenses.
+
+Table~\ref{tab:8_3_edge} details the edge hardware requirements and operational resource footprint.
+
+\small
+\begin{longtable}{@{}p{0.25\linewidth} p{0.35\linewidth} p{0.30\linewidth}@{}}
+\caption{Local clinic edge hardware requirements and runtime footprint}\label{tab:8_3_edge} \\
+\toprule
+\textbf{Hardware Resource} & \textbf{Minimum Specification} & \textbf{Observed Runtime Utilization} \\
+\midrule
+\endfirsthead
+\toprule
+\multicolumn{3}{c}{\small\textit{Local clinic edge requirements (Continued)}} \\[4pt]
+\midrule
+\textbf{Hardware Resource} & \textbf{Minimum Specification} & \textbf{Observed Runtime Utilization} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{\footnotesize\textit{Continued on next page...}} \\
+\bottomrule
+\endfoot
+\bottomrule
+\endlastfoot
+\textbf{Processor (CPU)} & Quad-Core x86-64 (Intel Core i3 / i5) & 15\%--25\% during vector query \\
+\textbf{System Memory (RAM)} & 8 GB Total System RAM & $< 3.2$~GB peak resident memory \\
+\textbf{Disk Storage} & 256 GB SATA / NVMe SSD & $< 1.8$~GB (weights, DB, vectors) \\
+\textbf{Graphics (GPU)} & None (CPU inference via ONNX) & Not required \\
+\textbf{Network Connection} & Local LAN (Offline capable) & 0 kbps for local SLM \\
+\midrule
+\textbf{Monthly Hosting Cost} & \textbf{On-Premise Clinic Deployment} & \textbf{INR~0 / month} \\
+\bottomrule
+\end{longtable}
+\normalsize
+
+
+\section{Chapter Summary}
+
+This chapter demonstrated the economic viability of ChronaNexus. Built entirely upon permissively licensed open-source technologies, the platform incurs zero initial software licensing expenditures. For regional institutional deployment, enterprise cloud infrastructure is estimated at an affordable INR~9,700 per month for 10,000 active patients. Furthermore, for rural primary healthcare centers, ChronaNexus operates autonomously on standard edge clinic hardware with zero recurring hosting costs.

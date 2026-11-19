@@ -21,7 +21,7 @@ dist-ssr
 *.suo
 *.ntvs*
 *.njsproj
-*.sln
+*.sln m
 *.sw?
 
 # Python
@@ -45,4 +45,24 @@ tests/benchmarks/exp_chroma_data/
 
 # Local third-party open-source reference repositories
 /open-source-references/
+
+# Unpublished Academic Research Paper & Conference Manuscripts (Protects against Turnitin / iThenticate indexing)
+research/
+
+# Cloudflare Tunnel Binary & Ephemeral Session URLs
+cloudflared.exe
+TUNNEL_PUBLIC_URL.txt
+
+# LaTeX Build Artifacts & Compiler Caches
+*.aux
+*.bbl
+*.blg
+*.lof
+*.lot
+*.out
+*.toc
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+
 

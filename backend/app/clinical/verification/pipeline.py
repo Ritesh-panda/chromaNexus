@@ -82,9 +82,14 @@ class EvidenceGroundingPipeline:
             is_abstained=is_abstained
         )
 
-        # If all citations were pruned and answer has ungrounded assertions, abstain (unless conflicting evidence is surfaced)
+        # If all citations were pruned and answer has unsupported assertions, abstain (unless conflicting evidence is surfaced)
         if has_initial_citations and not final_citations and not is_abstained and not has_conflicts:
-            if not any(w in verified_text.lower() for w in ["no clinical documentation", "not found", "no records"]):
+            has_unsupported_specific_claims = any(
+                c.claim_type in [ClaimType.NUMERICAL_LAB, ClaimType.TEMPORAL_MEASUREMENT, ClaimType.DIAGNOSIS, ClaimType.MEDICATION_INSTRUCTION]
+                and c.status != ClaimVerificationStatus.SUPPORTED
+                for c in verified_claims
+            )
+            if has_unsupported_specific_claims and not any(w in verified_text.lower() for w in ["no clinical documentation", "not found", "no records"]):
                 verified_text = "No verified clinical records were found to corroborate this statement."
                 is_abstained = True
 

@@ -56,6 +56,8 @@ class StructuredTrendSchema(BaseModel):
 
 class MessageCreate(BaseModel):
     text: str
+    language: Optional[str] = "en"
+    source: Optional[str] = "text"
 
 
 class MessageResponse(BaseModel):
@@ -66,6 +68,9 @@ class MessageResponse(BaseModel):
     reasoningType: Optional[str] = "fact"
     citations: Optional[List[CitationSchema]] = Field(default_factory=list)
     structuredTrend: Optional[StructuredTrendSchema] = None
+    isEmergency: Optional[bool] = False
+    emergencyType: Optional[str] = None
+    followUpSuggestions: Optional[List[str]] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
 

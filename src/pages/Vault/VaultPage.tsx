@@ -5,6 +5,7 @@ import { Search } from '@/components/ui/Search';
 import { ReportCard } from '@/components/cards/ReportCard';
 import { Modal } from '@/components/ui/Modal';
 import { useUI } from '@/contexts/UIContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { reportService } from '@/services/report.service';
 import { MOCK_REPORTS } from '@/constants/mockData';
 import type { MedicalReport } from '@/types';
@@ -24,11 +25,14 @@ import {
   AlertTriangle,
   RotateCcw,
   Sparkles,
-  SearchX
+  SearchX,
+  ExternalLink
 } from 'lucide-react';
 
 export const VaultPage: React.FC = () => {
   const { setUploadModalOpen, addToast } = useUI();
+  const { user } = useAuth();
+  const [allReports, setAllReports] = useState<MedicalReport[]>([]);
   const [reports, setReports] = useState<MedicalReport[]>([]);
   const [loading, setLoading] = useState(true);
   const [facilities, setFacilities] = useState<string[]>([]);
@@ -44,7 +48,18 @@ export const VaultPage: React.FC = () => {
   const [inspectReport, setInspectReport] = useState<MedicalReport | null>(null);
   const [inspectionTab, setInspectionTab] = useState<'overview' | 'extracted' | 'linked' | 'raw'>('overview');
 
-  // Load available facilities
+  // Load available facilities and master reports list for vault metrics
+  const fetchAllVaultReports = async () => {
+    try {
+      const data = await reportService.getReports();
+      const isDemo = user?.email === 'alex.vance@example.com';
+      setAllReports(isDemo ? (data && data.length > 0 ? data : MOCK_REPORTS) : (data || []));
+    } catch {
+      const isDemo = user?.email === 'alex.vance@example.com';
+      setAllReports(isDemo ? MOCK_REPORTS : []);
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
     reportService.getFacilities().then((facs) => {
@@ -52,6 +67,7 @@ export const VaultPage: React.FC = () => {
         setFacilities(facs);
       }
     });
+    fetchAllVaultReports();
     return () => { isMounted = false; };
   }, []);
 
@@ -69,9 +85,11 @@ export const VaultPage: React.FC = () => {
         sortBy,
         sortOrder,
       });
-      setReports(data && data.length > 0 ? data : MOCK_REPORTS);
+      const isDemo = user?.email === 'alex.vance@example.com';
+      setReports(isDemo ? (data && data.length > 0 ? data : MOCK_REPORTS) : (data || []));
     } catch {
-      setReports(MOCK_REPORTS);
+      const isDemo = user?.email === 'alex.vance@example.com';
+      setReports(isDemo ? MOCK_REPORTS : []);
     } finally {
       setLoading(false);
     }
@@ -81,14 +99,14 @@ export const VaultPage: React.FC = () => {
     fetchVaultReports();
   }, [selectedCategory, selectedFacility, selectedStatus, sortBy, sortOrder, startDate, endDate, searchQuery]);
 
-  // Compute category counts
+  // Compute category counts based on full vault catalog
   const categories = useMemo(() => [
-    { id: 'all', label: 'All Documents', count: reports.length },
-    { id: 'blood_report', label: 'Blood Reports', count: reports.filter((r) => r.category === 'blood_report').length },
-    { id: 'prescription', label: 'Prescriptions', count: reports.filter((r) => r.category === 'prescription').length },
-    { id: 'mri', label: 'Imaging / MRI', count: reports.filter((r) => r.category === 'mri' || r.category === 'x_ray' || r.category === 'ct_scan').length },
-    { id: 'discharge_summary', label: 'Discharge Summaries', count: reports.filter((r) => r.category === 'discharge_summary').length },
-  ], [reports]);
+    { id: 'all', label: 'All Documents', count: allReports.length },
+    { id: 'blood_report', label: 'Blood Reports', count: allReports.filter((r) => r.category === 'blood_report').length },
+    { id: 'prescription', label: 'Prescriptions', count: allReports.filter((r) => r.category === 'prescription').length },
+    { id: 'mri', label: 'Imaging / MRI', count: allReports.filter((r) => r.category === 'mri' || r.category === 'x_ray' || r.category === 'ct_scan').length },
+    { id: 'discharge_summary', label: 'Discharge Summaries', count: allReports.filter((r) => r.category === 'discharge_summary').length },
+  ], [allReports]);
 
   const handleDelete = async (id: string) => {
     try {
@@ -97,6 +115,7 @@ export const VaultPage: React.FC = () => {
       // Graceful local deletion fallback
     }
     setReports((prev) => prev.filter((r) => r.id !== id));
+    setAllReports((prev) => prev.filter((r) => r.id !== id));
     setInspectReport(null);
     addToast({
       type: 'info',
@@ -159,22 +178,23 @@ export const VaultPage: React.FC = () => {
 
       {/* Storage & Index Summary Strip */}
       {(() => {
-        const totalIndexedBytes = reports.reduce((acc, r) => acc + (r.fileSize || 0), 0);
+        const sourceForStats = allReports.length > 0 ? allReports : reports;
+        const totalIndexedBytes = sourceForStats.reduce((acc, r) => acc + (r.fileSize || 0), 0);
         const formattedIndexedSize = totalIndexedBytes > 0
           ? totalIndexedBytes >= 1024 * 1024
             ? `${(totalIndexedBytes / (1024 * 1024)).toFixed(1)} MB`
             : `${(totalIndexedBytes / 1024).toFixed(0)} KB`
           : '0 KB';
-        const completedCount = reports.filter((r) => r.status === 'completed').length;
-        const processingCount = reports.filter((r) => r.status === 'processing').length;
-        const failedCount = reports.filter((r) => r.status === 'failed').length;
+        const completedCount = sourceForStats.filter((r) => r.status === 'completed').length;
+        const processingCount = sourceForStats.filter((r) => r.status === 'processing').length;
+        const failedCount = sourceForStats.filter((r) => r.status === 'failed').length;
 
         return (
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div className="p-4 rounded-2xl bg-white dark:bg-[#1B1E23] border border-[#E5E7EB] dark:border-[#2F3540] shadow-[0_1px_2px_0_rgba(0,0,0,0.02)] flex items-center justify-between">
               <div>
                 <span className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF]">Indexed Documents</span>
-                <p className="text-xl font-semibold text-[#1F2937] dark:text-[#F3F4F6] tabular-nums">{reports.length} records</p>
+                <p className="text-xl font-semibold text-[#1F2937] dark:text-[#F3F4F6] tabular-nums">{sourceForStats.length} records</p>
               </div>
               <div className="p-2.5 rounded-xl bg-[#FAF8F5] dark:bg-[#23272E] text-[#10B981]">
                 <FileText className="w-4 h-4" />
@@ -628,6 +648,14 @@ export const VaultPage: React.FC = () => {
                 Delete
               </Button>
               <div className="flex items-center space-x-2">
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => reportService.openDocument(inspectReport.id)}
+                  leftIcon={<ExternalLink className="w-3.5 h-3.5 text-[#10B981]" />}
+                >
+                  View Original PDF
+                </Button>
                 <Button variant="primary" size="sm" onClick={() => setInspectReport(null)}>
                   Close
                 </Button>

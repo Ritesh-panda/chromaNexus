@@ -2,6 +2,19 @@ import { api } from './axios';
 import { MOCK_PATIENT, MOCK_USER, MOCK_DISEASES, MOCK_MEDICATIONS, MOCK_LAB_RESULTS } from '@/constants/mockData';
 import type { Patient, User, Disease, Medication, LabResult, AnalyteSummary, StructuredTrendData } from '@/types';
 
+function isDemoUser(): boolean {
+  try {
+    const saved = localStorage.getItem('chronanexus_auth_user');
+    if (saved) {
+      const u = JSON.parse(saved);
+      return u?.email === 'alex.vance@example.com';
+    }
+  } catch {
+    // Ignore
+  }
+  return false;
+}
+
 export const patientService = {
   async getProfile(): Promise<{ user: User; patient: Patient }> {
     try {
@@ -13,10 +26,12 @@ export const patientService = {
         return { user: userRes.data, patient: patientRes.data };
       }
     } catch {
-      // Fallback
+      // Fallback only if demo
     }
-    await new Promise((resolve) => setTimeout(resolve, 200));
-    return { user: MOCK_USER, patient: MOCK_PATIENT };
+    if (isDemoUser()) {
+      return { user: MOCK_USER, patient: MOCK_PATIENT };
+    }
+    throw new Error('Failed to load patient profile.');
   },
 
   async updatePatient(data: Partial<Patient>): Promise<Patient> {
@@ -28,7 +43,7 @@ export const patientService = {
     } catch {
       // Fallback
     }
-    return { ...MOCK_PATIENT, ...data };
+    return data as Patient;
   },
 
   async updateUser(data: Partial<User>): Promise<User> {
@@ -40,7 +55,7 @@ export const patientService = {
     } catch {
       // Fallback
     }
-    return { ...MOCK_USER, ...data };
+    return data as User;
   },
 
   async getDiagnoses(): Promise<Disease[]> {
@@ -52,7 +67,7 @@ export const patientService = {
     } catch {
       // Fallback
     }
-    return MOCK_DISEASES;
+    return isDemoUser() ? MOCK_DISEASES : [];
   },
 
   async getMedications(): Promise<Medication[]> {
@@ -64,7 +79,7 @@ export const patientService = {
     } catch {
       // Fallback
     }
-    return MOCK_MEDICATIONS;
+    return isDemoUser() ? MOCK_MEDICATIONS : [];
   },
 
   async getLabResults(): Promise<LabResult[]> {
@@ -76,7 +91,7 @@ export const patientService = {
     } catch {
       // Fallback
     }
-    return MOCK_LAB_RESULTS;
+    return isDemoUser() ? MOCK_LAB_RESULTS : [];
   },
 
   async getAnalytes(): Promise<AnalyteSummary[]> {
@@ -88,7 +103,10 @@ export const patientService = {
     } catch (err) {
       console.warn('Failed to fetch analytes from API:', err);
     }
-    // Fallback: extract distinct analytes from MOCK_LAB_RESULTS
+    if (!isDemoUser()) {
+      return [];
+    }
+    // Fallback: extract distinct analytes from MOCK_LAB_RESULTS for demo only
     const map = new Map<string, AnalyteSummary>();
     MOCK_LAB_RESULTS.forEach((l) => {
       const key = l.testName.toLowerCase().trim();

@@ -6,3 +6,4 @@ export * from './timeline.service';
 export * from './chat.service';
 export * from './summary.service';
 export * from './search.service';
+export * from './aiSettings.service';

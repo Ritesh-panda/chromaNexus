@@ -15,8 +15,13 @@ router = APIRouter(prefix="/reports", tags=["Reports"])
 
 
 def format_report_response(report: MedicalReport, linked_entities: Optional[Dict[str, Any]] = None) -> ReportResponse:
-    entities = [
-        ExtractedEntitySchema(
+    deduped_entities: Dict[tuple, ExtractedEntitySchema] = {}
+    for e in report.extracted_entities:
+        norm_name = (e.name or "").strip().lower()
+        if "type 2 diabetes" in norm_name or norm_name == "diabetes":
+            norm_name = "type 2 diabetes mellitus"
+        key = (e.category, norm_name)
+        schema_ent = ExtractedEntitySchema(
             category=e.category,
             name=e.name,
             confidence=e.confidence,
@@ -24,8 +29,17 @@ def format_report_response(report: MedicalReport, linked_entities: Optional[Dict
             unit=e.unit,
             notes=e.notes,
             sourcePageNumber=getattr(e, 'source_page_number', None)
-        ) for e in report.extracted_entities
-    ]
+        )
+        if key not in deduped_entities:
+            deduped_entities[key] = schema_ent
+        else:
+            existing = deduped_entities[key]
+            if not existing.value and e.value:
+                deduped_entities[key] = schema_ent
+            elif existing.value and e.value and len(str(e.value)) > len(str(existing.value)):
+                deduped_entities[key] = schema_ent
+
+    entities = list(deduped_entities.values())
     return ReportResponse(
         id=report.id,
         title=report.title,
@@ -96,13 +110,32 @@ def get_reports(
         )
     
     # Sorting: distinguish clinical_date from upload_date
-    if sort_by == "upload_date":
-        order_col = MedicalReport.upload_date.asc() if sort_order.lower() == "asc" else MedicalReport.upload_date.desc()
+    by_val = sort_by.lower() if isinstance(sort_by, str) else "clinical_date"
+    order_val = sort_order.lower() if isinstance(sort_order, str) else "desc"
+
+    if by_val == "upload_date":
+        order_col = MedicalReport.upload_date.asc() if order_val == "asc" else MedicalReport.upload_date.desc()
     else:
-        order_col = MedicalReport.report_date.asc() if sort_order.lower() == "asc" else MedicalReport.report_date.desc()
+        order_col = MedicalReport.report_date.asc() if order_val == "asc" else MedicalReport.report_date.desc()
     
     reports = query.order_by(order_col).all()
     return [format_report_response(r) for r in reports]
+
+
+@router.get("/{report_id}/status")
+def get_report_status(
+    report_id: str,
+    current_patient: Patient = Depends(get_current_patient),
+    db: Session = Depends(get_db)
+):
+    from backend.app.ai.ingestion import ingestion_registry
+    report = db.query(MedicalReport).filter(
+        MedicalReport.id == report_id,
+        MedicalReport.patient_id == current_patient.id
+    ).first()
+    if not report:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Medical report not found")
+    return ingestion_registry.get_status(report_id)
 
 
 @router.get("/{report_id}", response_model=ReportResponse)
@@ -247,6 +280,8 @@ def update_report(
 
     if report_update.title is not None:
         report.title = report_update.title
+    if hasattr(report_update, "reportDate") and report_update.reportDate is not None:
+        report.report_date = report_update.reportDate
     if report_update.category is not None:
         report.category = report_update.category
     if report_update.hospitalName is not None:

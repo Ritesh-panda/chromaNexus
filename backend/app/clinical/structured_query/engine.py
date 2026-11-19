@@ -354,15 +354,16 @@ class StructuredClinicalQueryEngine:
             l_code = lab.loinc_code or ""
 
             match = False
-            if l_code and l_code in target_loincs:
-                match = True
-            elif any(term in t_name or term in c_name for term in search_terms):
-                match = True
-            else:
-                # Resolve dynamically
-                r_defn = resolve_biomarker(lab.test_name)
-                if r_defn and r_defn.loinc_code in target_loincs:
+            r_defn = resolve_biomarker(lab.test_name)
+            if defn and r_defn:
+                if (defn.loinc_code and r_defn.loinc_code == defn.loinc_code) or (r_defn.canonical_name.lower() == defn.canonical_name.lower()):
                     match = True
+            elif l_code and l_code in target_loincs:
+                match = True
+            elif any(term == t_name or term == c_name for term in search_terms):
+                match = True
+            elif not r_defn and any(term in t_name for term in search_terms if len(term) >= 4):
+                match = True
 
             if not match:
                 continue

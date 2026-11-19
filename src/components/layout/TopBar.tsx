@@ -33,7 +33,9 @@ export const TopBar: React.FC = () => {
   const [profileOpen, setProfileOpen] = useState(false);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
 
-  const unreadCount = MOCK_NOTIFICATIONS.filter((n) => !n.read).length;
+  const isDemo = user?.email === 'alex.vance@example.com';
+  const notifications = isDemo ? MOCK_NOTIFICATIONS : [];
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const handleLogout = async () => {
     await logout();
@@ -115,18 +117,24 @@ export const TopBar: React.FC = () => {
                 </div>
 
                 <div className="space-y-1.5 max-h-60 overflow-y-auto">
-                  {MOCK_NOTIFICATIONS.map((n) => (
-                    <div
-                      key={n.id}
-                      className="p-2.5 rounded-xl hover:bg-[#FAF8F5] dark:hover:bg-[#23272E] transition-colors text-xs space-y-1 border border-transparent hover:border-[#E5E7EB] dark:hover:border-[#2F3540]"
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-medium text-[#1F2937] dark:text-[#F3F4F6] truncate">{n.title}</span>
-                        <span className="text-[10px] text-[#9CA3AF] tabular-nums shrink-0">{n.timestamp}</span>
-                      </div>
-                      <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] line-clamp-2 leading-relaxed">{n.message}</p>
+                  {notifications.length === 0 ? (
+                    <div className="py-6 text-center text-xs text-[#9CA3AF]">
+                      No notifications yet
                     </div>
-                  ))}
+                  ) : (
+                    notifications.map((n) => (
+                      <div
+                        key={n.id}
+                        className="p-2.5 rounded-xl hover:bg-[#FAF8F5] dark:hover:bg-[#23272E] transition-colors text-xs space-y-1 border border-transparent hover:border-[#E5E7EB] dark:hover:border-[#2F3540]"
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium text-[#1F2937] dark:text-[#F3F4F6] truncate">{n.title}</span>
+                          <span className="text-[10px] text-[#9CA3AF] tabular-nums shrink-0">{n.timestamp}</span>
+                        </div>
+                        <p className="text-[11px] text-[#6B7280] dark:text-[#9CA3AF] line-clamp-2 leading-relaxed">{n.message}</p>
+                      </div>
+                    ))
+                  )}
                 </div>
               </motion.div>
             )}
@@ -191,7 +199,7 @@ export const TopBar: React.FC = () => {
             className="flex items-center space-x-2 p-1 pl-1.5 pr-2 rounded-xl hover:bg-[#F3F1ED] dark:hover:bg-[#23272E] transition-colors"
             aria-label="User menu"
           >
-            <Avatar src={user?.avatarUrl} name={user?.name || 'Alex Vance'} size="sm" />
+            <Avatar src={user?.avatarUrl} name={user?.name || 'Patient'} size="sm" />
             <span className="hidden md:block text-xs font-medium text-[#1F2937] dark:text-[#F3F4F6] max-w-[100px] truncate">
               {user?.name || 'Alex Vance'}
             </span>

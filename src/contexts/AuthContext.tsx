@@ -17,13 +17,43 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(MOCK_USER); // Logged in by default for interactive demo experience
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [user, setUser] = useState<User | null>(() => {
+    const token = localStorage.getItem('chronanexus_auth_token');
+    const saved = localStorage.getItem('chronanexus_auth_user');
+    if (token && saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {
+        return null;
+      }
+    }
+    return null;
+  });
+  const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
     const token = localStorage.getItem('chronanexus_auth_token');
     if (token) {
-      setUser(MOCK_USER);
+      authService.getCurrentUser()
+        .then((u) => {
+          if (u) {
+            setUser(u);
+            localStorage.setItem('chronanexus_auth_user', JSON.stringify(u));
+          } else {
+            localStorage.removeItem('chronanexus_auth_token');
+            localStorage.removeItem('chronanexus_auth_user');
+            setUser(null);
+          }
+        })
+        .catch(() => {
+          localStorage.removeItem('chronanexus_auth_token');
+          localStorage.removeItem('chronanexus_auth_user');
+          setUser(null);
+        })
+        .finally(() => setIsLoading(false));
+    } else {
+      setUser(null);
+      setIsLoading(false);
     }
   }, []);
 
@@ -32,6 +62,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await authService.login(params);
       setUser(res.user);
+      localStorage.setItem('chronanexus_auth_user', JSON.stringify(res.user));
     } finally {
       setIsLoading(false);
     }
@@ -42,6 +73,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const res = await authService.signup(params);
       setUser(res.user);
+      localStorage.setItem('chronanexus_auth_user', JSON.stringify(res.user));
     } finally {
       setIsLoading(false);
     }
@@ -51,6 +83,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
     try {
       await authService.logout();
+      localStorage.removeItem('chronanexus_auth_user');
       setUser(null);
     } finally {
       setIsLoading(false);
